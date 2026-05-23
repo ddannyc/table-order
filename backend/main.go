@@ -19,10 +19,6 @@ func main() {
 		log.Fatalf("DB init failed: %v", err)
 	}
 
-	if err := config.InitRedis(cfg.Redis); err != nil {
-		log.Fatalf("Redis init failed: %v", err)
-	}
-
 	if err := config.MigrateDB(); err != nil {
 		log.Fatalf("Migration failed: %v", err)
 	}

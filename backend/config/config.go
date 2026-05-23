@@ -9,7 +9,6 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
-	Redis    RedisConfig
 	JWT      JWTConfig
 	WeChat   WeChatConfig
 }
@@ -25,13 +24,6 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	DBName   string
-}
-
-type RedisConfig struct {
-	Host     string
-	Port     string
-	Password string
-	DB       int
 }
 
 type JWTConfig struct {
@@ -62,7 +54,6 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("server.mode", "debug")
 	viper.SetDefault("jwt.expire_hours", 720)
-	viper.SetDefault("redis.db", 0)
 
 	// config.yaml is optional — Railway uses env vars only
 	viper.ReadInConfig()
@@ -77,10 +68,6 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Database.User = getEnv("POSTGRES_USER", getEnv("DB_USER", cfg.Database.User))
 	cfg.Database.Password = getEnv("POSTGRES_PASSWORD", getEnv("DB_PASSWORD", cfg.Database.Password))
 	cfg.Database.DBName = getEnv("POSTGRES_DB", getEnv("DB_NAME", cfg.Database.DBName))
-
-	cfg.Redis.Host = getEnv("REDIS_HOST", cfg.Redis.Host)
-	cfg.Redis.Port = getEnv("REDIS_PORT", cfg.Redis.Port)
-	cfg.Redis.Password = getEnv("REDIS_PASSWORD", cfg.Redis.Password)
 
 	return &cfg, nil
 }
