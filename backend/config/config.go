@@ -73,7 +73,8 @@ func LoadConfig(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// Override with env vars for Docker
+	// Override with env vars for Docker / Railway
+	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
 	cfg.Database.Host = getEnv("DB_HOST", cfg.Database.Host)
 	cfg.Database.Port = getEnv("DB_PORT", cfg.Database.Port)
 	cfg.Database.User = getEnv("DB_USER", cfg.Database.User)
