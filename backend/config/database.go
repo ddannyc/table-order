@@ -3,9 +3,6 @@ package config
 import (
 	"fmt"
 	"log"
-	"net/url"
-	"os"
-	"strings"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -15,36 +12,9 @@ import (
 
 var DB *gorm.DB
 
-func buildDSN(cfg DatabaseConfig) string {
-	if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
-		// Parse DATABASE_URL for individual fields if needed
-		if strings.HasPrefix(dsn, "postgresql://") || strings.HasPrefix(dsn, "postgres://") {
-			u, err := url.Parse(dsn)
-			if err == nil {
-				host := u.Hostname()
-				port := u.Port()
-				if port == "" {
-					port = "5432"
-				}
-				password, _ := u.User.Password()
-				user := u.User.Username()
-				dbname := strings.TrimPrefix(u.Path, "/")
-				sslmode := u.Query().Get("sslmode")
-				if sslmode == "" {
-					sslmode = "disable"
-				}
-				return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-					host, port, user, password, dbname, sslmode)
-			}
-		}
-		return dsn
-	}
-	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName)
-}
-
 func InitDB(cfg DatabaseConfig) error {
-	dsn := buildDSN(cfg)
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName)
 
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{

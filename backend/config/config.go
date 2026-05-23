@@ -64,28 +64,19 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("jwt.expire_hours", 720)
 	viper.SetDefault("redis.db", 0)
 
-	if err := viper.ReadInConfig(); err != nil {
-		// No config file is OK in Railway (env vars only)
-		cfg := &Config{
-			Server: ServerConfig{Port: "8080", Mode: "debug"},
-			JWT:    JWTConfig{ExpireHours: 720},
-		}
-		cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
-		return cfg, nil
-	}
+	// config.yaml is optional — Railway uses env vars only
+	viper.ReadInConfig()
 
 	var cfg Config
-	if err := viper.Unmarshal(&cfg); err != nil {
-		return nil, err
-	}
+	viper.Unmarshal(&cfg)
 
-	// Override with env vars for Docker / Railway
+	// Env vars override config file (for Docker / Railway)
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
-	cfg.Database.Host = getEnv("DB_HOST", cfg.Database.Host)
-	cfg.Database.Port = getEnv("DB_PORT", cfg.Database.Port)
-	cfg.Database.User = getEnv("DB_USER", cfg.Database.User)
-	cfg.Database.Password = getEnv("DB_PASSWORD", cfg.Database.Password)
-	cfg.Database.DBName = getEnv("DB_NAME", cfg.Database.DBName)
+	cfg.Database.Host = getEnv("PGHOST", getEnv("DB_HOST", cfg.Database.Host))
+	cfg.Database.Port = getEnv("PGPORT", getEnv("DB_PORT", cfg.Database.Port))
+	cfg.Database.User = getEnv("POSTGRES_USER", getEnv("DB_USER", cfg.Database.User))
+	cfg.Database.Password = getEnv("POSTGRES_PASSWORD", getEnv("DB_PASSWORD", cfg.Database.Password))
+	cfg.Database.DBName = getEnv("POSTGRES_DB", getEnv("DB_NAME", cfg.Database.DBName))
 
 	cfg.Redis.Host = getEnv("REDIS_HOST", cfg.Redis.Host)
 	cfg.Redis.Port = getEnv("REDIS_PORT", cfg.Redis.Port)
