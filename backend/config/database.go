@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"log"
+	"os"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,9 +13,16 @@ import (
 
 var DB *gorm.DB
 
-func InitDB(cfg DatabaseConfig) error {
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+func buildDSN(cfg DatabaseConfig) string {
+	if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
+		return dsn
+	}
+	return fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName)
+}
+
+func InitDB(cfg DatabaseConfig) error {
+	dsn := buildDSN(cfg)
 
 	var err error
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
