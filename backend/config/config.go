@@ -65,7 +65,13 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("redis.db", 0)
 
 	if err := viper.ReadInConfig(); err != nil {
-		return nil, err
+		// No config file is OK in Railway (env vars only)
+		cfg := &Config{
+			Server: ServerConfig{Port: "8080", Mode: "debug"},
+			JWT:    JWTConfig{ExpireHours: 720},
+		}
+		cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
+		return cfg, nil
 	}
 
 	var cfg Config
