@@ -1,0 +1,50 @@
+/* pages/login/index.wxss */
+.login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: #fff;
+}
+
+.login-logo {
+  width: 160rpx;
+  height: 160rpx;
+  background: rgba(7, 193, 96, 0.12);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 48rpx;
+  font-size: 80rpx;
+}
+
+.login-info {
+  text-align: center;
+  margin-bottom: 120rpx;
+}
+
+.app-name {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.app-desc {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.login-btn-wrap {
+  width: 600rpx;
+}
+
+.login-btn-wrap .weui-btn {
+  background: #07c160;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  height: 96rpx;
+  line-height: 96rpx;
+}

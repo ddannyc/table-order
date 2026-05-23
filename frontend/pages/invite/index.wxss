@@ -1,0 +1,125 @@
+/* pages/invite/index.wxss */
+.header-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 0 0 32rpx 32rpx;
+  padding: 56rpx 32rpx;
+  color: #fff;
+  margin-bottom: 24rpx;
+}
+
+.stats-row {
+  display: flex;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+}
+
+.stat .value {
+  font-size: 52rpx;
+  font-weight: bold;
+}
+
+.stat .label {
+  font-size: 24rpx;
+  opacity: 0.8;
+  margin-top: 8rpx;
+}
+
+.share-card {
+  text-align: center;
+  padding: 56rpx 48rpx;
+}
+
+.share-icon {
+  width: 128rpx;
+  height: 128rpx;
+  background: rgba(7, 193, 96, 0.12);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+  font-size: 80rpx;
+}
+
+.share-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+}
+
+.share-desc {
+  font-size: 28rpx;
+  color: #999;
+  margin-bottom: 48rpx;
+}
+
+.share-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  width: 100%;
+  background: #07c160;
+  color: #fff;
+  border: none;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.copy-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  width: 100%;
+  background: #f5f5f5;
+  color: #07c160;
+  border: none;
+  border-radius: 48rpx;
+  font-size: 32rpx;
+}
+
+.rules-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 32rpx;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.rule-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 24rpx;
+}
+
+.rule-num {
+  width: 44rpx;
+  height: 44rpx;
+  background: #07c160;
+  color: #fff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.rule-text {
+  font-size: 28rpx;
+  color: #666;
+  line-height: 1.5;
+  padding-top: 4rpx;
+}

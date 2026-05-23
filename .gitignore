@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+backend/vendor/
+
+# Build outputs
+backend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Environment (keep .env.example but not real credentials)
+.env
+.env.local
+.env.*.local
+
+# Config with secrets (use config.yaml.example as template)
+backend/config/config.yaml
+
+# Temp files
+tmp/
+temp/
+*.tmp
+
+# Backend binary
+table-order
+main
+
+# WeChat dev tools (on Windows)
+*.pcss
+*.sss
+
+# WeChat private config with internal IPs
+frontend/project.private.config.json

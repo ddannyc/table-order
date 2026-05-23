@@ -1,0 +1,54 @@
+<!-- pages/invite/index.wxml -->
+<view class="page">
+  <!-- Header Stats -->
+  <view class="header-card">
+    <view class="stats-row">
+      <view class="stat">
+        <view class="value">{{stats.invite_count}}</view>
+        <view class="label">邀请人数</view>
+      </view>
+      <view class="stat">
+        <view class="value">{{statsText.totalInviteReward}}</view>
+        <view class="label">累计奖励</view>
+      </view>
+      <view class="stat">
+        <view class="value">{{statsText.todayReward}}</view>
+        <view class="label">今日奖励</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Share Card -->
+  <view class="share-card weui-card">
+    <view class="share-icon">
+      <text class="share-icon-emoji">🎁</text>
+    </view>
+    <view class="share-title">邀请好友赚奖励</view>
+    <view class="share-desc">好友消费后你可获得5%奖励</view>
+
+    <button class="share-btn" open-type="share">分享到微信</button>
+    <view class="copy-btn" bind:tap="copyLink">复制链接</view>
+  </view>
+
+  <!-- Rules -->
+  <view class="rules-card weui-card">
+    <view class="rules-title">邀请规则</view>
+    <view class="rules-list">
+      <view class="rule-item">
+        <view class="rule-num">1</view>
+        <view class="rule-text">邀请好友扫码成为会员</view>
+      </view>
+      <view class="rule-item">
+        <view class="rule-num">2</view>
+        <view class="rule-text">好友每消费一笔，你获得5%奖励</view>
+      </view>
+      <view class="rule-item">
+        <view class="rule-num">3</view>
+        <view class="rule-text">奖励即时到账，可用于消费抵扣</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部tabbar -->
+  <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />
+</view>

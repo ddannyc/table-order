@@ -1,0 +1,113 @@
+package handler
+
+import (
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"github.com/example/table-order/config"
+	"github.com/example/table-order/models"
+)
+
+type CreateShopRequest struct {
+	Name        string `json:"name" binding:"required"`
+	Description string `json:"description"`
+	Address     string `json:"address"`
+	Phone       string `json:"phone"`
+	Hours       string `json:"hours"`
+	RewardRate  float64 `json:"reward_rate"`
+	InviteRate  float64 `json:"invite_rate"`
+}
+
+func CreateShop(c *gin.Context) {
+	merchantID := c.GetUint("user_id")
+
+	var req CreateShopRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "name required"})
+		return
+	}
+
+	shop := models.Shop{
+		MerchantID: merchantID,
+		Name:       req.Name,
+		Description: req.Description,
+		Address:    req.Address,
+		Phone:      req.Phone,
+		Hours:      req.Hours,
+		RewardRate: req.RewardRate,
+		InviteRate: req.InviteRate,
+		Status:     1,
+	}
+
+	if shop.RewardRate == 0 {
+		shop.RewardRate = 0.1 // default 10%
+	}
+	if shop.InviteRate == 0 {
+		shop.InviteRate = 0.05 // default 5%
+	}
+
+	if err := config.DB.Create(&shop).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "create shop failed"})
+		return
+	}
+
+	c.JSON(http.StatusOK, shop)
+}
+
+func GetShops(c *gin.Context) {
+	merchantID := c.GetUint("user_id")
+
+	var shops []models.Shop
+	config.DB.Where("merchant_id = ?", merchantID).Find(&shops)
+
+	c.JSON(http.StatusOK, shops)
+}
+
+func GetShop(c *gin.Context) {
+	shopID := c.Param("id")
+
+	var shop models.Shop
+	if err := config.DB.First(&shop, shopID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "shop not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, shop)
+}
+
+type UpdateShopRequest struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Address     string `json:"address"`
+	Phone       string `json:"phone"`
+	Hours       string `json:"hours"`
+	Logo        string `json:"logo"`
+	RewardRate  float64 `json:"reward_rate"`
+	InviteRate  float64 `json:"invite_rate"`
+	Status      int    `json:"status"`
+}
+
+func UpdateShop(c *gin.Context) {
+	shopID := c.Param("id")
+
+	var req UpdateShopRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	updates := map[string]interface{}{}
+	if req.Name != "" { updates["name"] = req.Name }
+	if req.Description != "" { updates["description"] = req.Description }
+	if req.Address != "" { updates["address"] = req.Address }
+	if req.Phone != "" { updates["phone"] = req.Phone }
+	if req.Hours != "" { updates["hours"] = req.Hours }
+	if req.Logo != "" { updates["logo"] = req.Logo }
+	if req.RewardRate > 0 { updates["reward_rate"] = req.RewardRate }
+	if req.InviteRate > 0 { updates["invite_rate"] = req.InviteRate }
+	if req.Status > 0 { updates["status"] = req.Status }
+
+	config.DB.Model(&models.Shop{}).Where("id = ?", shopID).Updates(updates)
+
+	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}

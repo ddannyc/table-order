@@ -1,0 +1,57 @@
+<!-- pages/home/index.wxml -->
+<view class="page">
+
+  <!-- 未绑定桌号：扫码引导 -->
+  <view wx:if="{{!boundShopId}}" class="scan-prompt">
+    <view class="prompt-icon">
+      <text class="icon-emoji">📱</text>
+    </view>
+    <view class="prompt-title">扫码点餐</view>
+    <view class="prompt-desc">请扫描餐桌上的二维码开始点餐</view>
+    <button class="submit-btn" bind:tap="scanQR">扫码绑定桌号</button>
+  </view>
+
+  <!-- 已绑定桌号：点餐页面 -->
+  <mp-form-page wx:else>
+    <!-- 标题 -->
+    <view slot="title" class="header-title">
+      <text>{{shop.name || '店铺'}} · 桌{{boundTableNo}}</text>
+      <text class="change-table-btn" bind:tap="changeTable">换桌</text>
+    </view>
+
+    <!-- 菜品分类列表 -->
+    <view wx:for="{{categories}}" wx:key="this" class="category-section">
+      <mp-cells title="{{item}}">
+        <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="product-row">
+          <view class="product-info">
+            <view class="product-name {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
+            <view class="product-desc">{{p.description || '美味菜品'}}</view>
+            <view class="product-price">¥{{p.priceText}}</view>
+          </view>
+          <view class="product-action">
+            <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" bindtap="onAdd" data-id="{{p.id}}">+</view>
+            <view wx:elif="{{p.status !== 2}}" class="qty-control">
+              <view class="qty-btn" bindtap="onDec" data-id="{{p.id}}">−</view>
+              <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
+              <view class="qty-btn" bindtap="onInc" data-id="{{p.id}}">+</view>
+            </view>
+            <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
+          </view>
+        </view>
+      </mp-cells>
+    </view>
+
+    <!-- 去结算 (form-page button 插槽，在文档流中，不会被 tabbar 遮挡) -->
+    <view slot="button" wx:if="{{cartCount > 0}}" class="cart-bar" bindtap="goCart">
+      <view class="cart-info">
+        <view class="cart-icon">🛒</view>
+        <view class="cart-count">{{cartCount}} 件</view>
+        <view class="cart-total">¥{{cartTotal}}</view>
+      </view>
+      <view class="cart-btn">去结算</view>
+    </view>
+  </mp-form-page>
+
+  <!-- 底部tabbar -->
+  <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />
+</view>

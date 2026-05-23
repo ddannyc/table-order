@@ -1,0 +1,13 @@
+{
+  "name": "table-order-miniprogram",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WeChat mini-program for restaurant member referral",
+  "scripts": {
+    "dev": "echo 'Open frontend/ in WeChat DevTools directly'",
+    "build": "echo 'No build step needed - native WeChat mini-program'"
+  },
+  "dependencies": {
+    "weui-miniprogram": "^1.2.3"
+  }
+}
