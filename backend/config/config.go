@@ -69,5 +69,9 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Database.Password = getEnv("POSTGRES_PASSWORD", getEnv("DB_PASSWORD", cfg.Database.Password))
 	cfg.Database.DBName = getEnv("POSTGRES_DB", getEnv("DB_NAME", cfg.Database.DBName))
 
+	// WeChat env vars (Railway)
+	cfg.WeChat.AppID = getEnv("WECHAT_APPID", cfg.WeChat.AppID)
+	cfg.WeChat.AppSecret = getEnv("WECHAT_APPSECRET", cfg.WeChat.AppSecret)
+
 	return &cfg, nil
 }
