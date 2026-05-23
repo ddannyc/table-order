@@ -8,6 +8,7 @@
  *
  * 切换方法: 修改下面一行 const 值，然后重新编译项目
  */
-const API_BASE = 'http://localhost:8080/api'
+// const API_BASE = 'http://localhost:8080/api'
+const API_BASE = 'respectful-comfort-production-6bc5.up.railway.app/api'
 
 module.exports = { API_BASE }

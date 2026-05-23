@@ -75,12 +75,17 @@ func Setup(r *gin.Engine) {
 		invite.GET("/stats", handler.GetInviteStats)
 	}
 
+	// Merchant - public endpoints
+	merchantPublic := api.Group("/merchant")
+	{
+		merchantPublic.POST("/login", handler.MerchantLogin)
+		merchantPublic.POST("/register", handler.RegisterMerchant)
+	}
+
 	// Merchant (merchant auth required)
 	merchant := api.Group("/merchant")
 	merchant.Use(middleware.AuthMiddleware(), middleware.MerchantAuth())
 	{
-		merchant.POST("/login", handler.MerchantLogin) // Alternative login path
-		merchant.POST("/register", handler.RegisterMerchant)
 		merchant.GET("/shops", handler.GetShops)
 		merchant.POST("/shops", handler.CreateShop)
 		merchant.PUT("/shops/:id", handler.UpdateShop)
