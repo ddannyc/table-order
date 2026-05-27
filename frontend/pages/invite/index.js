@@ -1,5 +1,5 @@
 // pages/invite/index.js
-const { getInviteStats, generateInviteCode, bindInviteCode, getInviteQR } = require('../../api/index.js')
+const { getInviteStats, bindInviteCode, getInviteQR } = require('../../api/index.js')
 
 Page({
   data: {
@@ -64,23 +64,17 @@ Page({
     }).catch(err => {
       console.error(err)
     })
-    // Generate invite URL (fallback: construct from storage or API)
+    // Invite URL: construct from cached invite_code (generated at user creation)
     const cached = wx.getStorageSync('invite_url')
     if (cached) {
       this.setData({ inviteURL: cached })
     } else {
-      generateInviteCode().then(res => {
-        const url = res.invite_url || ''
-        if (url && url.indexOf('http') !== 0) {
-          wx.setStorageSync('invite_url', url)
-          this.setData({ inviteURL: url })
-        } else if (url && url.indexOf('http') === 0) {
-          wx.removeStorageSync('invite_url')
-          this.loadData()
-        }
-      }).catch(err => {
-        console.error(err)
-      })
+      const user = wx.getStorageSync('user')
+      if (user && user.invite_code) {
+        const url = '/pages/invite/index?invite_code=' + user.invite_code
+        wx.setStorageSync('invite_url', url)
+        this.setData({ inviteURL: url })
+      }
     }
 
     // Load invite QR code (cache in local storage, permanent)

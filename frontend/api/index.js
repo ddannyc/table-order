@@ -73,8 +73,6 @@ export const createOrder = (shopId, tableNo, totalAmount, items, useReward) => r
 // 邀请
 export const getInviteStats = () => request({ url: '/invites/stats' })
 
-export const generateInviteCode = () => request({ url: '/invites/generate', method: 'POST' })
-
 export const bindInviteCode = (code) => request({ url: '/invites/bind', method: 'POST', data: { code } })
 
 export const getInviteQR = () => {
