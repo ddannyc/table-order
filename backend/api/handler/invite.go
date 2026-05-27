@@ -8,6 +8,7 @@ import (
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
 	"github.com/example/table-order/services"
+	"gorm.io/gorm/clause"
 )
 
 // GenerateInviteQR generates a WeChat mini-program QR code for invite sharing.
@@ -67,27 +68,27 @@ func BindInviteCode(c *gin.Context) {
 		return
 	}
 
-	// Fetch invitee
-	var invitee models.User
-	if err := config.DB.First(&invitee, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-		return
-	}
-
-	// Already bound — first inviter wins
-	if invitee.InviterID != nil {
-		c.JSON(http.StatusOK, gin.H{"message": "already bound"})
-		return
-	}
-
-	// Atomic: set InviterID + create InviteRelation
+	// Atomic: check already-bound + set InviterID + create InviteRelation
 	tx := config.DB.Begin()
 	if tx.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "transaction failed"})
 		return
 	}
 
-	if err := tx.Model(&models.User{}).Where("id = ?", userID).Update("inviter_id", inviter.ID).Error; err != nil {
+	// Lock invitee row and check not already bound (first inviter wins)
+	var invitee models.User
+	if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).First(&invitee, userID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+	if invitee.InviterID != nil {
+		tx.Rollback()
+		c.JSON(http.StatusOK, gin.H{"message": "already bound"})
+		return
+	}
+
+	if err := tx.Model(&invitee).Update("inviter_id", inviter.ID).Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "bind failed"})
 		return

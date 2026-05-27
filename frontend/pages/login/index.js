@@ -56,6 +56,7 @@ Page({
   redirectAfterLogin() {
     const pendingCode = wx.getStorageSync('pending_invite_code')
     if (pendingCode) {
+      this.bindPendingInvite()
       wx.reLaunch({ url: '/pages/invite/index' })
     } else {
       wx.reLaunch({ url: '/pages/home/index' })

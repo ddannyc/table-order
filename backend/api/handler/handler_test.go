@@ -435,7 +435,7 @@ func TestBindInviteCode_BindsSuccessfully(t *testing.T) {
 		t.Errorf("expected InviterID=%d, got %v", inviter.ID, invitee.InviterID)
 	}
 
-	// Verify InviteRelation created
+	// Verify InviteRelation created (shop_id defaults to 0 when not provided)
 	var relation models.InviteRelation
 	if err := config.DB.Where("inviter_id = ? AND invitee_id = ?", inviter.ID, invitee.ID).First(&relation).Error; err != nil {
 		t.Errorf("expected InviteRelation to exist: %v", err)

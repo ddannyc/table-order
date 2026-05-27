@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"log"
 	"math"
 	"net/http"
 	"time"
@@ -257,7 +258,11 @@ func GetOrder(c *gin.Context) {
 
 func processInviteReward(userID uint, shopID uint, amount float64) {
 	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil || user.InviterID == nil {
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		log.Printf("[invite_reward] user not found: userID=%d err=%v", userID, err)
+		return
+	}
+	if user.InviterID == nil {
 		return
 	}
 
@@ -265,19 +270,25 @@ func processInviteReward(userID uint, shopID uint, amount float64) {
 
 	var shop models.Shop
 	if err := config.DB.First(&shop, shopID).Error; err != nil {
+		log.Printf("[invite_reward] shop not found: shopID=%d err=%v", shopID, err)
 		return
 	}
 
 	inviteReward := amount * shop.InviteRate
+	if inviteReward <= 0 {
+		return
+	}
 
 	tx := config.DB.Begin()
 	if tx.Error != nil {
+		log.Printf("[invite_reward] tx begin failed: err=%v", tx.Error)
 		return
 	}
 
 	if err := tx.Model(&models.User{}).Where("id = ?", inviterID).
 		UpdateColumn("reward_balance", gorm.Expr("reward_balance + ?", inviteReward)).Error; err != nil {
 		tx.Rollback()
+		log.Printf("[invite_reward] update reward_balance failed: inviterID=%d amount=%.2f err=%v", inviterID, inviteReward, err)
 		return
 	}
 
@@ -289,8 +300,10 @@ func processInviteReward(userID uint, shopID uint, amount float64) {
 	}
 	if err := tx.Create(&walletLog).Error; err != nil {
 		tx.Rollback()
+		log.Printf("[invite_reward] create wallet_log failed: inviterID=%d err=%v", inviterID, err)
 		return
 	}
 
 	tx.Commit()
+	log.Printf("[invite_reward] rewarded: inviterID=%d inviteeID=%d amount=%.2f", inviterID, userID, inviteReward)
 }

@@ -73,7 +73,7 @@ export const createOrder = (shopId, tableNo, totalAmount, items, useReward) => r
 // 邀请
 export const getInviteStats = () => request({ url: '/invites/stats' })
 
-export const bindInviteCode = (code) => request({ url: '/invites/bind', method: 'POST', data: { code } })
+export const bindInviteCode = (code, shopId) => request({ url: '/invites/bind', method: 'POST', data: { code, shop_id: shopId || 0 } })
 
 export const getInviteQR = () => {
   return new Promise((resolve, reject) => {
