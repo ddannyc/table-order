@@ -70,7 +70,6 @@ func Setup(r *gin.Engine) {
 	invite := api.Group("/invites")
 	invite.Use(middleware.AuthMiddleware())
 	{
-		invite.POST("/generate", handler.GenerateInviteCode)
 		invite.POST("/bind", handler.BindInviteCode)
 		invite.GET("/stats", handler.GetInviteStats)
 		invite.GET("/qrcode", handler.GenerateInviteQR)

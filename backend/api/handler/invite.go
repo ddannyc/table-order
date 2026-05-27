@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
 	"github.com/example/table-order/services"
@@ -40,50 +39,6 @@ func GenerateInviteQR(c *gin.Context) {
 	}
 
 	c.Data(http.StatusOK, "image/jpeg", png.Buffer)
-}
-
-type GenerateInviteRequest struct {
-	ShopID uint `json:"shop_id"`
-}
-
-type InviteResponse struct {
-	InviteCode string `json:"invite_code"`
-	InviteURL  string `json:"invite_url"`
-}
-
-func GenerateInviteCode(c *gin.Context) {
-	userID := c.GetUint("user_id")
-
-	var req GenerateInviteRequest
-	c.ShouldBindJSON(&req)
-
-	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
-		return
-	}
-
-	// Idempotent: return existing code if already generated
-	if user.InviteCode != nil && *user.InviteCode != "" {
-		inviteURL := fmt.Sprintf("/pages/invite/index?invite_code=%s", *user.InviteCode)
-		c.JSON(http.StatusOK, InviteResponse{
-			InviteCode: *user.InviteCode,
-			InviteURL:  inviteURL,
-		})
-		return
-	}
-
-	inviteCode := uuid.New().String()[:12]
-	if err := config.DB.Model(&user).Update("invite_code", inviteCode).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "generate invite code failed"})
-		return
-	}
-
-	inviteURL := fmt.Sprintf("/pages/invite/index?invite_code=%s", inviteCode)
-	c.JSON(http.StatusOK, InviteResponse{
-		InviteCode: inviteCode,
-		InviteURL:  inviteURL,
-	})
 }
 
 // BindInviteCode called when user opens invite share link
