@@ -158,23 +158,27 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 	// On success, the response is raw image bytes (not JSON).
 	// On error, it returns JSON with errcode and errmsg.
 	contentType := resp.Header.Get("Content-Type")
-	fmt.Printf("[wechat] wxacode response status=%d content-type=%s body_len=%d\n", resp.StatusCode, contentType, len(respBody))
-	if contentType == "image/jpeg" || contentType == "image/png" || contentType == "" {
-		// Success — raw image
-		if len(respBody) == 0 {
-			return nil, fmt.Errorf("wxacode returned empty image body (status %d)", resp.StatusCode)
+	fmt.Printf("[wechat] wxacode response status=%d content-type=%s body_len=%d body=%s\n", resp.StatusCode, contentType, len(respBody), string(respBody))
+
+	// Check for error JSON first (regardless of content-type)
+	if len(respBody) > 0 && respBody[0] == '{' {
+		var errResp struct {
+			ErrCode int    `json:"errcode"`
+			ErrMsg  string `json:"errmsg"`
 		}
-		return &WXACodeUnlimitedResponse{Buffer: respBody}, nil
+		if json.Unmarshal(respBody, &errResp) == nil && errResp.ErrCode != 0 {
+			return nil, fmt.Errorf("wxacode error %d: %s", errResp.ErrCode, errResp.ErrMsg)
+		}
 	}
 
-	// Try to parse as error JSON
-	var errResp struct {
-		ErrCode int    `json:"errcode"`
-		ErrMsg  string `json:"errmsg"`
-	}
-	if json.Unmarshal(respBody, &errResp) == nil && errResp.ErrCode != 0 {
-		return nil, fmt.Errorf("wxacode error %d: %s (body: %s)", errResp.ErrCode, errResp.ErrMsg, string(respBody))
+	// Non-200 status with no error JSON
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf("wxacode request failed status=%d body=%s", resp.StatusCode, string(respBody))
 	}
 
-	return nil, fmt.Errorf("wxacode unexpected response content-type=%s body=%s", contentType, string(respBody))
+	// Success — raw image
+	if len(respBody) == 0 {
+		return nil, fmt.Errorf("wxacode returned empty image body")
+	}
+	return &WXACodeUnlimitedResponse{Buffer: respBody}, nil
 }
