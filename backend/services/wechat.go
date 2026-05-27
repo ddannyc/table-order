@@ -134,7 +134,7 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 		return nil, fmt.Errorf("get access token: %w", err)
 	}
 
-	url := fmt.Sprintf("https://api.weixin.qq.com/wxa/getwxacodeunlimited?access_token=%s", token)
+	url := fmt.Sprintf("https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=%s", token)
 
 	body := map[string]interface{}{
 		"scene": scene,
