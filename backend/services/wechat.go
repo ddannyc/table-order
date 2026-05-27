@@ -146,6 +146,8 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 
 	bodyBytes, _ := json.Marshal(body)
 
+	fmt.Printf("[wechat] wxacode request url=%s body=%s\n", url, string(bodyBytes))
+
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Post(url, "application/json", io.NopCloser(bytes.NewReader(bodyBytes)))
 	if err != nil {
