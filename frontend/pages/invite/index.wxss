@@ -90,6 +90,34 @@
   flex-shrink: 0;
 }
 
+.qr-card {
+  text-align: center;
+  padding: 40rpx 48rpx;
+}
+
+.qr-title {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 32rpx;
+}
+
+.qr-image-wrap {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24rpx;
+}
+
+.qr-image {
+  width: 200rpx;
+  height: 200rpx;
+}
+
+.qr-desc {
+  font-size: 26rpx;
+  color: #999;
+}
+
 .rule-text {
   font-size: 28rpx;
   color: #666;

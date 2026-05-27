@@ -8,7 +8,39 @@ import (
 	"github.com/google/uuid"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"github.com/example/table-order/services"
 )
+
+// GenerateInviteQR generates a WeChat mini-program QR code for invite sharing.
+func GenerateInviteQR(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Ensure invite code exists
+	if user.InviteCode == nil || *user.InviteCode == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "generate invite code first"})
+		return
+	}
+
+	// scene: max 32 chars, encode invite_code
+	scene := fmt.Sprintf("ic=%s", *user.InviteCode)
+	if len(scene) > 32 {
+		scene = scene[:32]
+	}
+
+	png, err := services.GetWXACodeUnlimited(scene, "pages/invite/index")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("generate qr failed: %v", err)})
+		return
+	}
+
+	c.Data(http.StatusOK, "image/jpeg", png.Buffer)
+}
 
 type GenerateInviteRequest struct {
 	ShopID uint `json:"shop_id"`

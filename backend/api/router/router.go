@@ -73,6 +73,7 @@ func Setup(r *gin.Engine) {
 		invite.POST("/generate", handler.GenerateInviteCode)
 		invite.POST("/bind", handler.BindInviteCode)
 		invite.GET("/stats", handler.GetInviteStats)
+		invite.GET("/qrcode", handler.GenerateInviteQR)
 	}
 
 	// Merchant - public endpoints

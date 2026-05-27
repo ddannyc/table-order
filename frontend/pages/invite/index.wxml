@@ -48,6 +48,15 @@
     </view>
   </view>
 
+  <!-- 邀请二维码 -->
+  <view class="qr-card card" wx:if="{{qrCodeSrc}}">
+    <view class="qr-title">邀请二维码</view>
+    <view class="qr-image-wrap">
+      <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
+    </view>
+    <view class="qr-desc">扫一扫二维码，加入我的邀请</view>
+  </view>
+
   <!-- 底部tabbar -->
   <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />
 </view>

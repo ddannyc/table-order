@@ -1,11 +1,12 @@
 // pages/invite/index.js
-const { getInviteStats, generateInviteCode, bindInviteCode } = require('../../api/index.js')
+const { getInviteStats, generateInviteCode, bindInviteCode, getInviteQR } = require('../../api/index.js')
 
 Page({
   data: {
     stats: { invite_count: 0, total_invite_reward: 0, today_reward: 0 },
     statsText: { totalInviteReward: '0.00', todayReward: '0.00' },
     inviteURL: '',
+    qrCodeSrc: '',
     tabbar: {
       current: 1,
       list: [
@@ -20,6 +21,12 @@ Page({
     // Check if opened from share link with invite_code
     if (options && options.invite_code) {
       bindInviteCode(options.invite_code).catch(err => console.error(err))
+    }
+    // Check if opened from QR code scan (pending invite from app.js handleScene)
+    const pendingCode = wx.getStorageSync('pending_invite_code')
+    if (pendingCode) {
+      wx.removeStorageSync('pending_invite_code')
+      bindInviteCode(pendingCode).catch(err => console.error(err))
     }
     this.loadData()
   },
@@ -76,5 +83,13 @@ Page({
         console.error(err)
       })
     }
+
+    // Load invite QR code
+    getInviteQR().then(data => {
+      const base64 = wx.arrayBufferToBase64(data)
+      this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + base64 })
+    }).catch(err => {
+      console.error('load invite qr failed:', err)
+    })
   }
 })

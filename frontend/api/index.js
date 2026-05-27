@@ -77,6 +77,32 @@ export const generateInviteCode = () => request({ url: '/invites/generate', meth
 
 export const bindInviteCode = (code) => request({ url: '/invites/bind', method: 'POST', data: { code } })
 
+export const getInviteQR = () => {
+  return new Promise((resolve, reject) => {
+    const token = wx.getStorageSync('token') || ''
+    wx.request({
+      url: API_BASE + '/invites/qrcode',
+      method: 'GET',
+      responseType: 'arraybuffer',
+      header: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
+      success: (res) => {
+        if (res.statusCode === 200) {
+          resolve(res.data)
+        } else if (res.statusCode === 401) {
+          wx.removeStorageSync('token')
+          wx.reLaunch({ url: '/pages/login/index' })
+          reject(new Error('未登录'))
+        } else {
+          reject(res.data)
+        }
+      },
+      fail: (err) => reject(err)
+    })
+  })
+}
+
 // 桌号绑定
 export const getTableBinding = () => {
   return {
