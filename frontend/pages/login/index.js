@@ -1,5 +1,5 @@
 // pages/login/index.js
-const { loginByCode } = require('../../api/index.js')
+const { loginByCode, bindInviteCode } = require('../../api/index.js')
 
 Page({
   data: {
@@ -9,7 +9,7 @@ Page({
   onLoad() {
     const token = wx.getStorageSync('token')
     if (token) {
-      wx.reLaunch({ url: '/pages/home/index' })
+      this.redirectAfterLogin()
     }
   },
 
@@ -24,7 +24,8 @@ Page({
             if (res.token) {
               wx.setStorageSync('token', res.token)
               wx.setStorageSync('user', res.user || {})
-              wx.reLaunch({ url: '/pages/home/index' })
+              this.bindPendingInvite()
+              this.redirectAfterLogin()
             } else {
               wx.showToast({ title: '登录失败', icon: 'none' })
             }
@@ -42,5 +43,22 @@ Page({
         this.setData({ loading: false })
       }
     })
+  },
+
+  bindPendingInvite() {
+    const pendingCode = wx.getStorageSync('pending_invite_code')
+    if (pendingCode) {
+      wx.removeStorageSync('pending_invite_code')
+      bindInviteCode(pendingCode).catch(err => console.error('bind invite failed:', err))
+    }
+  },
+
+  redirectAfterLogin() {
+    const pendingCode = wx.getStorageSync('pending_invite_code')
+    if (pendingCode) {
+      wx.reLaunch({ url: '/pages/invite/index' })
+    } else {
+      wx.reLaunch({ url: '/pages/home/index' })
+    }
   }
 })
