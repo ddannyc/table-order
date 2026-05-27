@@ -19,19 +19,18 @@
   </view>
 
   <!-- Share Card -->
-  <view class="share-card weui-card">
+  <view class="share-card card">
     <view class="share-icon">
       <text class="share-icon-emoji">🎁</text>
     </view>
     <view class="share-title">邀请好友赚奖励</view>
     <view class="share-desc">好友消费后你可获得5%奖励</view>
 
-    <button class="share-btn" open-type="share">分享到微信</button>
-    <view class="copy-btn" bind:tap="copyLink">复制链接</view>
+    <button class="weui-btn" type="primary" open-type="share">分享到微信</button>
   </view>
 
   <!-- Rules -->
-  <view class="rules-card weui-card">
+  <view class="rules-card card">
     <view class="rules-title">邀请规则</view>
     <view class="rules-list">
       <view class="rule-item">

@@ -65,16 +65,5 @@ Page({
         console.error(err)
       })
     }
-  },
-
-  copyLink() {
-    if (!this.data.inviteURL) {
-      wx.showToast({ title: '链接未生成', icon: 'none' })
-      return
-    }
-    wx.setClipboardData({
-      data: this.data.inviteURL,
-      success: () => wx.showToast({ title: '已复制', icon: 'success' })
-    })
   }
 })

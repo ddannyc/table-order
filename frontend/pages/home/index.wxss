@@ -11,7 +11,7 @@
 .prompt-icon {
   width: 192rpx;
   height: 192rpx;
-  background: rgba(7, 193, 96, 0.12);
+  background: var(--weui-primary-light);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -73,7 +73,7 @@
 
 .product-price {
   font-size: 34rpx;
-  color: #07c160;
+  color: var(--weui-primary);
   font-weight: bold;
   margin-top: 8rpx;
 }
@@ -88,7 +88,7 @@
 .add-btn {
   width: 56rpx;
   height: 56rpx;
-  background: #07c160;
+  background: var(--weui-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -96,7 +96,7 @@
   font-size: 36rpx;
   font-weight: bold;
   color: #fff;
-  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3);
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3); /* custom shadow, --weui-primary-light is too light */
 }
 
 .qty-control {
@@ -109,14 +109,14 @@
   width: 56rpx;
   height: 56rpx;
   background: #fff;
-  border: 2rpx solid #07c160;
+  border: 2rpx solid var(--weui-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32rpx;
   font-weight: bold;
-  color: #07c160;
+  color: var(--weui-primary);
 }
 
 .qty-value {
@@ -137,7 +137,7 @@
 
 /* cart-bar 在 form-page button slot 中，不需要 fixed 定位 */
 .cart-bar {
-  background: #07c160;
+  background: var(--weui-primary);
   color: #fff;
   padding: 28rpx 40rpx;
   display: flex;
@@ -187,8 +187,8 @@
 
 .change-table-btn {
   font-size: 24rpx;
-  color: #07c160;
-  background: rgba(7, 193, 96, 0.1);
+  color: var(--weui-primary);
+  background: var(--weui-primary-light);
   padding: 6rpx 20rpx;
   border-radius: 24rpx;
   margin-left: 16rpx;

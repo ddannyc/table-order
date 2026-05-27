@@ -133,7 +133,7 @@
 }
 
 .weui-tabs__item_on {
-  background: #07c160;
+  background: var(--weui-primary);
   color: #fff;
   font-weight: 600;
 }
@@ -165,7 +165,7 @@
 }
 
 .log-amount.plus {
-  color: #07c160;
+  color: var(--weui-primary);
 }
 
 .log-amount.minus {
@@ -191,7 +191,7 @@
 
 .order-status {
   font-size: 24rpx;
-  color: #07c160;
+  color: var(--weui-primary);
 }
 
 .order-body {

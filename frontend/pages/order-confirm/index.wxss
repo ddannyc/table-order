@@ -45,8 +45,7 @@
   font-weight: 500;
 }
 
-.text-primary { color: #07c160 !important; }
-.text-discount { color: #07c160; }
+.text-discount { color: var(--weui-primary); }
 
 .total-label {
   font-weight: 600;
@@ -80,7 +79,7 @@
 }
 
 .toggle-switch.on {
-  background: #07c160;
+  background: var(--weui-primary);
 }
 
 .toggle-switch::after {
@@ -107,15 +106,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 24rpx 32rpx;
-  background: rgba(7, 193, 96, 0.08);
-  border: 2rpx solid #07c160;
+  background: var(--weui-primary-light);
+  border: 2rpx solid var(--weui-primary);
   border-radius: 16rpx;
 }
 
 .option-icon {
   width: 56rpx;
   height: 56rpx;
-  background: #07c160;
+  background: var(--weui-primary);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -165,5 +164,5 @@
 .submit-amount {
   font-size: 48rpx;
   font-weight: bold;
-  color: #07c160;
+  color: var(--weui-primary);
 }

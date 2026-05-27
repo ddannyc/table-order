@@ -18,11 +18,11 @@ page, view, text, navigator {
   padding-bottom: 160rpx;
 }
 
-.text-primary { color: #07c160 !important; }
-.bg-primary { background: #07c160 !important; }
+.text-primary { color: var(--weui-primary) !important; }
+.bg-primary { background: var(--weui-primary) !important; }
 .text-gold { color: #FFD700 !important; }
 
-.weui-card {
+.card {
   background: #fff;
   border-radius: 16rpx;
   padding: 32rpx;
@@ -43,21 +43,6 @@ page, view, text, navigator {
   align-items: center;
   z-index: 100;
   box-shadow: 0 -2rpx 12rpx rgba(0, 0, 0, 0.05);
-}
-
-.submit-btn {
-  background: #07c160;
-  color: #fff;
-  border: none;
-  border-radius: 48rpx;
-  padding: 24rpx 64rpx;
-  font-size: 32rpx;
-  font-weight: 600;
-  text-align: center;
-}
-
-.submit-btn[disabled] {
-  background: #ccc;
 }
 
 .empty-tip {

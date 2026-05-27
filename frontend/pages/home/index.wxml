@@ -8,7 +8,7 @@
     </view>
     <view class="prompt-title">扫码点餐</view>
     <view class="prompt-desc">请扫描餐桌上的二维码开始点餐</view>
-    <button class="submit-btn" bind:tap="scanQR">扫码绑定桌号</button>
+    <button class="weui-btn" type="primary" bind:tap="scanQR">扫码绑定桌号</button>
   </view>
 
   <!-- 已绑定桌号：点餐页面 -->
