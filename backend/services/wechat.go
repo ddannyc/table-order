@@ -139,6 +139,7 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 	body := map[string]interface{}{
 		"scene": scene,
 		"page":  page,
+		"check_path": false,
 	}
 
 	bodyBytes, _ := json.Marshal(body)
