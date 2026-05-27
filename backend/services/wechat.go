@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -154,6 +155,7 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 		return nil, fmt.Errorf("create request failed: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", strconv.Itoa(len(bodyBytes)))
 	req.ContentLength = int64(len(bodyBytes))
 	resp, err := client.Do(req)
 	if err != nil {
