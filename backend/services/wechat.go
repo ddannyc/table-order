@@ -140,7 +140,7 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 		"scene": scene,
 		"page":  page,
 		"check_path": false,
-		"env_version": "release",
+		"env_version": "develop",
 		"width": 280,
 	}
 
