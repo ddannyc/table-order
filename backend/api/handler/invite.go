@@ -25,45 +25,100 @@ func GenerateInviteCode(c *gin.Context) {
 	var req GenerateInviteRequest
 	c.ShouldBindJSON(&req)
 
-	// Generate unique invite code
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Idempotent: return existing code if already generated
+	if user.InviteCode != nil && *user.InviteCode != "" {
+		inviteURL := fmt.Sprintf("/pages/invite/index?invite_code=%s", *user.InviteCode)
+		c.JSON(http.StatusOK, InviteResponse{
+			InviteCode: *user.InviteCode,
+			InviteURL:  inviteURL,
+		})
+		return
+	}
+
 	inviteCode := uuid.New().String()[:12]
+	if err := config.DB.Model(&user).Update("invite_code", inviteCode).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "generate invite code failed"})
+		return
+	}
 
-	// Store invite code mapping in Redis for quick lookup
-	// For MVP, store in DB
-	inviteURL := fmt.Sprintf("https://domain.com/invite?code=%s&u=%d", inviteCode, userID)
-
+	inviteURL := fmt.Sprintf("/pages/invite/index?invite_code=%s", inviteCode)
 	c.JSON(http.StatusOK, InviteResponse{
 		InviteCode: inviteCode,
 		InviteURL:  inviteURL,
 	})
 }
 
-// BindInviteCode called when user scans an invite QR or clicks invite link
+// BindInviteCode called when user opens invite share link
 func BindInviteCode(c *gin.Context) {
 	userID := c.GetUint("user_id")
-	code := c.Query("code")
-	shopID := c.Query("shop_id")
 
-	if code == "" {
+	var req struct {
+		Code   string `json:"code"`
+		ShopID uint   `json:"shop_id"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Code == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "code is required"})
 		return
 	}
 
-	// TODO: Look up inviter from invite code (Redis/DB)
-	// For MVP, just store the relation
-	// inviterID := getInviterFromCode(code)
-
-	// Only bind if user doesn't already have an inviter
-	var user models.User
-	if err := config.DB.First(&user, userID).Error; err != nil {
+	// Find inviter by invite code
+	var inviter models.User
+	if err := config.DB.Where("invite_code = ?", req.Code).First(&inviter).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "invalid invite code"})
 		return
 	}
 
-	if user.InviterID != nil {
-		return // Already has inviter
+	// Prevent self-referral
+	if inviter.ID == userID {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "cannot invite yourself"})
+		return
 	}
 
-	// TODO: Set inviter_id after looking up from code
-	_ = shopID
+	// Fetch invitee
+	var invitee models.User
+	if err := config.DB.First(&invitee, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	// Already bound — first inviter wins
+	if invitee.InviterID != nil {
+		c.JSON(http.StatusOK, gin.H{"message": "already bound"})
+		return
+	}
+
+	// Atomic: set InviterID + create InviteRelation
+	tx := config.DB.Begin()
+	if tx.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "transaction failed"})
+		return
+	}
+
+	if err := tx.Model(&models.User{}).Where("id = ?", userID).Update("inviter_id", inviter.ID).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "bind failed"})
+		return
+	}
+
+	relation := models.InviteRelation{
+		InviterID: inviter.ID,
+		InviteeID: userID,
+		ShopID:    req.ShopID,
+	}
+	if err := tx.Create(&relation).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "bind failed"})
+		return
+	}
+
+	tx.Commit()
+	c.JSON(http.StatusOK, gin.H{"message": "bound successfully"})
 }
 
 func GetInviteStats(c *gin.Context) {

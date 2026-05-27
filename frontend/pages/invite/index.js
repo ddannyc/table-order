@@ -1,5 +1,5 @@
 // pages/invite/index.js
-const { getInviteStats, generateInviteCode } = require('../../api/index.js')
+const { getInviteStats, generateInviteCode, bindInviteCode } = require('../../api/index.js')
 
 Page({
   data: {
@@ -16,20 +16,20 @@ Page({
     }
   },
 
-  onLoad() {
+  onLoad(options) {
+    // Check if opened from share link with invite_code
+    if (options && options.invite_code) {
+      bindInviteCode(options.invite_code).catch(err => console.error(err))
+    }
     this.loadData()
   },
 
   onShareAppMessage() {
-    // Ensure inviteURL exists before sharing
-    if (!this.data.inviteURL) {
-      generateInviteCode().then(res => {
-        this.setData({ inviteURL: res.invite_url || '' })
-      })
-    }
+    const cached = wx.getStorageSync('invite_url')
+    const path = cached || '/pages/home/index'
     return {
       title: '来XX餐饮消费可返10%福利金',
-      path: this.data.inviteURL || '/pages/home/index'
+      path
     }
   },
 

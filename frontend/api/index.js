@@ -75,6 +75,8 @@ export const getInviteStats = () => request({ url: '/invites/stats' })
 
 export const generateInviteCode = () => request({ url: '/invites/generate', method: 'POST' })
 
+export const bindInviteCode = (code) => request({ url: '/invites/bind', method: 'POST', data: { code } })
+
 // 桌号绑定
 export const getTableBinding = () => {
   return {
