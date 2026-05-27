@@ -29,6 +29,15 @@
     <button class="weui-btn" type="primary" open-type="share">分享到微信</button>
   </view>
 
+  <!-- 邀请二维码 -->
+  <view class="qr-card card" wx:if="{{qrCodeSrc}}">
+    <view class="qr-title">邀请二维码</view>
+    <view class="qr-image-wrap">
+      <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
+    </view>
+    <view class="qr-desc">扫一扫二维码，加入我的邀请</view>
+  </view>
+
   <!-- Rules -->
   <view class="rules-card card">
     <view class="rules-title">邀请规则</view>
@@ -46,15 +55,6 @@
         <view class="rule-text">奖励即时到账，可用于消费抵扣</view>
       </view>
     </view>
-  </view>
-
-  <!-- 邀请二维码 -->
-  <view class="qr-card card" wx:if="{{qrCodeSrc}}">
-    <view class="qr-title">邀请二维码</view>
-    <view class="qr-image-wrap">
-      <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
-    </view>
-    <view class="qr-desc">扫一扫二维码，加入我的邀请</view>
   </view>
 
   <!-- 底部tabbar -->
