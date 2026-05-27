@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -395,11 +396,100 @@ func TestGenerateInviteCode_CreatesAndPersists(t *testing.T) {
 		t.Errorf("invite_url format wrong: %s", inviteURL)
 	}
 
+	// Verify inviteURL is a valid mini-program page path (not external URL)
+	if len(inviteURL) > 0 && inviteURL[0] != '/' {
+		t.Errorf("invite_url must start with '/', got: %s", inviteURL)
+	}
+	if len(inviteURL) >= 4 && inviteURL[0:4] == "http" {
+		t.Errorf("invite_url must be a mini-program page path, not external URL: %s", inviteURL)
+	}
+
 	// Verify persisted in DB
 	var saved models.User
 	config.DB.First(&saved, user.ID)
 	if saved.InviteCode == nil || *saved.InviteCode != code {
 		t.Errorf("invite_code not persisted in DB, got %v", saved.InviteCode)
+	}
+}
+
+func TestGenerateInviteCode_URLIsValidMiniProgramPath(t *testing.T) {
+	setupTestDB(t)
+
+	user := models.User{OpenID: "invite_url_test", Nickname: "URLTest", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/invites/generate", GenerateInviteCode, user.ID)
+
+	body := map[string]interface{}{}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/invites/generate", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+
+	inviteURL, _ := resp["invite_url"].(string)
+
+	// Must start with /pages/ — WeChat requires valid registered page path
+	if len(inviteURL) < 7 || inviteURL[0:7] != "/pages/" {
+		t.Errorf("invite_url must start with /pages/, got: %s", inviteURL)
+	}
+
+	// Must contain invite_code query param
+	if !strings.Contains(inviteURL, "invite_code=") {
+		t.Errorf("invite_url must contain invite_code= param, got: %s", inviteURL)
+	}
+
+	// Must NOT be external URL
+	if strings.Contains(inviteURL, "http://") || strings.Contains(inviteURL, "https://") {
+		t.Errorf("invite_url must NOT be external URL, got: %s", inviteURL)
+	}
+}
+
+func TestGenerateInviteCode_URLMatchesRegisteredPage(t *testing.T) {
+	setupTestDB(t)
+
+	user := models.User{OpenID: "invite_page_test", Nickname: "PageTest", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/invites/generate", GenerateInviteCode, user.ID)
+
+	body := map[string]interface{}{}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/invites/generate", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+
+	inviteURL, _ := resp["invite_url"].(string)
+
+	// The path before ? must exactly match a registered page in app.json
+	pathOnly := strings.Split(inviteURL, "?")[0]
+
+	registeredPages := []string{
+		"/pages/home/index",
+		"/pages/invite/index",
+		"/pages/profile/index",
+		"/pages/order-confirm/index",
+		"/pages/login/index",
+	}
+
+	found := false
+	for _, p := range registeredPages {
+		if pathOnly == p {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("invite_url path %s is not a registered page", pathOnly)
 	}
 }
 

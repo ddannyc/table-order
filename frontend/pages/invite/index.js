@@ -26,7 +26,12 @@ Page({
 
   onShareAppMessage() {
     const cached = wx.getStorageSync('invite_url')
-    const path = cached || '/pages/home/index'
+    let path = cached || '/pages/home/index'
+    // Guard: cached URL may be old external URL from previous app version.
+    // WeChat mini-program share path must be a page path starting with /.
+    if (path.indexOf('http') === 0) {
+      path = '/pages/home/index'
+    }
     return {
       title: '来XX餐饮消费可返10%福利金',
       path
@@ -59,8 +64,14 @@ Page({
     } else {
       generateInviteCode().then(res => {
         const url = res.invite_url || ''
-        if (url) wx.setStorageSync('invite_url', url)
-        this.setData({ inviteURL: url })
+        if (url && url.indexOf('http') !== 0) {
+          wx.setStorageSync('invite_url', url)
+          this.setData({ inviteURL: url })
+        } else if (url && url.indexOf('http') === 0) {
+          // Backend returned external URL — regenerate to get correct page path
+          wx.removeStorageSync('invite_url')
+          this.loadData()
+        }
       }).catch(err => {
         console.error(err)
       })
