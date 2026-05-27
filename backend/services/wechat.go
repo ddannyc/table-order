@@ -158,8 +158,12 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 	// On success, the response is raw image bytes (not JSON).
 	// On error, it returns JSON with errcode and errmsg.
 	contentType := resp.Header.Get("Content-Type")
+	fmt.Printf("[wechat] wxacode response status=%d content-type=%s body_len=%d\n", resp.StatusCode, contentType, len(respBody))
 	if contentType == "image/jpeg" || contentType == "image/png" || contentType == "" {
 		// Success — raw image
+		if len(respBody) == 0 {
+			return nil, fmt.Errorf("wxacode returned empty image body (status %d)", resp.StatusCode)
+		}
 		return &WXACodeUnlimitedResponse{Buffer: respBody}, nil
 	}
 
@@ -169,9 +173,8 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 		ErrMsg  string `json:"errmsg"`
 	}
 	if json.Unmarshal(respBody, &errResp) == nil && errResp.ErrCode != 0 {
-		return nil, fmt.Errorf("wxacode error %d: %s", errResp.ErrCode, errResp.ErrMsg)
+		return nil, fmt.Errorf("wxacode error %d: %s (body: %s)", errResp.ErrCode, errResp.ErrMsg, string(respBody))
 	}
 
-	// Treat as image if we can't parse JSON
-	return &WXACodeUnlimitedResponse{Buffer: respBody}, nil
+	return nil, fmt.Errorf("wxacode unexpected response content-type=%s body=%s", contentType, string(respBody))
 }

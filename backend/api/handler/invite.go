@@ -33,7 +33,7 @@ func GenerateInviteQR(c *gin.Context) {
 		scene = scene[:32]
 	}
 
-	png, err := services.GetWXACodeUnlimited(scene, "pages/invite/index")
+	png, err := services.GetWXACodeUnlimited(scene, "pages/home/index")
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("generate qr failed: %v", err)})
 		return
