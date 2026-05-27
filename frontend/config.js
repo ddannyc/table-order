@@ -1,14 +1,12 @@
 /**
  * 全局配置
- * 修改 API_BASE 值切换开发/生产环境
  *
- * 使用方式（需在微信开发者工具中重新编译）:
- *   dev:   API_BASE = 'http://10.157.2.132:8080/api'
- *   prod:  API_BASE = 'https://api.yourdomain.com/api'
+ * API_BASE 通过微信小程序编译时常量 defineConstants 注入。
+ * project.config.json  → 生产环境
+ * project.private.config.json → 本地开发环境（覆盖 project.config.json）
  *
- * 切换方法: 修改下面一行 const 值，然后重新编译项目
+ * 无需修改此文件切换环境。
  */
-const API_BASE = 'http://172.25.143.50:8080/api'
-// const API_BASE = 'https://respectful-comfort-production-6bc5.up.railway.app/api'
+const API_BASE = typeof API_BASE !== 'undefined' ? API_BASE : 'http://localhost:8080/api'
 
 module.exports = { API_BASE }
