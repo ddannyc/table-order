@@ -71,7 +71,7 @@ Page({
     } else {
       const user = wx.getStorageSync('user')
       if (user && user.invite_code) {
-        const url = '/pages/invite/index?invite_code=' + user.invite_code
+        const url = '/pages/home/index?invite_code=' + user.invite_code
         wx.setStorageSync('invite_url', url)
         this.setData({ inviteURL: url })
       }

@@ -1,5 +1,5 @@
 // pages/home/index.js
-const { getShop, getTableBinding, setTableBinding } = require('../../api/index.js')
+const { getShop, getTableBinding, setTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCartCount, getCartTotal, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
 
 Page({
@@ -24,7 +24,11 @@ Page({
     }
   },
 
-  onLoad() {
+  onLoad(options) {
+    // Bind invite code from share card
+    if (options && options.invite_code) {
+      bindInviteCode(options.invite_code).catch(err => console.error('bind invite failed:', err))
+    }
     this.checkTableBinding()
   },
 
