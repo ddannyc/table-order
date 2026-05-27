@@ -149,7 +149,13 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 	fmt.Printf("[wechat] wxacode request url=%s body=%s\n", url, string(bodyBytes))
 
 	client := &http.Client{Timeout: 15 * time.Second}
-	resp, err := client.Post(url, "application/json", io.NopCloser(bytes.NewReader(bodyBytes)))
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return nil, fmt.Errorf("create request failed: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.ContentLength = int64(len(bodyBytes))
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("wxacode request failed: %w", err)
 	}
