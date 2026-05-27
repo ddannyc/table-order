@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/middleware"
 	"github.com/example/table-order/models"
@@ -49,10 +50,12 @@ func Login(c *gin.Context) {
 	var user models.User
 	if err := config.DB.Where("open_id = ?", openid).First(&user).Error; err != nil {
 		// Create new user
+		inviteCode := uuid.New().String()[:12]
 		user = models.User{
-			OpenID: openid,
-			Nickname: "用户" + openid[len(openid)-6:],
-			Role: 0,
+			OpenID:     openid,
+			Nickname:   "用户" + openid[len(openid)-6:],
+			Role:       0,
+			InviteCode: &inviteCode,
 		}
 		if err := config.DB.Create(&user).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "create user failed"})

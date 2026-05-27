@@ -64,7 +64,7 @@ Page({
     }).catch(err => {
       console.error(err)
     })
-    // Generate invite URL only once and cache in storage
+    // Generate invite URL (fallback: construct from storage or API)
     const cached = wx.getStorageSync('invite_url')
     if (cached) {
       this.setData({ inviteURL: cached })
@@ -75,7 +75,6 @@ Page({
           wx.setStorageSync('invite_url', url)
           this.setData({ inviteURL: url })
         } else if (url && url.indexOf('http') === 0) {
-          // Backend returned external URL — regenerate to get correct page path
           wx.removeStorageSync('invite_url')
           this.loadData()
         }
