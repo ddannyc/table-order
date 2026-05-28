@@ -1,5 +1,5 @@
 // pages/profile/index.js
-const { getBalance, getWalletLogs, getOrders, getInviteStats } = require('../../api/index.js')
+const { getBalance, getWalletLogs, getOrders, getInviteStats, getRewardLogs, getRewardExpiryInfo } = require('../../api/index.js')
 
 Page({
   data: {
@@ -8,6 +8,9 @@ Page({
     stats: { invite_count: 0, total_invite_reward: 0, today_reward: 0 },
     logs: [],
     orders: [],
+    rewardLogs: [],
+    rewardPaused: false,
+    expiringSoonCount: 0,
     activeTab: 'orders',
     balanceText: '0.00',
     rewardBalanceText: '0.00',
@@ -40,8 +43,10 @@ Page({
       getBalance(),
       getInviteStats(),
       getWalletLogs(),
-      getOrders()
-    ]).then(([balance, stats, logsRes, ordersRes]) => {
+      getOrders(),
+      getRewardLogs(),
+      getRewardExpiryInfo()
+    ]).then(([balance, stats, logsRes, ordersRes, rewardLogsRes, expiryInfo]) => {
       const typeLabelMap = { reward: '返利', invite_reward: '邀请奖励', deduct: '抵扣' }
       const logs = (logsRes.logs || logsRes || []).map(log => ({
         ...log,
@@ -63,12 +68,21 @@ Page({
           dateText
         }
       })
+      const rewardLogs = (rewardLogsRes.logs || []).map(log => ({
+        ...log,
+        amountText: '+' + log.amount.toFixed(2),
+        typeLabel: log.type_label || log.type,
+        dateText: (log.created_at || '').substring(0, 10)
+      }))
       this.setData({
         user,
         balance,
         stats,
         logs,
         orders,
+        rewardLogs,
+        rewardPaused: expiryInfo.reward_paused || false,
+        expiringSoonCount: expiryInfo.expiring_soon_count || 0,
         balanceText: (balance.balance || 0).toFixed(2),
         rewardBalanceText: (balance.reward_balance || 0).toFixed(2),
         todayRewardText: (stats.today_reward || 0).toFixed(2),
@@ -81,5 +95,9 @@ Page({
 
   switchTab(e) {
     this.setData({ activeTab: e.currentTarget.dataset.tab })
+  },
+
+  goShareCode() {
+    wx.navigateTo({ url: '/pages/share-code/index' })
   }
 })

@@ -244,3 +244,42 @@
   font-size: 24rpx;
   color: #666;
 }
+
+.reward-paused-bar {
+  background: #fff3cd;
+  color: #856404;
+  padding: 20rpx 32rpx;
+  font-size: 24rpx;
+  margin-bottom: 16rpx;
+  border-radius: 8rpx;
+}
+
+.expiring-soon-bar {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 20rpx 32rpx;
+  font-size: 24rpx;
+  margin-bottom: 16rpx;
+  border-radius: 8rpx;
+}
+
+.reward-rules {
+  padding: 24rpx 32rpx;
+  margin-bottom: 24rpx;
+}
+
+.rule-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 16rpx;
+}
+
+.rule-item {
+  font-size: 24rpx;
+  color: #666;
+  padding: 8rpx 0;
+  padding-left: 16rpx;
+  border-left: 4rpx solid var(--weui-primary);
+  margin-bottom: 8rpx;
+}

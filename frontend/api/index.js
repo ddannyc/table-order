@@ -101,6 +101,22 @@ export const getInviteQR = () => {
   })
 }
 
+// 手机号验证
+export const verifyPhone = (phone) => request({
+  url: '/auth/verify-phone',
+  method: 'POST',
+  data: { phone }
+})
+
+// 福利金币
+export const getRewardBalance = () => request({ url: '/reward/balance' })
+
+export const getRewardLogs = (page = 1, pageSize = 20) => request({
+  url: `/reward/logs?page=${page}&page_size=${pageSize}`
+})
+
+export const getRewardExpiryInfo = () => request({ url: '/reward/expiry-info' })
+
 // 桌号绑定
 export const getTableBinding = () => {
   return {

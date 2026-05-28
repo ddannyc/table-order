@@ -21,6 +21,43 @@ type LoginResponse struct {
 	User     models.User  `json:"user"`
 }
 
+func VerifyPhone(c *gin.Context) {
+	userID := c.GetUint("user_id")
+
+	var req struct {
+		Phone string `json:"phone" binding:"required"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "phone required"})
+		return
+	}
+
+	var user models.User
+	if err := config.DB.First(&user, userID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	updates := map[string]interface{}{
+		"phone":          req.Phone,
+		"phone_verified": true,
+	}
+	// Generate invite code on phone verification if missing
+	if user.InviteCode == nil || *user.InviteCode == "" {
+		inviteCode := uuid.New().String()[:12]
+		updates["invite_code"] = inviteCode
+	}
+
+	if err := config.DB.Model(&user).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "verify phone failed"})
+		return
+	}
+
+	// Reload user
+	config.DB.First(&user, userID)
+	c.JSON(http.StatusOK, gin.H{"user": user})
+}
+
 func Login(c *gin.Context) {
 	var req LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {

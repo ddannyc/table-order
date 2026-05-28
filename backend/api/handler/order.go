@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"github.com/example/table-order/services"
 	"github.com/example/table-order/utils"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -182,7 +183,15 @@ func CreateOrder(c *gin.Context) {
 
 	tx.Commit()
 
-	processInviteReward(userID, req.ShopID, req.Amount)
+	// Update last_consume_at and resume reward
+	config.DB.Model(&models.User{}).Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"last_consume_at":  time.Now(),
+			"reward_paused_at": nil,
+		})
+
+	// Distribute 3-tier reward asynchronously
+	go services.DistributeReward(order.ID, userID, req.ShopID, req.Amount)
 
 	c.JSON(http.StatusOK, gin.H{
 		"id":            order.ID,
@@ -274,7 +283,7 @@ func processInviteReward(userID uint, shopID uint, amount float64) {
 		return
 	}
 
-	inviteReward := amount * shop.InviteRate
+	inviteReward := amount * shop.RewardRateLevel1
 	if inviteReward <= 0 {
 		return
 	}

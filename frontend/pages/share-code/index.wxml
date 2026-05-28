@@ -1,0 +1,57 @@
+<!-- pages/share-code/index.wxml -->
+<view class="page">
+  <!-- Header -->
+  <view class="header">
+    <view class="header-title">我的推广码</view>
+    <view class="header-sub">分享给好友，消费即返利</view>
+  </view>
+
+  <!-- QR Code -->
+  <view class="qr-section card">
+    <view class="qr-image-wrap" wx:if="{{qrCodeSrc}}">
+      <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
+    </view>
+    <view wx:else class="qr-placeholder">加载中...</view>
+    <view class="qr-tip">扫一扫二维码，锁定邀请关系</view>
+  </view>
+
+  <!-- Reward Info -->
+  <view class="reward-info card">
+    <view class="info-row">
+      <text class="info-label">当前福利金币</text>
+      <text class="info-value gold">¥{{rewardBalance}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">邀请关系</text>
+      <text class="info-value">终身绑定，不可解绑</text>
+    </view>
+  </view>
+
+  <!-- Reward Rates -->
+  <view class="rates-card card">
+    <view class="rates-title">返利比例</view>
+    <view class="rate-item">
+      <text class="rate-pct">3%</text>
+      <text class="rate-desc">自购返利 — 自己消费返订单金额3%</text>
+    </view>
+    <view class="rate-item">
+      <text class="rate-pct primary">10%</text>
+      <text class="rate-desc">直推奖励 — 一级好友消费返10%</text>
+    </view>
+    <view class="rate-item">
+      <text class="rate-pct">4%</text>
+      <text class="rate-desc">间推奖励 — 二级好友消费返4%</text>
+    </view>
+  </view>
+
+  <!-- Reward Paused Warning -->
+  <view wx:if="{{rewardPaused}}" class="paused-bar">
+    账户连续90天未消费，返利已暂停。消费一笔即可恢复。
+  </view>
+
+  <!-- Actions -->
+  <view class="actions">
+    <button class="weui-btn" type="primary" open-type="share">分享给好友</button>
+    <button class="weui-btn weui-btn_default" bind:tap="copyLink">复制邀请码</button>
+  </view>
+</view>

@@ -4,7 +4,8 @@
     "pages/invite/index",
     "pages/profile/index",
     "pages/order-confirm/index",
-    "pages/login/index"
+    "pages/login/index",
+    "pages/share-code/index"
   ],
   "window": {
     "navigationBarBackgroundColor": "#07c160",

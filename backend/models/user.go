@@ -11,10 +11,13 @@ type User struct {
 	Nickname      string     `gorm:"size:64" json:"nickname"`
 	Avatar        string     `gorm:"size:512" json:"avatar"`
 	Phone         string     `gorm:"index;size:32" json:"phone"`
+	PhoneVerified bool       `gorm:"default:false" json:"phone_verified"`
 	InviteCode    *string    `gorm:"uniqueIndex;size:12" json:"invite_code"`
 	InviterID     *uint      `gorm:"index" json:"inviter_id"`
 	Balance       float64    `gorm:"type:numeric(12,2);default:0" json:"balance"`
 	RewardBalance float64    `gorm:"type:numeric(12,2);default:0" json:"reward_balance"`
+	LastConsumeAt *time.Time `json:"last_consume_at"`
+	RewardPausedAt *time.Time `json:"reward_paused_at"`
 	Role          int        `gorm:"default:0" json:"role"`
 	IsBanned      bool       `gorm:"default:false" json:"is_banned"`
 	CreatedAt     time.Time  `json:"created_at"`

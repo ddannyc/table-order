@@ -64,22 +64,22 @@ Page({
     const balance = Number(this.data.balance) || 0
     const rewardBalance = Number(this.data.rewardBalance) || 0
     const { useReward, shop } = this.data
+    const rewardCeiling = Number(shop.reward_ceiling || 0.5) || 0.5
     let rewardDeduct = 0
     let actualPay = total
     if (useReward && rewardBalance > 0) {
-      const ceiling = Number(shop.reward_ceiling || shop.rewardCeiling) || 0.8
-      rewardDeduct = Math.min(rewardBalance, total * ceiling)
+      rewardDeduct = Math.min(rewardBalance, total * rewardCeiling)
       actualPay = total - rewardDeduct
     }
     const availableBalance = balance + (useReward ? rewardBalance : 0)
-    const rewardCeiling = ((shop.reward_ceiling || 0.8) * 100).toFixed(0)
+    const rewardCeilingPercent = (rewardCeiling * 100).toFixed(0)
     this.setData({
       cart, cartItems,
       totalAmount: total.toFixed(2),
       actualPayAmount: actualPay.toFixed(2),
       rewardDeduct: rewardDeduct.toFixed(2),
       availableBalance: availableBalance.toFixed(2),
-      rewardCeiling
+      rewardCeiling: rewardCeilingPercent
     })
   },
 

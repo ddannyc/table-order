@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
@@ -26,6 +27,7 @@ func setupTestDB(t *testing.T) {
 	}
 
 	sqlDB, _ := db.DB()
+	sqlDB.Exec("DROP TABLE IF EXISTS reward_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS wallet_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS order_items")
 	sqlDB.Exec("DROP TABLE IF EXISTS orders")
@@ -38,7 +40,10 @@ func setupTestDB(t *testing.T) {
 	config.DB = db
 
 	// Recreate tables
-	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.Order{}, &models.OrderItem{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{})
+	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.Order{}, &models.OrderItem{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
+
+	// Wait for any lingering goroutines from previous tests to finish
+	time.Sleep(300 * time.Millisecond)
 }
 
 func setupRouter() *gin.Engine {
@@ -87,7 +92,7 @@ func TestCreateOrder_NoRewardForNonReferredUser(t *testing.T) {
 	setupTestDB(t)
 
 	// Create shop
-	shop := models.Shop{Name: "Reward Test Shop", MerchantID: 1, Status: 1, RewardRate: 0.1}
+	shop := models.Shop{Name: "Reward Test Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03}
 	config.DB.Create(&shop)
 
 	// Create product
@@ -134,7 +139,7 @@ func TestCreateOrder_WithdrawRewardBalanceOnPayment(t *testing.T) {
 	setupTestDB(t)
 
 	// Create shop
-	shop := models.Shop{Name: "Deduct Shop", MerchantID: 1, Status: 1, RewardRate: 0.1}
+	shop := models.Shop{Name: "Deduct Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03}
 	config.DB.Create(&shop)
 
 	// Create product
@@ -182,7 +187,7 @@ func TestCreateOrder_InviterReceivesInviteReward(t *testing.T) {
 	setupTestDB(t)
 
 	// Create shop with 10% reward rate and 5% invite rate
-	shop := models.Shop{Name: "Invite Reward Shop", MerchantID: 1, Status: 1, RewardRate: 0.1, InviteRate: 0.05}
+	shop := models.Shop{Name: "Invite Reward Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03, RewardRateLevel1: 0.10}
 	config.DB.Create(&shop)
 
 	// Create product
@@ -226,11 +231,12 @@ func TestCreateOrder_InviterReceivesInviteReward(t *testing.T) {
 	// But this test is about INVITER getting invite reward, not about self-reward.
 	// The referredUser's inviter (referrer) should receive invite reward.
 
-	// Check referrer received invite reward
+	// Check referrer received invite reward (async, wait for goroutine)
+	time.Sleep(200 * time.Millisecond)
 	config.DB.First(&referrer, referrer.ID)
-	// Invite reward = amount * inviteRate = 100 * 0.05 = 5
-	if referrer.RewardBalance != 5 {
-		t.Errorf("expected referrer reward_balance 5, got %f", referrer.RewardBalance)
+	// Invite reward = amount * RewardRateLevel1 = 100 * 0.10 = 10
+	if referrer.RewardBalance != 10 {
+		t.Errorf("expected referrer reward_balance 10, got %f", referrer.RewardBalance)
 	}
 }
 
@@ -238,7 +244,7 @@ func TestCreateOrder_ReferredUserGetsRewardButInviterGetsInviteReward(t *testing
 	setupTestDB(t)
 
 	// Create shop with 10% reward rate and 5% invite rate
-	shop := models.Shop{Name: "Reward Shop", MerchantID: 1, Status: 1, RewardRate: 0.1, InviteRate: 0.05}
+	shop := models.Shop{Name: "Reward Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03, RewardRateLevel1: 0.10}
 	config.DB.Create(&shop)
 
 	// Create product
@@ -284,10 +290,11 @@ func TestCreateOrder_ReferredUserGetsRewardButInviterGetsInviteReward(t *testing
 		t.Errorf("expected reward_amount 0 for referred user (only inviter gets reward), got %v", resp["reward_amount"])
 	}
 
-	// Inviter should receive invite reward
+	// Inviter should receive invite reward (async, wait for goroutine)
+	time.Sleep(200 * time.Millisecond)
 	config.DB.First(&referrer, referrer.ID)
-	if referrer.RewardBalance != 5 {
-		t.Errorf("expected referrer invite_reward 5, got %f", referrer.RewardBalance)
+	if referrer.RewardBalance != 10 {
+		t.Errorf("expected referrer invite_reward 10, got %f", referrer.RewardBalance)
 	}
 }
 
@@ -295,7 +302,7 @@ func TestGetOrders_ExcludesNonReferredUserReward(t *testing.T) {
 	setupTestDB(t)
 
 	// Create shop with 10% reward
-	shop := models.Shop{Name: "Reward Exclude Shop", MerchantID: 1, Status: 1, RewardRate: 0.1}
+	shop := models.Shop{Name: "Reward Exclude Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03}
 	config.DB.Create(&shop)
 
 	// Create referred user (has inviter)

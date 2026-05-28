@@ -14,8 +14,6 @@ type CreateShopRequest struct {
 	Address     string `json:"address"`
 	Phone       string `json:"phone"`
 	Hours       string `json:"hours"`
-	RewardRate  float64 `json:"reward_rate"`
-	InviteRate  float64 `json:"invite_rate"`
 }
 
 func CreateShop(c *gin.Context) {
@@ -28,22 +26,13 @@ func CreateShop(c *gin.Context) {
 	}
 
 	shop := models.Shop{
-		MerchantID: merchantID,
-		Name:       req.Name,
+		MerchantID:  merchantID,
+		Name:        req.Name,
 		Description: req.Description,
-		Address:    req.Address,
-		Phone:      req.Phone,
-		Hours:      req.Hours,
-		RewardRate: req.RewardRate,
-		InviteRate: req.InviteRate,
-		Status:     1,
-	}
-
-	if shop.RewardRate == 0 {
-		shop.RewardRate = 0.1 // default 10%
-	}
-	if shop.InviteRate == 0 {
-		shop.InviteRate = 0.05 // default 5%
+		Address:     req.Address,
+		Phone:       req.Phone,
+		Hours:       req.Hours,
+		Status:      1,
 	}
 
 	if err := config.DB.Create(&shop).Error; err != nil {
@@ -82,8 +71,6 @@ type UpdateShopRequest struct {
 	Phone       string `json:"phone"`
 	Hours       string `json:"hours"`
 	Logo        string `json:"logo"`
-	RewardRate  float64 `json:"reward_rate"`
-	InviteRate  float64 `json:"invite_rate"`
 	Status      int    `json:"status"`
 }
 
@@ -103,8 +90,6 @@ func UpdateShop(c *gin.Context) {
 	if req.Phone != "" { updates["phone"] = req.Phone }
 	if req.Hours != "" { updates["hours"] = req.Hours }
 	if req.Logo != "" { updates["logo"] = req.Logo }
-	if req.RewardRate > 0 { updates["reward_rate"] = req.RewardRate }
-	if req.InviteRate > 0 { updates["invite_rate"] = req.InviteRate }
 	if req.Status > 0 { updates["status"] = req.Status }
 
 	config.DB.Model(&models.Shop{}).Where("id = ?", shopID).Updates(updates)

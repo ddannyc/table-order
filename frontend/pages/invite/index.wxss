@@ -124,3 +124,10 @@
   line-height: 1.5;
   padding-top: 4rpx;
 }
+
+.reward-paused-bar {
+  background: #fff3cd;
+  color: #856404;
+  padding: 20rpx 32rpx;
+  font-size: 24rpx;
+}

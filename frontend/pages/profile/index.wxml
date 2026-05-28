@@ -43,11 +43,22 @@
     </view>
   </view>
 
+  <!-- Reward Paused Warning -->
+  <view wx:if="{{rewardPaused}}" class="reward-paused-bar">
+    账户连续90天未消费，返利已暂停。消费一笔即可恢复。
+  </view>
+
+  <!-- Expiring Soon -->
+  <view wx:if="{{expiringSoonCount > 0}}" class="expiring-soon-bar">
+    你有 {{expiringSoonCount}} 笔福利金即将过期，请及时使用。
+  </view>
+
   <!-- Tabs -->
   <view class="weui-tabs">
     <view class="weui-tabs__header">
       <view class="weui-tabs__item {{activeTab === 'orders' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="orders">消费订单</view>
       <view class="weui-tabs__item {{activeTab === 'logs' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="logs">收支明细</view>
+      <view class="weui-tabs__item {{activeTab === 'reward' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="reward">福利金币</view>
     </view>
   </view>
 
@@ -65,6 +76,30 @@
       </view>
     </mp-cells>
     <view wx:if="{{logs.length === 0}}" class="empty-tip">暂无记录</view>
+  </view>
+
+  <!-- Tab Content: 福利金币 -->
+  <view wx:if="{{activeTab === 'reward'}}" class="tab-content">
+    <view class="reward-rules card">
+      <view class="rule-title">返利规则</view>
+      <view class="rule-item">自购返利：订单金额 3%</view>
+      <view class="rule-item">直推奖励：一级下线消费的 10%</view>
+      <view class="rule-item">间推奖励：二级下线消费的 4%</view>
+      <view class="rule-item">有效期：180 天</view>
+      <view class="rule-item">抵扣上限：单笔订单 50%</view>
+    </view>
+    <mp-cells>
+      <view wx:for="{{rewardLogs}}" wx:key="id">
+        <mp-cell>
+          <view slot="title" class="log-cell">
+            <view class="log-type">{{item.typeLabel}}</view>
+            <view class="log-remark">{{item.dateText}} 过期</view>
+          </view>
+          <view slot="footer" class="log-amount plus">{{item.amountText}}</view>
+        </mp-cell>
+      </view>
+    </mp-cells>
+    <view wx:if="{{rewardLogs.length === 0}}" class="empty-tip">暂无金币记录</view>
   </view>
 
   <!-- Tab Content: 消费订单 -->

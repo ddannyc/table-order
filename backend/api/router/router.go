@@ -75,6 +75,18 @@ func Setup(r *gin.Engine) {
 		invite.GET("/qrcode", handler.GenerateInviteQR)
 	}
 
+	// Reward (authenticated)
+	reward := api.Group("/reward")
+	reward.Use(middleware.AuthMiddleware())
+	{
+		reward.GET("/balance", handler.GetRewardBalance)
+		reward.GET("/logs", handler.GetRewardLogs)
+		reward.GET("/expiry-info", handler.GetRewardExpiryInfo)
+	}
+
+	// Auth - phone verification
+	auth.POST("/verify-phone", middleware.AuthMiddleware(), handler.VerifyPhone)
+
 	// Merchant - public endpoints
 	merchantPublic := api.Group("/merchant")
 	{

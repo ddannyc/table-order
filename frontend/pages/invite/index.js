@@ -1,10 +1,11 @@
 // pages/invite/index.js
-const { getInviteStats, bindInviteCode, getInviteQR } = require('../../api/index.js')
+const { getInviteStats, bindInviteCode, getInviteQR, getRewardBalance } = require('../../api/index.js')
 
 Page({
   data: {
     stats: { invite_count: 0, total_invite_reward: 0, today_reward: 0 },
     statsText: { totalInviteReward: '0.00', todayReward: '0.00' },
+    rewardPaused: false,
     inviteURL: '',
     qrCodeSrc: '',
     tabbar: {
@@ -40,7 +41,7 @@ Page({
       path = '/pages/home/index'
     }
     return {
-      title: '来XX餐饮消费可返10%福利金',
+      title: '来店消费返福利金，自购3%直推10%间推4%',
       path
     }
   },
@@ -64,6 +65,11 @@ Page({
     }).catch(err => {
       console.error(err)
     })
+
+    getRewardBalance().then(rb => {
+      this.setData({ rewardPaused: rb.reward_paused || false })
+    }).catch(() => {})
+
     // Invite URL: construct from cached invite_code (generated at user creation)
     const cached = wx.getStorageSync('invite_url')
     if (cached) {
@@ -90,5 +96,9 @@ Page({
         console.error('load invite qr failed:', err)
       })
     }
+  },
+
+  goShareCode() {
+    wx.navigateTo({ url: '/pages/share-code/index' })
   }
 })

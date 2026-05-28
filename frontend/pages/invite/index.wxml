@@ -18,15 +18,21 @@
     </view>
   </view>
 
+  <!-- Reward Paused Warning -->
+  <view wx:if="{{rewardPaused}}" class="reward-paused-bar">
+    账户连续90天未消费，返利已暂停。消费一笔即可恢复。
+  </view>
+
   <!-- Share Card -->
   <view class="share-card card">
     <view class="share-icon">
       <text class="share-icon-emoji">🎁</text>
     </view>
-    <view class="share-title">邀请好友赚奖励</view>
-    <view class="share-desc">好友消费后你可获得5%奖励</view>
+    <view class="share-title">邀请好友赚福利金币</view>
+    <view class="share-desc">直推10% · 间推4% · 自购3%</view>
 
     <button class="weui-btn" type="primary" open-type="share">分享到微信</button>
+    <button class="weui-btn weui-btn_default" bind:tap="goShareCode" style="margin-top:16rpx">我的推广码</button>
   </view>
 
   <!-- 邀请二维码 -->
@@ -40,19 +46,23 @@
 
   <!-- Rules -->
   <view class="rules-card card">
-    <view class="rules-title">邀请规则</view>
+    <view class="rules-title">福利金币规则</view>
     <view class="rules-list">
       <view class="rule-item">
+        <view class="rule-num">自</view>
+        <view class="rule-text">自购返利 3% — 自己消费得订单金额3%金币</view>
+      </view>
+      <view class="rule-item">
         <view class="rule-num">1</view>
-        <view class="rule-text">邀请好友扫码成为会员</view>
+        <view class="rule-text">直推奖励 10% — 一级好友消费得10%金币</view>
       </view>
       <view class="rule-item">
         <view class="rule-num">2</view>
-        <view class="rule-text">好友每消费一笔，你获得5%奖励</view>
+        <view class="rule-text">间推奖励 4% — 二级好友消费得4%金币</view>
       </view>
       <view class="rule-item">
-        <view class="rule-num">3</view>
-        <view class="rule-text">奖励即时到账，可用于消费抵扣</view>
+        <view class="rule-num">抵</view>
+        <view class="rule-text">金币可抵扣订单金额最高50%，有效期180天</view>
       </view>
     </view>
   </view>
