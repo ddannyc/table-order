@@ -9,10 +9,7 @@
     ],
     "include": []
   },
-  "defineConstants": {
-    "API_BASE": "\"https://respectful-comfort-production-6bc5.up.railway.app/api\""
-  },
-  "setting": {
+"setting": {
     "urlCheck": false,
     "es6": true,
     "enhance": true,
