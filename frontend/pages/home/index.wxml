@@ -23,7 +23,8 @@
     <view wx:for="{{categories}}" wx:key="this" class="category-section">
       <mp-cells title="{{item}}">
         <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="product-row">
-          <view class="product-info">
+          <image wx:if="{{p.image}}" src="{{p.image}}" mode="aspectFill" class="product-img" />
+          <view class="product-info {{p.image ? 'product-info-with-img' : ''}}">
             <view class="product-name {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
             <view class="product-desc">{{p.description || '美味菜品'}}</view>
             <view class="product-price">¥{{p.priceText}}</view>
