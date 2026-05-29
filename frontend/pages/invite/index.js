@@ -83,19 +83,13 @@ Page({
       }
     }
 
-    // Load invite QR code (cache in local storage, permanent)
-    const cachedQR = wx.getStorageSync('invite_qr_base64')
-    if (cachedQR) {
-      this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + cachedQR })
-    } else {
-      getInviteQR().then(data => {
-        const base64 = wx.arrayBufferToBase64(data)
-        wx.setStorageSync('invite_qr_base64', base64)
-        this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + base64 })
-      }).catch(err => {
-        console.error('load invite qr failed:', err)
-      })
-    }
+    // Load invite QR code from API (no local cache — always fetch fresh)
+    getInviteQR().then(data => {
+      const base64 = wx.arrayBufferToBase64(data)
+      this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + base64 })
+    }).catch(err => {
+      console.error('load invite qr failed:', err)
+    })
   },
 
   goShareCode() {
