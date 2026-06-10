@@ -1,5 +1,5 @@
 // pages/order-confirm/index.js
-const { getShop, getBalance, createOrder, getTableBinding } = require('../../api/index.js')
+const { getShop, getRewardBalance, createOrder, getTableBinding } = require('../../api/index.js')
 const { getCart, clearCart, getCartTotal } = require('../../api/product.js')
 
 Page({
@@ -9,14 +9,12 @@ Page({
     shop: {},
     cart: [],
     cartItems: [],
-    balance: 0,
     rewardBalance: 0,
     useReward: false,
     loading: false,
     totalAmount: '0.00',
     actualPayAmount: '0.00',
     rewardDeduct: '0.00',
-    availableBalance: '0.00',
     rewardCeiling: '80'
   },
 
@@ -61,7 +59,6 @@ Page({
       ...item,
       subtotal: (Number(item.price) * Number(item.quantity)).toFixed(2)
     }))
-    const balance = Number(this.data.balance) || 0
     const rewardBalance = Number(this.data.rewardBalance) || 0
     const { useReward, shop } = this.data
     const rewardCeiling = Number(shop.reward_ceiling || 0.5) || 0.5
@@ -71,14 +68,12 @@ Page({
       rewardDeduct = Math.min(rewardBalance, total * rewardCeiling)
       actualPay = total - rewardDeduct
     }
-    const availableBalance = balance + (useReward ? rewardBalance : 0)
     const rewardCeilingPercent = (rewardCeiling * 100).toFixed(0)
     this.setData({
       cart, cartItems,
       totalAmount: total.toFixed(2),
       actualPayAmount: actualPay.toFixed(2),
       rewardDeduct: rewardDeduct.toFixed(2),
-      availableBalance: availableBalance.toFixed(2),
       rewardCeiling: rewardCeilingPercent
     })
   },
@@ -87,15 +82,12 @@ Page({
     const { shopId } = this.data
     Promise.all([
       getShop(shopId),
-      getBalance()
-    ]).then(([shop, balanceData]) => {
-      const b = Number(balanceData.balance) || 0
-      const rb = Number(balanceData.reward_balance) || 0
+      getRewardBalance()
+    ]).then(([shop, rewardData]) => {
+      const rb = Number(rewardData.reward_balance) || 0
       this.setData({
         shop,
-        balance: b,
-        rewardBalance: rb,
-        availableBalance: b.toFixed(2)
+        rewardBalance: rb
       })
       this.refreshCartDisplay()
     }).catch(err => {
@@ -116,12 +108,6 @@ Page({
       wx.showToast({ title: '购物车为空', icon: 'none' })
       return
     }
-    const actualPay = parseFloat(this.data.actualPayAmount)
-    const totalWithReward = Number(this.data.balance) + (this.data.useReward ? Number(this.data.rewardBalance) : 0)
-    if (actualPay > totalWithReward) {
-      wx.showToast({ title: '余额不足', icon: 'none' })
-      return
-    }
     this.setData({ loading: true })
     const orderItems = cart.map(item => ({
       product_id: item.id,
@@ -130,21 +116,51 @@ Page({
     }))
     createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward)
       .then((res) => {
-        if (res.id) {
+        if (res.error) {
+          wx.showToast({ title: res.error === 'prepay failed' ? '支付配置异常' : '下单失败', icon: 'none' })
+          return
+        }
+        // Zero-amount order: skip WeChat Pay, go straight to success
+        if (res.status === 2) {
           clearCart(this.data.shopId)
           wx.showModal({
-            title: '支付成功',
-            content: '订单已提交，可在"我的"页面查看订单详情',
+            title: '下单成功',
+            content: '福利金已全额抵扣，可在"我的"页面查看订单详情',
             showCancel: false,
             success: () => {
               wx.reLaunch({ url: '/pages/profile/index' })
             }
           })
+          return
         }
+
+        // Call WeChat Pay
+        wx.requestPayment({
+          timeStamp: res.time_stamp,
+          nonceStr: res.nonce_str,
+          package: res.package,
+          signType: res.sign_type,
+          paySign: res.pay_sign,
+          success: () => {
+            clearCart(this.data.shopId)
+            wx.showModal({
+              title: '支付成功',
+              content: '订单已提交，可在"我的"页面查看订单详情',
+              showCancel: false,
+              success: () => {
+                wx.reLaunch({ url: '/pages/profile/index' })
+              }
+            })
+          },
+          fail: (err) => {
+            console.error(err)
+            wx.showToast({ title: '支付取消或失败', icon: 'none' })
+          }
+        })
       })
       .catch((err) => {
         console.error(err)
-        wx.showToast({ title: '支付失败', icon: 'none' })
+        wx.showToast({ title: '下单失败', icon: 'none' })
       })
       .finally(() => {
         this.setData({ loading: false })

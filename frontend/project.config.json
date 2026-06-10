@@ -9,7 +9,7 @@
     ],
     "include": []
   },
-"setting": {
+  "setting": {
     "urlCheck": false,
     "es6": true,
     "enhance": true,
@@ -48,7 +48,7 @@
   },
   "compileType": "miniprogram",
   "libVersion": "3.16.0",
-  "appid": "wxc9669f96df98ae4f",
+  "appid": "wx387239d43ef0abf8",
   "projectname": "table-order",
   "condition": {},
   "editorSetting": {

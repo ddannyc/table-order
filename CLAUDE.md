@@ -1,93 +1,65 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
 
-## Project Overview
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
 
-Restaurant member referral mini-program ("餐饮店扫码会员裂变小程序"). Go/Gin backend + uni-app Vue3 frontend. Users scan QR codes at restaurants, become members, earn 10% cashback on purchases, and 5% referral rewards when inviting friends.
+## 1. Think Before Coding
 
-## Architecture
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
 
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
 ```
-table-order/
-├── backend/          # Go/Gin API server
-│   ├── api/
-│   │   ├── handler/  # HTTP handlers (auth, order, wallet, invite, shop, qrcode, admin, merchant)
-│   │   └── router/   # Route definitions
-│   ├── config/       # DB/Redis init, config.yaml loading, AppConfig global
-│   ├── middleware/   # Auth, JWT validation
-│   ├── models/       # GORM models (User, Shop, Order, WalletLog, etc.)
-│   ├── services/     # Business logic (WeChat API)
-│   └── utils/        # Shared utilities (ParseUint)
-├── frontend/         # uni-app Vue3 mini-program
-│   ├── src/
-│   │   ├── api/      # API client functions
-│   │   ├── pages/    # Page components (login, home, wallet, invite, orders, scan)
-│   │   └── static/    # Tab bar icons
-│   └── dist/build/mp-weixin/  # Built WeChat mini-program output
-├── docker-compose.yml
-└── 餐饮店扫码会员裂变小程序_prd.md
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
 ```
 
-## Common Commands
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
-### Backend
-```bash
-cd backend
-go run main.go                        # Start server on :8080
-go build ./...                        # Build
-go test ./...                         # Run tests
-```
+---
 
-### Frontend
-```bash
-cd frontend
-npm run dev:h5                        # H5 dev server (localhost:5174)
-npm run dev:mp-weixin                 # WeChat mini-program dev
-npm run build:mp-weixin              # Build WeChat mini-program for dev
-npm run build:mp-weixin:prod         # Build WeChat mini-program for prod
-```
-
-### Database
-```bash
-# PostgreSQL (local)
-psql -U postgres -d table_order -h localhost -p 5432
-
-# Docker postgres
-docker exec -it <container> psql -U postgres -d table_order
-```
-
-## Key Technical Details
-
-### API Base URL
-- Dev: `http://localhost:8080/api` (for H5)
-- WeChat mini-program: Use machine IP or domain — `localhost` doesn't work from mobile device/emulator
-- Configured via `vite.config.js` define plugin, not runtime env
-
-### Database
-- PostgreSQL on port 5432 (local) or 5433 (docker)
-- GORM with `github.com/example/table-order` module path
-- Column names use snake_case (e.g., `open_id`, not `openid`)
-- Numeric decimals use `numeric(12,2)`
-
-### Auth
-- JWT token with `user_id`, `openid`, `role` claims
-- Token signed with `config.AppConfig.JWT.Secret`
-- Roles: 0=user, 1=merchant, 2=admin
-- WeChat auth: real API when `appid`/`appsecret` configured, fallback to mock `mock_openid_*` for dev
-
-### Order Flow
-1. Create order → atomic transaction (order + reward balance + wallet log)
-2. After commit → async `processInviteReward` for inviter
-3. Reward: 10% of amount (shop.RewardRate)
-4. Invite reward: 5% of amount (shop.InviteRate)
-
-### Pagination
-- `GetOrders` and `GetWalletLogs` use `page` and `page_size` query params
-- Response format: `{orders/logs: [], total, page, page_size}`
-
-## Build Output
-
-- WeChat mini-program: `frontend/dist/build/mp-weixin/`
-- Copy to Windows local path for WeChat dev tools (WSL path access issue)
-- Tab bar icons must be 81x81 PNG in `src/static/` before build
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

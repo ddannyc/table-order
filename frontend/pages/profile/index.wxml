@@ -12,13 +12,8 @@
     </view>
   </view>
 
-  <!-- Balance Card -->
+  <!-- 福利金余额 -->
   <view class="balance-card">
-    <view class="balance-item">
-      <view class="balance-label">可提现余额</view>
-      <view class="balance-amount">¥{{balanceText}}</view>
-    </view>
-    <view class="balance-divider"></view>
     <view class="balance-item">
       <view class="balance-label">福利金</view>
       <view class="balance-amount gold">¥{{rewardBalanceText}}</view>

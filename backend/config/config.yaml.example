@@ -22,3 +22,12 @@ jwt:
 wechat:
   appid: "your-wechat-appid"
   appsecret: "your-wechat-appsecret"
+  # WeChat Pay V3
+  mch_id: "your-mch-id"
+  mch_certificate_serial_number: "your-cert-serial"
+  mch_private_key_path: "./tmp/apiclient_key.pem"
+  mch_api_v3_key: "your-api-v3-key"
+  pay_notify_url: "https://your-domain.com/api/orders/notify"
+  # Public key scheme (required since 2026)
+  wechatpay_public_key_id: "PUB_KEY_ID_xxxxxxxx"
+  wechatpay_public_key_path: "./tmp/pub_key.pem"

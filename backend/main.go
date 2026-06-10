@@ -23,6 +23,10 @@ func main() {
 		log.Fatalf("Migration failed: %v", err)
 	}
 
+	if err := config.InitWechatPay(cfg.WeChat); err != nil {
+		log.Fatalf("WeChat Pay init failed: %v", err)
+	}
+
 	gin.SetMode(cfg.Server.Mode)
 	r := gin.Default()
 

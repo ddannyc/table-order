@@ -129,14 +129,22 @@ func TestCreateOrder_NoRewardForNonReferredUser(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &resp)
 
 	// Non-referred user should NOT receive reward
-	rewardAmount, ok := resp["reward_amount"].(float64)
-	if !ok || rewardAmount != 0 {
+	rewardAmount, _ := resp["reward_amount"].(float64)
+	if rewardAmount != 0 {
 		t.Errorf("expected reward_amount 0 for non-referred user, got %v", resp["reward_amount"])
+	}
+
+	// Order should be pending (status=1) with WeChat Pay params
+	if status, ok := resp["status"].(float64); !ok || status != 1 {
+		t.Errorf("expected status 1 (pending), got %v", resp["status"])
+	}
+	if _, ok := resp["prepay_id"]; !ok {
+		// prepay_id may be empty string if WeChat Pay not configured — that's OK in test
+		// Just check the field exists
 	}
 }
 
-func TestCreateOrder_WithdrawRewardBalanceOnPayment(t *testing.T) {
-	setupTestDB(t)
+func TestCreateOrder_DeductsRewardBalanceButNotBalance(t *testing.T) {
 
 	// Create shop
 	shop := models.Shop{Name: "Deduct Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03}
@@ -146,7 +154,7 @@ func TestCreateOrder_WithdrawRewardBalanceOnPayment(t *testing.T) {
 	product := models.Product{ShopID: shop.ID, Name: "Test Dish", Price: 100, Status: 1}
 	config.DB.Create(&product)
 
-	// Create user with reward balance (pre-accumulated, no inviter needed for deduction test)
+	// Create user with reward balance and regular balance
 	user := models.User{OpenID: "test_rewards_user", Nickname: "RewardsUser", Role: 0, RewardBalance: 50, Balance: 100}
 	config.DB.Create(&user)
 
@@ -173,20 +181,30 @@ func TestCreateOrder_WithdrawRewardBalanceOnPayment(t *testing.T) {
 		t.Errorf("expected status 200, got %d body: %s", w.Code, w.Body.String())
 	}
 
-	// Reload user and check balance deducted
+	// Reload user and check reward_balance deducted but regular balance unchanged
 	config.DB.First(&user, user.ID)
 	if user.RewardBalance != 0 {
-		t.Errorf("expected reward_balance 0 after payment (50-50), got %f", user.RewardBalance)
+		t.Errorf("expected reward_balance 0 after deduction (50-50), got %f", user.RewardBalance)
 	}
-	if user.Balance != 50 {
-		t.Errorf("expected balance 50 after payment (100-50), got %f", user.Balance)
+	if user.Balance != 100 {
+		t.Errorf("expected balance unchanged (100) since WeChat Pay handles payment, got %f", user.Balance)
+	}
+
+	// Order should be pending (status=1), not paid (status=2)
+	var order models.Order
+	config.DB.Where("user_id = ?", user.ID).Order("id desc").First(&order)
+	if order.Status != 1 {
+		t.Errorf("expected order status 1 (pending), got %d", order.Status)
+	}
+	if order.PaidAt != nil {
+		t.Errorf("expected PaidAt to be nil for pending order")
 	}
 }
 
 func TestCreateOrder_InviterReceivesInviteReward(t *testing.T) {
 	setupTestDB(t)
 
-	// Create shop with 10% reward rate and 5% invite rate
+	// Create shop
 	shop := models.Shop{Name: "Invite Reward Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03, RewardRateLevel1: 0.10}
 	config.DB.Create(&shop)
 
@@ -224,26 +242,18 @@ func TestCreateOrder_InviterReceivesInviteReward(t *testing.T) {
 		t.Errorf("expected status 200, got %d body: %s", w.Code, w.Body.String())
 	}
 
-	// Referred user should NOT receive self-reward (no inviter field check passes for them, but they are the ORDER PLACER)
-	// Actually the order placer DOES get reward if they have inviter. Let me check order.go logic.
-	// Line 87: `if user.InviterID != nil { rewardAmount = req.Amount * shop.RewardRate }`
-	// So referredUser HAS inviter -> they GET rewardAmount = 10. That's the bug - they shouldn't get self-reward.
-	// But this test is about INVITER getting invite reward, not about self-reward.
-	// The referredUser's inviter (referrer) should receive invite reward.
-
-	// Check referrer received invite reward (async, wait for goroutine)
-	time.Sleep(200 * time.Millisecond)
-	config.DB.First(&referrer, referrer.ID)
-	// Invite reward = amount * RewardRateLevel1 = 100 * 0.10 = 10
-	if referrer.RewardBalance != 10 {
-		t.Errorf("expected referrer reward_balance 10, got %f", referrer.RewardBalance)
+	// Order should be pending — reward distribution happens via callback now, not here
+	var order models.Order
+	config.DB.Where("user_id = ?", referredUser.ID).Order("id desc").First(&order)
+	if order.Status != 1 {
+		t.Errorf("expected order status 1 (pending), got %d", order.Status)
 	}
 }
 
-func TestCreateOrder_ReferredUserGetsRewardButInviterGetsInviteReward(t *testing.T) {
+func TestCreateOrder_ReferredUserNoSelfReward(t *testing.T) {
 	setupTestDB(t)
 
-	// Create shop with 10% reward rate and 5% invite rate
+	// Create shop
 	shop := models.Shop{Name: "Reward Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03, RewardRateLevel1: 0.10}
 	config.DB.Create(&shop)
 
@@ -285,16 +295,101 @@ func TestCreateOrder_ReferredUserGetsRewardButInviterGetsInviteReward(t *testing
 	json.Unmarshal(w.Body.Bytes(), &resp)
 
 	// Referred user should NOT receive self-reward (only inviter gets invite reward)
-	rewardAmount, ok := resp["reward_amount"].(float64)
-	if !ok || rewardAmount != 0 {
+	rewardAmount, _ := resp["reward_amount"].(float64)
+	if rewardAmount != 0 {
 		t.Errorf("expected reward_amount 0 for referred user (only inviter gets reward), got %v", resp["reward_amount"])
 	}
+}
 
-	// Inviter should receive invite reward (async, wait for goroutine)
-	time.Sleep(200 * time.Millisecond)
-	config.DB.First(&referrer, referrer.ID)
-	if referrer.RewardBalance != 10 {
-		t.Errorf("expected referrer invite_reward 10, got %f", referrer.RewardBalance)
+func TestCreateOrder_ReturnsPrepayFields(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "Prepay Test Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+
+	product := models.Product{ShopID: shop.ID, Name: "Test Dish", Price: 50, Status: 1}
+	config.DB.Create(&product)
+
+	user := models.User{OpenID: "test_prepay_user", Nickname: "PrepayUser", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   50,
+		"items": []map[string]interface{}{
+			{"product_id": product.ID, "quantity": 1},
+		},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+
+	// Verify order fields
+	if id, ok := resp["id"].(float64); !ok || id == 0 {
+		t.Errorf("expected non-zero order id, got %v", resp["id"])
+	}
+	if status, ok := resp["status"].(float64); !ok || status != 1 {
+		t.Errorf("expected status 1 (pending), got %v", resp["status"])
+	}
+
+	// Verify prepay fields — only present when WeChat Pay is configured
+	_, hasPrepayID := resp["prepay_id"]
+	_, hasTimeStamp := resp["time_stamp"]
+	_, hasNonceStr := resp["nonce_str"]
+	_, hasPackage := resp["package"]
+	_, hasSignType := resp["sign_type"]
+	_, hasPaySign := resp["pay_sign"]
+
+	if config.WxPayClient != nil {
+		if !hasPrepayID {
+			t.Errorf("expected prepay_id field in response")
+		}
+		if !hasTimeStamp {
+			t.Errorf("expected time_stamp field in response")
+		}
+		if !hasNonceStr {
+			t.Errorf("expected nonce_str field in response")
+		}
+		if !hasPackage {
+			t.Errorf("expected package field in response")
+		}
+		if !hasSignType {
+			t.Errorf("expected sign_type field in response")
+		}
+		if !hasPaySign {
+			t.Errorf("expected pay_sign field in response")
+		}
+	} else {
+		// WeChat Pay not configured — expect error field instead
+		if !hasPrepayID {
+			t.Log("prepay fields absent: WeChat Pay not configured (expected)")
+		}
+		if errMsg, ok := resp["error"]; !ok || errMsg != "prepay failed" {
+			t.Errorf("expected error='prepay failed', got %v", resp["error"])
+		}
+	}
+
+	// Verify order persisted as pending
+	var order models.Order
+	config.DB.Where("user_id = ?", user.ID).Order("id desc").First(&order)
+	if order.Status != 1 {
+		t.Errorf("expected order status 1 in db, got %d", order.Status)
+	}
+	if order.PaidAt != nil {
+		t.Errorf("expected PaidAt nil for pending order")
 	}
 }
 

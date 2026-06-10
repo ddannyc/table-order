@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "wechatpay-basic-payment": {
+      "source": "wechatpay-apiv3/wechatpay-skills",
+      "sourceType": "github",
+      "skillPath": "wechatpay-basic-payment/SKILL.md",
+      "computedHash": "452a815bd8d2e9d6b47e4a741cb1c12b54629c1d67894285cc30371493c2c94a"
+    },
+    "wechatpay-deduction-service": {
+      "source": "wechatpay-apiv3/wechatpay-skills",
+      "sourceType": "github",
+      "skillPath": "wechatpay-deduction-service/SKILL.md",
+      "computedHash": "ee81864976d757607ee319fd536e02933dc053c3720a88d5ef9964d9cd1d5feb"
+    },
+    "wechatpay-medical-insurance-payment": {
+      "source": "wechatpay-apiv3/wechatpay-skills",
+      "sourceType": "github",
+      "skillPath": "wechatpay-medical-insurance-payment/SKILL.md",
+      "computedHash": "8f2daaddd8307e283043fe203bc9a064b83002a1e4c85d81db15bb93e4d41c21"
+    },
+    "wechatpay-payscore": {
+      "source": "wechatpay-apiv3/wechatpay-skills",
+      "sourceType": "github",
+      "skillPath": "wechatpay-payscore/SKILL.md",
+      "computedHash": "606214411c74667ed68346f50ca357ad47e2d3e2033538f074946513aedfa77a"
+    },
+    "wechatpay-product-coupon": {
+      "source": "wechatpay-apiv3/wechatpay-skills",
+      "sourceType": "github",
+      "skillPath": "wechatpay-product-coupon/SKILL.md",
+      "computedHash": "a1ea6d09bd962782a3fa40ccfc2d3b8da3bda2166aafc14097f56a3a0de026f2"
+    }
+  }
+}

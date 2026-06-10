@@ -27,6 +27,13 @@ logs/
 # Config with secrets (use config.yaml.example as template)
 backend/config/config.yaml
 
+# Agent skills cache (external, reproducible via skills-lock.json)
+.agents/
+.claude/skills/
+
+# Code intelligence cache
+.codegraph/
+
 # Temp files
 tmp/
 temp/

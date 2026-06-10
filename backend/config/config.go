@@ -32,8 +32,17 @@ type JWTConfig struct {
 }
 
 type WeChatConfig struct {
-	AppID     string
-	AppSecret string
+	AppID     string `mapstructure:"appid"`
+	AppSecret string `mapstructure:"appsecret"`
+	// WeChat Pay V3
+	MchID                      string `mapstructure:"mch_id"`
+	MchCertificateSerialNumber string `mapstructure:"mch_certificate_serial_number"`
+	MchPrivateKeyPath          string `mapstructure:"mch_private_key_path"`
+	MchAPIv3Key                string `mapstructure:"mch_api_v3_key"`
+	PayNotifyURL               string `mapstructure:"pay_notify_url"`
+	// Public key scheme (required since 2026)
+	WechatPayPublicKeyID   string `mapstructure:"wechatpay_public_key_id"`
+	WechatPayPublicKeyPath string `mapstructure:"wechatpay_public_key_path"`
 }
 
 func getEnv(key, defaultVal string) string {
@@ -72,6 +81,13 @@ func LoadConfig(path string) (*Config, error) {
 	// WeChat env vars (Railway)
 	cfg.WeChat.AppID = getEnv("WECHAT_APPID", cfg.WeChat.AppID)
 	cfg.WeChat.AppSecret = getEnv("WECHAT_APPSECRET", cfg.WeChat.AppSecret)
+	cfg.WeChat.MchID = getEnv("WECHAT_MCHID", cfg.WeChat.MchID)
+	cfg.WeChat.MchCertificateSerialNumber = getEnv("WECHAT_MCH_CERT_SERIAL", cfg.WeChat.MchCertificateSerialNumber)
+	cfg.WeChat.MchPrivateKeyPath = getEnv("WECHAT_MCH_PRIVATE_KEY_PATH", cfg.WeChat.MchPrivateKeyPath)
+	cfg.WeChat.MchAPIv3Key = getEnv("WECHAT_MCH_API_V3_KEY", cfg.WeChat.MchAPIv3Key)
+	cfg.WeChat.PayNotifyURL = getEnv("WECHAT_PAY_NOTIFY_URL", cfg.WeChat.PayNotifyURL)
+	cfg.WeChat.WechatPayPublicKeyID = getEnv("WECHATPAY_PUBLIC_KEY_ID", cfg.WeChat.WechatPayPublicKeyID)
+	cfg.WeChat.WechatPayPublicKeyPath = getEnv("WECHATPAY_PUBLIC_KEY_PATH", cfg.WeChat.WechatPayPublicKeyPath)
 
 	return &cfg, nil
 }

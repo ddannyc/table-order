@@ -76,12 +76,6 @@
   color: #FFD700;
 }
 
-.balance-divider {
-  width: 2rpx;
-  background: rgba(255, 255, 255, 0.2);
-  margin: 0 32rpx;
-}
-
 .stats-row {
   display: flex;
   background: #fff;

@@ -1,10 +1,15 @@
 package config
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/wechatpay-apiv3/wechatpay-go/core"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/downloader"
+	"github.com/wechatpay-apiv3/wechatpay-go/core/option"
+	"github.com/wechatpay-apiv3/wechatpay-go/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -12,6 +17,7 @@ import (
 )
 
 var DB *gorm.DB
+var WxPayClient *core.Client
 
 func buildDSN(cfg DatabaseConfig) string {
 	if dsn := os.Getenv("DATABASE_URL"); dsn != "" {
@@ -49,4 +55,64 @@ func MigrateDB() error {
 		&models.WalletLog{},
 		&models.RewardLog{},
 	)
+}
+
+func InitWechatPay(cfg WeChatConfig) error {
+	if cfg.MchID == "" || cfg.MchAPIv3Key == "" {
+		log.Println("WeChat Pay not configured — skipping")
+		return nil
+	}
+
+	ctx := context.Background()
+
+	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(cfg.MchPrivateKeyPath)
+	if err != nil {
+		return fmt.Errorf("load merchant private key: %w", err)
+	}
+
+	if cfg.WechatPayPublicKeyID != "" && cfg.WechatPayPublicKeyPath != "" {
+		// Public key scheme (new, required since 2026)
+		wechatPayPublicKey, err := utils.LoadPublicKeyWithPath(cfg.WechatPayPublicKeyPath)
+		if err != nil {
+			return fmt.Errorf("load wechat pay public key: %w", err)
+		}
+
+		client, err := core.NewClient(ctx,
+			option.WithWechatPayPublicKeyAuthCipher(
+				cfg.MchID,
+				cfg.MchCertificateSerialNumber,
+				mchPrivateKey,
+				cfg.WechatPayPublicKeyID,
+				wechatPayPublicKey,
+			),
+		)
+		if err != nil {
+			return fmt.Errorf("new wechat pay client (public key): %w", err)
+		}
+
+		WxPayClient = client
+		log.Println("WeChat Pay client initialized (public key scheme)")
+		return nil
+	}
+
+	// Fallback: certificate auto-download scheme (legacy)
+	downloader.MgrInstance().RegisterDownloaderWithPrivateKey(
+		ctx, mchPrivateKey, cfg.MchCertificateSerialNumber, cfg.MchID, cfg.MchAPIv3Key,
+	)
+
+	client, err := core.NewClient(ctx,
+		option.WithWechatPayAutoAuthCipher(
+			cfg.MchID,
+			cfg.MchCertificateSerialNumber,
+			mchPrivateKey,
+			cfg.MchAPIv3Key,
+		),
+	)
+	if err != nil {
+		return fmt.Errorf("new wechat pay client: %w", err)
+	}
+
+	WxPayClient = client
+	log.Println("WeChat Pay client initialized (certificate scheme)")
+	return nil
 }

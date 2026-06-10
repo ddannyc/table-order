@@ -76,15 +76,14 @@ func CreateOrder(c *gin.Context) {
 		req.Amount = calculatedAmount
 	}
 
-	// Get user to check if referred
+	// Get user (for openid and reward balance)
 	var user models.User
 	if err := config.DB.First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
-	// Order placer does NOT receive self-reward (only inviter receives invite reward via processInviteReward)
-	// Handle reward balance deduction for payment
+	// Handle reward balance deduction for discount
 	var deductAmount float64
 	maxDeductAmount := req.Amount * shop.RewardCeiling
 	if req.UseReward && user.RewardBalance > 0 {
@@ -94,7 +93,6 @@ func CreateOrder(c *gin.Context) {
 
 	orderNo := fmt.Sprintf("%s%s", time.Now().Format("20060102150405"), uuid.New().String()[:8])
 
-	now := time.Now()
 	order := models.Order{
 		OrderNo:      orderNo,
 		UserID:       userID,
@@ -102,8 +100,7 @@ func CreateOrder(c *gin.Context) {
 		TableNo:      req.TableNo,
 		Amount:       req.Amount,
 		RewardAmount: 0,
-		Status:       2,
-		PaidAt:       &now,
+		Status:       1, // pending — WeChat Pay will confirm
 	}
 
 	tx := config.DB.Begin()
@@ -135,7 +132,7 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
-	// Deduct reward balance if used for payment
+	// Deduct reward balance if used for discount (happens at order creation)
 	if req.UseReward && deductAmount > 0 {
 		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&models.User{}).Where("id = ?", userID).
 			UpdateColumn("reward_balance", gorm.Expr("reward_balance - ?", deductAmount)).Error; err != nil {
@@ -157,48 +154,57 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
-	// Deduct remaining amount from regular balance
-	if req.Amount > 0 {
-		result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&models.User{}).
-			Where("id = ? AND balance >= ?", userID, req.Amount).
-			UpdateColumn("balance", gorm.Expr("balance - ?", req.Amount))
-		if result.Error != nil || result.RowsAffected == 0 {
-			tx.Rollback()
-			c.JSON(http.StatusBadRequest, gin.H{"error": "insufficient balance"})
-			return
-		}
-		payLog := models.WalletLog{
-			UserID:  userID,
-			Type:    "pay",
-			Amount:  -req.Amount,
-			OrderID: &order.ID,
-			Remark:  fmt.Sprintf("订单支付 %.2f 元", req.Amount),
-		}
-		if err := tx.Create(&payLog).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "create pay log failed"})
-			return
-		}
-	}
-
 	tx.Commit()
 
-	// Update last_consume_at and resume reward
-	config.DB.Model(&models.User{}).Where("id = ?", userID).
-		Updates(map[string]interface{}{
-			"last_consume_at":  time.Now(),
-			"reward_paused_at": nil,
+	// Zero-amount order (reward covered everything): mark paid directly, skip WeChat Pay
+	if req.Amount <= 0 {
+		now := time.Now()
+		config.DB.Model(&order).Updates(map[string]interface{}{
+			"status":  2,
+			"paid_at": &now,
 		})
+		config.DB.Model(&models.User{}).Where("id = ?", userID).
+			Updates(map[string]interface{}{
+				"last_consume_at":  now,
+				"reward_paused_at": nil,
+			})
+		go services.DistributeReward(order.ID, userID, req.ShopID, req.Amount)
+		c.JSON(http.StatusOK, gin.H{
+			"id":       order.ID,
+			"order_no": order.OrderNo,
+			"amount":   order.Amount,
+			"status":   2,
+		})
+		return
+	}
 
-	// Distribute 3-tier reward asynchronously
-	go services.DistributeReward(order.ID, userID, req.ShopID, req.Amount)
+	// Call WeChat Pay JSAPI prepay
+	amountCents := int64(math.Round(req.Amount * 100))
+	description := fmt.Sprintf("%s-订单%s", shop.Name, orderNo)
+	prepay, err := services.CreateJSAPIPrepay(c.Request.Context(), user.OpenID, orderNo, description, amountCents)
+	if err != nil {
+		log.Printf("[order] wechat prepay failed for order %s: %v", orderNo, err)
+		c.JSON(http.StatusOK, gin.H{
+			"id":       order.ID,
+			"order_no": order.OrderNo,
+			"amount":   order.Amount,
+			"status":   order.Status,
+			"error":    "prepay failed",
+		})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":            order.ID,
-		"order_no":      order.OrderNo,
-		"amount":        order.Amount,
-		"reward_amount": order.RewardAmount,
-		"status":        order.Status,
+		"id":         order.ID,
+		"order_no":   order.OrderNo,
+		"amount":     order.Amount,
+		"status":     order.Status,
+		"prepay_id":  prepay.PrepayID,
+		"time_stamp": prepay.TimeStamp,
+		"nonce_str":  prepay.NonceStr,
+		"package":    prepay.Package,
+		"sign_type":  prepay.SignType,
+		"pay_sign":   prepay.PaySign,
 	})
 }
 

@@ -66,6 +66,9 @@ func Setup(r *gin.Engine) {
 		orders.GET("/:id", handler.GetOrder)
 	}
 
+	// WeChat Pay notification callback (public — WeChat server calls this)
+	api.POST("/orders/notify", handler.WechatPayNotify)
+
 	// Invite (authenticated)
 	invite := api.Group("/invites")
 	invite.Use(middleware.AuthMiddleware())
