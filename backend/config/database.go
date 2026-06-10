@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"crypto/rsa"
 	"fmt"
 	"log"
 	"os"
@@ -65,14 +66,30 @@ func InitWechatPay(cfg WeChatConfig) error {
 
 	ctx := context.Background()
 
-	mchPrivateKey, err := utils.LoadPrivateKeyWithPath(cfg.MchPrivateKeyPath)
+	// Load merchant private key: prefer content from env var, fall back to file path
+	var mchPrivateKey *rsa.PrivateKey
+	var err error
+	if cfg.MchPrivateKeyContent != "" {
+		mchPrivateKey, err = utils.LoadPrivateKey(cfg.MchPrivateKeyContent)
+	} else {
+		mchPrivateKey, err = utils.LoadPrivateKeyWithPath(cfg.MchPrivateKeyPath)
+	}
 	if err != nil {
 		return fmt.Errorf("load merchant private key: %w", err)
 	}
 
-	if cfg.WechatPayPublicKeyID != "" && cfg.WechatPayPublicKeyPath != "" {
+	// Determine if public key scheme is configured
+	publicKeyConfigured := cfg.WechatPayPublicKeyID != "" &&
+		(cfg.WechatPayPublicKeyPath != "" || cfg.WechatPayPublicKeyContent != "")
+
+	if publicKeyConfigured {
 		// Public key scheme (new, required since 2026)
-		wechatPayPublicKey, err := utils.LoadPublicKeyWithPath(cfg.WechatPayPublicKeyPath)
+		var wechatPayPublicKey *rsa.PublicKey
+		if cfg.WechatPayPublicKeyContent != "" {
+			wechatPayPublicKey, err = utils.LoadPublicKey(cfg.WechatPayPublicKeyContent)
+		} else {
+			wechatPayPublicKey, err = utils.LoadPublicKeyWithPath(cfg.WechatPayPublicKeyPath)
+		}
 		if err != nil {
 			return fmt.Errorf("load wechat pay public key: %w", err)
 		}

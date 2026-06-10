@@ -41,8 +41,10 @@ type WeChatConfig struct {
 	MchAPIv3Key                string `mapstructure:"mch_api_v3_key"`
 	PayNotifyURL               string `mapstructure:"pay_notify_url"`
 	// Public key scheme (required since 2026)
-	WechatPayPublicKeyID   string `mapstructure:"wechatpay_public_key_id"`
-	WechatPayPublicKeyPath string `mapstructure:"wechatpay_public_key_path"`
+	WechatPayPublicKeyID      string `mapstructure:"wechatpay_public_key_id"`
+	WechatPayPublicKeyPath    string `mapstructure:"wechatpay_public_key_path"`
+	WechatPayPublicKeyContent string `mapstructure:"wechatpay_public_key_content"`
+	MchPrivateKeyContent      string `mapstructure:"mch_private_key_content"`
 }
 
 func getEnv(key, defaultVal string) string {
@@ -88,6 +90,8 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.WeChat.PayNotifyURL = getEnv("WECHAT_PAY_NOTIFY_URL", cfg.WeChat.PayNotifyURL)
 	cfg.WeChat.WechatPayPublicKeyID = getEnv("WECHATPAY_PUBLIC_KEY_ID", cfg.WeChat.WechatPayPublicKeyID)
 	cfg.WeChat.WechatPayPublicKeyPath = getEnv("WECHATPAY_PUBLIC_KEY_PATH", cfg.WeChat.WechatPayPublicKeyPath)
+	cfg.WeChat.WechatPayPublicKeyContent = getEnv("WECHATPAY_PUBLIC_KEY_CONTENT", cfg.WeChat.WechatPayPublicKeyContent)
+	cfg.WeChat.MchPrivateKeyContent = getEnv("WECHAT_MCH_PRIVATE_KEY_CONTENT", cfg.WeChat.MchPrivateKeyContent)
 
 	return &cfg, nil
 }

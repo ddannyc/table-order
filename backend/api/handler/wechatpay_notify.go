@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"crypto/rsa"
 	"log"
 	"net/http"
 	"time"
@@ -29,7 +30,13 @@ func WechatPayNotify(c *gin.Context) {
 
 	var handler *notify.Handler
 	if cfg.WechatPayPublicKeyID != "" {
-		wechatPayPublicKey, err := utils.LoadPublicKeyWithPath(cfg.WechatPayPublicKeyPath)
+		var wechatPayPublicKey *rsa.PublicKey
+		var err error
+		if cfg.WechatPayPublicKeyContent != "" {
+			wechatPayPublicKey, err = utils.LoadPublicKey(cfg.WechatPayPublicKeyContent)
+		} else {
+			wechatPayPublicKey, err = utils.LoadPublicKeyWithPath(cfg.WechatPayPublicKeyPath)
+		}
 		if err != nil {
 			log.Printf("[wechatpay] FATAL: load public key for notify failed: %v", err)
 			c.JSON(http.StatusOK, gin.H{"code": "FAIL", "message": "internal config error"})
