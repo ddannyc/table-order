@@ -159,27 +159,6 @@ Page({
     })
   },
 
-  changeTable() {
-    wx.scanCode({
-      success: (res) => {
-        const query = res.result.split('?')[1] || ''
-        const params = {}
-        query.split('&').forEach(pair => {
-          const [key, val] = pair.split('=')
-          if (key) params[key] = val || ''
-        })
-        const shopId = Number(params.shop_id) || 1
-        const tableNo = params.table_no || 'A01'
-        setTableBinding(shopId, tableNo)
-        this.setData({ boundShopId: shopId, boundTableNo: tableNo })
-        this.loadData()
-      },
-      fail: () => {
-        wx.showToast({ title: '扫码失败', icon: 'none' })
-      }
-    })
-  },
-
   onRetry() {
     this.loadData()
   },

@@ -46,7 +46,6 @@
     <!-- 标题 -->
     <view slot="title" class="header-title">
       <text>{{shop.name || '店铺'}} · 桌{{boundTableNo}}</text>
-      <text class="change-table-btn" bind:tap="changeTable">换桌</text>
     </view>
 
     <!-- 菜品分类列表 -->

@@ -316,17 +316,8 @@
   text-align: center;
 }
 
-/* header title with change-table button */
 .header-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-}
-.change-table-btn {
-  font-size: var(--font-caption);
-  color: var(--weui-primary);
-  background: var(--weui-primary-light);
-  padding: 6rpx 20rpx;
-  border-radius: 24rpx;
-  margin-left: var(--space-sm);
+  justify-content: flex-start;
 }
