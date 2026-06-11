@@ -28,9 +28,16 @@
 }
 
 .icon-emoji {
-  font-size: 48rpx;
-  line-height: 1;
-  transition: transform 0.2s;
+  width: 48rpx;
+  height: 48rpx;
+  line-height: 48rpx;
+  text-align: center;
+  font-size: 28rpx;
+  font-weight: bold;
+  border-radius: 50%;
+  background: var(--color-border-light);
+  color: var(--color-text-hint);
+  transition: all 0.2s;
 }
 
 .icon-text {
@@ -40,19 +47,13 @@
 }
 
 .tab-item.active .icon-emoji {
-  transform: scale(1.15);
+  background: var(--weui-primary-light);
+  color: var(--weui-primary);
+  transform: scale(1.1);
 }
 
 .tab-item.active .icon-text,
 .icon-text.active {
   color: var(--weui-primary);
   font-weight: 600;
-}
-
-.icon-emoji:not(.active) {
-  filter: grayscale(100%) opacity(0.45);
-}
-
-.tab-item.active .icon-emoji {
-  filter: none;
 }

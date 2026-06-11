@@ -1,4 +1,4 @@
-const icons = ['🍽', '🎁', '👤']
+const icons = ['点', '邀', '我']
 
 Component({
   data: {
