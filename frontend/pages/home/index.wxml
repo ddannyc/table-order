@@ -49,8 +49,15 @@
       <text class="change-table-btn" bind:tap="changeTable">换桌</text>
     </view>
 
+    <!-- 分类导航 -->
+    <scroll-view scroll-x class="category-tabs" wx:if="{{categories.length > 1}}">
+      <view wx:for="{{categories}}" wx:key="this"
+            class="cat-tab {{activeCategory === item ? 'cat-tab-on' : ''}}"
+            bindtap="onCategoryTap" data-cat="{{item}}">{{item}}</view>
+    </scroll-view>
+
     <!-- 菜品分类列表 -->
-    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access">
+    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access" id="panel-{{item}}">
       <view class="weui-panel__hd">{{item}}</view>
       <view class="weui-panel__bd">
         <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="weui-media-box weui-media-box_appmsg">

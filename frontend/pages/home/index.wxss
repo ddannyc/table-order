@@ -33,6 +33,39 @@
   text-align: center;
 }
 
+/* Category sticky tabs */
+.category-tabs {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-bg-surface);
+  white-space: nowrap;
+  padding: var(--space-sm) var(--space-sm) 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+.cat-tab {
+  display: inline-block;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-body);
+  color: var(--color-text-secondary);
+  position: relative;
+}
+.cat-tab-on {
+  color: var(--weui-primary);
+  font-weight: 600;
+}
+.cat-tab-on::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40rpx;
+  height: 4rpx;
+  background: var(--weui-primary);
+  border-radius: 2rpx;
+}
+
 /* WeUI panel overrides for dish list */
 .weui-panel {
   margin-top: 0;
