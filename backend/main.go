@@ -15,6 +15,8 @@ func main() {
 	}
 	config.AppConfig = cfg
 
+	log.Printf("BaseURL=%s", cfg.Server.BaseURL)
+
 	if err := config.InitDB(cfg.Database); err != nil {
 		log.Fatalf("DB init failed: %v", err)
 	}
