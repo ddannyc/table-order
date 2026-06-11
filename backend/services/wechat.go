@@ -185,3 +185,107 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 	}
 	return &WXACodeUnlimitedResponse{Buffer: respBody}, nil
 }
+
+// --- wxa/generatescheme (URL Scheme for opening mini-program from H5) ---
+
+type schemeCacheEntry struct {
+	SchemeURL string
+	ExpiresAt time.Time
+}
+
+var (
+	schemeCache   = make(map[string]*schemeCacheEntry) // key: "shopID:tableNo"
+	schemeCacheMu sync.RWMutex
+)
+
+type generateSchemeRequest struct {
+	JumpWxa  generateSchemeJumpWxa `json:"jump_wxa"`
+	IsExpire bool                   `json:"is_expire"`
+}
+
+type generateSchemeJumpWxa struct {
+	Path       string `json:"path"`
+	Query      string `json:"query"`
+	EnvVersion string `json:"env_version"`
+}
+
+type generateSchemeResponse struct {
+	OpenLink string `json:"openlink"`
+	ErrCode  int    `json:"errcode"`
+	ErrMsg   string `json:"errmsg"`
+}
+
+// GenerateURLScheme generates a WeChat URL Scheme for opening the mini-program.
+// shopID and tableNo are encoded as query parameters on the target page.
+// Returns the scheme URL like "weixin://dl/business/?t=TOKEN".
+// Schemes are cached per (shopID, tableNo) and refreshed before expiry.
+func GenerateURLScheme(shopID, tableNo string) (string, error) {
+	cacheKey := shopID + ":" + tableNo
+
+	// Check cache first (valid if more than 7 days until expiry)
+	schemeCacheMu.RLock()
+	entry, ok := schemeCache[cacheKey]
+	schemeCacheMu.RUnlock()
+	if ok && entry != nil && time.Now().Before(entry.ExpiresAt.AddDate(0, 0, -7)) {
+		return entry.SchemeURL, nil
+	}
+
+	token, err := GetAccessToken()
+	if err != nil {
+		return "", fmt.Errorf("get access token: %w", err)
+	}
+
+	url := fmt.Sprintf("https://api.weixin.qq.com/wxa/generatescheme?access_token=%s", token)
+
+	body := generateSchemeRequest{
+		JumpWxa: generateSchemeJumpWxa{
+			Path:       "/pages/home/index",
+			Query:      "shop_id=" + shopID + "&table_no=" + tableNo,
+			EnvVersion: "release",
+		},
+		IsExpire: false, // permanent scheme
+	}
+
+	bodyBytes, _ := json.Marshal(body)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
+	if err != nil {
+		return "", fmt.Errorf("create request failed: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("scheme request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read scheme response failed: %w", err)
+	}
+
+	var result generateSchemeResponse
+	if err := json.Unmarshal(respBody, &result); err != nil {
+		return "", fmt.Errorf("parse scheme response failed: %w", err)
+	}
+
+	if result.ErrCode != 0 {
+		return "", fmt.Errorf("wechat scheme error %d: %s", result.ErrCode, result.ErrMsg)
+	}
+
+	if result.OpenLink == "" {
+		return "", fmt.Errorf("scheme response missing openlink")
+	}
+
+	// Cache the scheme (permanent schemes don't have an expiry, but we set a 30-day refresh cycle)
+	schemeCacheMu.Lock()
+	schemeCache[cacheKey] = &schemeCacheEntry{
+		SchemeURL: result.OpenLink,
+		ExpiresAt: time.Now().AddDate(0, 0, 30),
+	}
+	schemeCacheMu.Unlock()
+
+	return result.OpenLink, nil
+}

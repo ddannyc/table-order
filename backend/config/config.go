@@ -14,8 +14,9 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Port string
-	Mode string
+	Port    string
+	Mode    string
+	BaseURL string // Public base URL for QR code generation (e.g. https://example.com)
 }
 
 type DatabaseConfig struct {
@@ -64,6 +65,7 @@ func LoadConfig(path string) (*Config, error) {
 
 	viper.SetDefault("server.port", "8080")
 	viper.SetDefault("server.mode", "debug")
+	viper.SetDefault("server.baseurl", "")
 	viper.SetDefault("jwt.expire_hours", 720)
 
 	// config.yaml is optional — Railway uses env vars only
@@ -74,6 +76,8 @@ func LoadConfig(path string) (*Config, error) {
 
 	// Env vars override config file (for Docker / Railway)
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
+	cfg.Server.Mode = getEnv("MODE", cfg.Server.Mode)
+	cfg.Server.BaseURL = getEnv("BASE_URL", cfg.Server.BaseURL)
 	cfg.Database.Host = getEnv("PGHOST", getEnv("DB_HOST", cfg.Database.Host))
 	cfg.Database.Port = getEnv("PGPORT", getEnv("DB_PORT", cfg.Database.Port))
 	cfg.Database.User = getEnv("POSTGRES_USER", getEnv("DB_USER", cfg.Database.User))

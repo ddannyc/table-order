@@ -31,6 +31,15 @@ Page({
     if (options && options.invite_code) {
       bindInviteCode(options.invite_code).catch(err => console.error('bind invite failed:', err))
     }
+    // Handle direct URL Scheme params (when mini-program already running)
+    if (options && options.shop_id && options.table_no) {
+      const shopId = Number(options.shop_id)
+      const tableNo = options.table_no
+      setTableBinding(shopId, tableNo)
+      this.setData({ boundShopId: shopId, boundTableNo: tableNo })
+      this.loadData()
+      return
+    }
     this.checkTableBinding()
   },
 

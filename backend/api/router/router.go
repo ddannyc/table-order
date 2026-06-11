@@ -24,6 +24,9 @@ func Setup(r *gin.Engine) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
 
+	// QR code scan redirect (public — accessed from WeChat browser when scanning table QR)
+	r.GET("/scan", handler.ScanRedirect)
+
 	api := r.Group("/api")
 
 	// Auth (public)

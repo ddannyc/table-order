@@ -46,7 +46,11 @@ func GenerateQR(c *gin.Context) {
 	}
 
 	// Generate QR code image
-	qrURL := fmt.Sprintf("https://domain.com/scan?shop_id=%s&table_no=%s&token=%s", shopID, req.TableNo, token)
+	baseURL := config.AppConfig.Server.BaseURL
+	if baseURL == "" {
+		baseURL = "https://domain.com"
+	}
+	qrURL := fmt.Sprintf("%s/scan?shop_id=%s&table_no=%s&token=%s", baseURL, shopID, req.TableNo, token)
 	png, err := qrcode.Encode(qrURL, qrcode.Medium, 256)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "generate qr image failed"})
