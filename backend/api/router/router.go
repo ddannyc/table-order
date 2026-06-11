@@ -1,6 +1,10 @@
 package router
 
 import (
+	"net/http"
+	"os"
+	"path/filepath"
+
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/api/handler"
 	"github.com/example/table-order/middleware"
@@ -26,6 +30,26 @@ func Setup(r *gin.Engine) {
 
 	// QR code scan redirect (public — accessed from WeChat browser when scanning table QR)
 	r.GET("/scan", handler.ScanRedirect)
+
+	// Static file serving — serve files from backend root by path
+	r.GET("/*filename", func(c *gin.Context) {
+		name := c.Param("filename")[1:] // strip leading /
+		if name == "" {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		// Only allow exact filenames (no subdirectories)
+		if filepath.Base(name) != name {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		data, err := os.ReadFile(name)
+		if err != nil {
+			c.Status(http.StatusNotFound)
+			return
+		}
+		c.Data(http.StatusOK, "text/plain; charset=utf-8", data)
+	})
 
 	api := r.Group("/api")
 
