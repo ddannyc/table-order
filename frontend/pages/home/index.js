@@ -14,6 +14,8 @@ Page({
     cartTotal: '0.00',
     cartMap: {},
     cartQtyMap: {},
+    loading: true,
+    error: false,
     tabbar: {
       current: 0,
       list: [
@@ -56,6 +58,7 @@ Page({
   loadData() {
     const { boundShopId } = this.data
     if (!boundShopId) return
+    this.setData({ loading: true, error: false })
     Promise.all([
       getShop(boundShopId),
       getShopProducts(boundShopId)
@@ -68,10 +71,11 @@ Page({
           priceText: p.price.toFixed(2)
         }))
       })
-      this.setData({ shop, products, categories, productsByCategory })
+      this.setData({ shop, products, categories, productsByCategory, loading: false })
       this.updateCartInfo()
     }).catch(err => {
       console.error(err)
+      this.setData({ loading: false, error: true })
       wx.showToast({ title: '加载失败', icon: 'none' })
     })
   },
@@ -165,6 +169,18 @@ Page({
         wx.showToast({ title: '扫码失败', icon: 'none' })
       }
     })
+  },
+
+  onRetry() {
+    this.loadData()
+  },
+
+  onImgError(e) {
+    const id = e.currentTarget.dataset.id
+    const key = `productsByCategory`
+    // mark image as failed so fallback shows
+    const fallback = '/assets/img-fallback.png'
+    e.target.src = fallback
   },
 
   goCart() {
