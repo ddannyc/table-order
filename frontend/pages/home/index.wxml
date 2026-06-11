@@ -63,11 +63,11 @@
             <view class="product-bottom">
               <view class="product-price">¥{{p.priceText}}</view>
               <view class="product-action">
-                <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" bindtap="onAdd" data-id="{{p.id}}">+</view>
+                <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onAdd" data-id="{{p.id}}">+</view>
                 <view wx:elif="{{p.status !== 2}}" class="qty-control">
-                  <view class="qty-btn" bindtap="onDec" data-id="{{p.id}}">−</view>
+                  <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onDec" data-id="{{p.id}}">−</view>
                   <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
-                  <view class="qty-btn" bindtap="onInc" data-id="{{p.id}}">+</view>
+                  <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onInc" data-id="{{p.id}}">+</view>
                 </view>
                 <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
               </view>
