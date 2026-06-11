@@ -1,128 +1,155 @@
 <!-- pages/profile/index.wxml -->
 <view class="page">
-  <!-- User Header -->
-  <view class="user-header">
-    <view class="avatar-box">
-      <image wx:if="{{user.avatar}}" src="{{user.avatar}}" class="avatar" />
-      <view wx:else class="avatar-placeholder">{{user.nickname ? user.nickname[0] : 'V'}}</view>
+
+  <!-- 加载骨架屏 -->
+  <view wx:if="{{loading}}" class="profile-skeleton">
+    <view class="sk-user-header">
+      <view class="sk-avatar"></view>
+      <view class="sk-lines">
+        <view class="sk-line sk-line-short"></view>
+        <view class="sk-line sk-line-xs"></view>
+      </view>
     </view>
-    <view class="user-info">
-      <view class="nickname">{{user.nickname || 'VIP会员'}}</view>
-      <view class="user-desc">福利会员·随时消费随时返</view>
-    </view>
+    <view class="sk-card"></view>
+    <view class="sk-stats"></view>
+    <view class="sk-tabs"></view>
+    <view wx:for="{{[1,2,3]}}" wx:key="this" class="sk-row"></view>
   </view>
 
-  <!-- 福利金余额 -->
-  <view class="balance-card">
-    <view class="balance-item">
-      <view class="balance-label">福利金</view>
-      <view class="balance-amount gold">¥{{rewardBalanceText}}</view>
-    </view>
+  <!-- 错误状态 -->
+  <view wx:elif="{{error}}" class="error-state">
+    <view class="error-icon">!</view>
+    <view class="error-title">加载失败</view>
+    <view class="error-desc">网络开小差了，请检查后重试</view>
+    <button class="weui-btn" type="primary" bind:tap="onRetry">重新加载</button>
   </view>
 
-  <!-- Stats Row -->
-  <view class="stats-row">
-    <view class="stat-item">
-      <view class="stat-value">{{todayRewardText}}</view>
-      <view class="stat-label">今日收益</view>
+  <!-- 正常内容 -->
+  <block wx:else>
+    <!-- User Header -->
+    <view class="user-header">
+      <view class="avatar-box">
+        <image wx:if="{{user.avatar}}" src="{{user.avatar}}" class="avatar" />
+        <view wx:else class="avatar-placeholder">{{user.nickname ? user.nickname[0] : 'V'}}</view>
+      </view>
+      <view class="user-info">
+        <view class="nickname">{{user.nickname || 'VIP会员'}}</view>
+        <view class="user-desc">福利会员·随时消费随时返</view>
+      </view>
     </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <view class="stat-value">{{stats.invite_count}}</view>
-      <view class="stat-label">邀请人数</view>
+
+    <!-- 福利金余额 -->
+    <view class="balance-card">
+      <view class="balance-item">
+        <view class="balance-label">福利金</view>
+        <view class="balance-amount gold">¥{{rewardBalanceText}}</view>
+      </view>
     </view>
-    <view class="stat-divider"></view>
-    <view class="stat-item">
-      <view class="stat-value">{{totalInviteRewardText}}</view>
-      <view class="stat-label">累计奖励</view>
+
+    <!-- Stats Row -->
+    <view class="stats-row">
+      <view class="stat-item">
+        <view class="stat-value">{{todayRewardText}}</view>
+        <view class="stat-label">今日收益</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{stats.invite_count}}</view>
+        <view class="stat-label">邀请人数</view>
+      </view>
+      <view class="stat-divider"></view>
+      <view class="stat-item">
+        <view class="stat-value">{{totalInviteRewardText}}</view>
+        <view class="stat-label">累计奖励</view>
+      </view>
     </view>
-  </view>
 
-  <!-- Reward Paused Warning -->
-  <view wx:if="{{rewardPaused}}" class="reward-paused-bar">
-    账户连续90天未消费，返利已暂停。消费一笔即可恢复。
-  </view>
-
-  <!-- Expiring Soon -->
-  <view wx:if="{{expiringSoonCount > 0}}" class="expiring-soon-bar">
-    你有 {{expiringSoonCount}} 笔福利金即将过期，请及时使用。
-  </view>
-
-  <!-- Tabs -->
-  <view class="weui-tabs">
-    <view class="weui-tabs__header">
-      <view class="weui-tabs__item {{activeTab === 'orders' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="orders">消费订单</view>
-      <view class="weui-tabs__item {{activeTab === 'logs' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="logs">收支明细</view>
-      <view class="weui-tabs__item {{activeTab === 'reward' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="reward">福利金币</view>
+    <!-- Reward Paused Warning -->
+    <view wx:if="{{rewardPaused}}" class="reward-paused-bar">
+      账户连续90天未消费，返利已暂停。消费一笔即可恢复。
     </view>
-  </view>
 
-  <!-- Tab Content: 收支明细 -->
-  <view wx:if="{{activeTab === 'logs'}}" class="tab-content">
-    <mp-cells>
-      <view wx:for="{{logs}}" wx:key="id">
-        <mp-cell>
-          <view slot="title" class="log-cell">
-            <view class="log-type">{{item.typeLabel}}</view>
-            <view class="log-remark">{{item.remark}}</view>
+    <!-- Expiring Soon -->
+    <view wx:if="{{expiringSoonCount > 0}}" class="expiring-soon-bar">
+      你有 {{expiringSoonCount}} 笔福利金即将过期，请及时使用。
+    </view>
+
+    <!-- Tabs -->
+    <view class="weui-tabs">
+      <view class="weui-tabs__header">
+        <view class="weui-tabs__item {{activeTab === 'orders' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="orders">消费订单</view>
+        <view class="weui-tabs__item {{activeTab === 'logs' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="logs">收支明细</view>
+        <view class="weui-tabs__item {{activeTab === 'reward' ? 'weui-tabs__item_on' : ''}}" bind:tap="switchTab" data-tab="reward">福利金币</view>
+      </view>
+    </view>
+
+    <!-- Tab Content: 收支明细 -->
+    <view wx:if="{{activeTab === 'logs'}}" class="tab-content">
+      <mp-cells>
+        <view wx:for="{{logs}}" wx:key="id">
+          <mp-cell>
+            <view slot="title" class="log-cell">
+              <view class="log-type">{{item.typeLabel}}</view>
+              <view class="log-remark">{{item.remark}}</view>
+            </view>
+            <view slot="footer" class="log-amount {{item.amount < 0 ? 'minus' : 'plus'}}">{{item.amountText}}</view>
+          </mp-cell>
+        </view>
+      </mp-cells>
+      <view wx:if="{{logs.length === 0}}" class="empty-tip">暂无记录</view>
+    </view>
+
+    <!-- Tab Content: 福利金币 -->
+    <view wx:if="{{activeTab === 'reward'}}" class="tab-content">
+      <view class="reward-rules card">
+        <view class="rule-title">返利规则</view>
+        <view class="rule-item">自购返利：订单金额 3%</view>
+        <view class="rule-item">直推奖励：一级下线消费的 10%</view>
+        <view class="rule-item">间推奖励：二级下线消费的 4%</view>
+        <view class="rule-item">有效期：180 天</view>
+        <view class="rule-item">抵扣上限：单笔订单 50%</view>
+      </view>
+      <mp-cells>
+        <view wx:for="{{rewardLogs}}" wx:key="id">
+          <mp-cell>
+            <view slot="title" class="log-cell">
+              <view class="log-type">{{item.typeLabel}}</view>
+              <view class="log-remark">{{item.dateText}} 过期</view>
+            </view>
+            <view slot="footer" class="log-amount plus">{{item.amountText}}</view>
+          </mp-cell>
+        </view>
+      </mp-cells>
+      <view wx:if="{{rewardLogs.length === 0}}" class="empty-tip">暂无金币记录</view>
+    </view>
+
+    <!-- Tab Content: 消费订单 -->
+    <view wx:if="{{activeTab === 'orders'}}" class="tab-content">
+      <view wx:for="{{orders}}" wx:key="id" class="order-item card">
+        <view class="order-header">
+          <text class="order-no">{{item.order_no}}</text>
+          <text class="order-status">{{item.statusText}}</text>
+        </view>
+        <view class="order-body">
+          <view class="order-info">
+            <text class="shop-name">店铺消费</text>
+            <text class="order-time">{{item.dateText}}</text>
           </view>
-          <view slot="footer" class="log-amount {{item.amount < 0 ? 'minus' : 'plus'}}">{{item.amountText}}</view>
-        </mp-cell>
-      </view>
-    </mp-cells>
-    <view wx:if="{{logs.length === 0}}" class="empty-tip">暂无记录</view>
-  </view>
-
-  <!-- Tab Content: 福利金币 -->
-  <view wx:if="{{activeTab === 'reward'}}" class="tab-content">
-    <view class="reward-rules card">
-      <view class="rule-title">返利规则</view>
-      <view class="rule-item">自购返利：订单金额 3%</view>
-      <view class="rule-item">直推奖励：一级下线消费的 10%</view>
-      <view class="rule-item">间推奖励：二级下线消费的 4%</view>
-      <view class="rule-item">有效期：180 天</view>
-      <view class="rule-item">抵扣上限：单笔订单 50%</view>
-    </view>
-    <mp-cells>
-      <view wx:for="{{rewardLogs}}" wx:key="id">
-        <mp-cell>
-          <view slot="title" class="log-cell">
-            <view class="log-type">{{item.typeLabel}}</view>
-            <view class="log-remark">{{item.dateText}} 过期</view>
+          <view class="order-amount">
+            <text class="amount">{{item.amountText}}</text>
           </view>
-          <view slot="footer" class="log-amount plus">{{item.amountText}}</view>
-        </mp-cell>
-      </view>
-    </mp-cells>
-    <view wx:if="{{rewardLogs.length === 0}}" class="empty-tip">暂无金币记录</view>
-  </view>
-
-  <!-- Tab Content: 消费订单 -->
-  <view wx:if="{{activeTab === 'orders'}}" class="tab-content">
-    <view wx:for="{{orders}}" wx:key="id" class="order-item card">
-      <view class="order-header">
-        <text class="order-no">{{item.order_no}}</text>
-        <text class="order-status">{{item.statusText}}</text>
-      </view>
-      <view class="order-body">
-        <view class="order-info">
-          <text class="shop-name">店铺消费</text>
-          <text class="order-time">{{item.dateText}}</text>
         </view>
-        <view class="order-amount">
-          <text class="amount">{{item.amountText}}</text>
+        <!-- 订单明细 -->
+        <view wx:if="{{item.items && item.items.length > 0}}" class="order-detail">
+          <view wx:for="{{item.items}}" wx:for-item="oi" wx:key="id" class="detail-row">
+            <text class="detail-name">{{oi.product_name}} x{{oi.quantity}}</text>
+            <text class="detail-price">{{oi.subtotalText}}</text>
+          </view>
         </view>
       </view>
-      <!-- 订单明细 -->
-      <view wx:if="{{item.items && item.items.length > 0}}" class="order-detail">
-        <view wx:for="{{item.items}}" wx:for-item="oi" wx:key="id" class="detail-row">
-          <text class="detail-name">{{oi.product_name}} x{{oi.quantity}}</text>
-          <text class="detail-price">{{oi.subtotalText}}</text>
-        </view>
-      </view>
+      <view wx:if="{{orders.length === 0}}" class="empty-tip">暂无订单</view>
     </view>
-    <view wx:if="{{orders.length === 0}}" class="empty-tip">暂无订单</view>
-  </view>
+  </block>
 
   <!-- 底部tabbar -->
   <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />

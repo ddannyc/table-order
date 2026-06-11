@@ -11,6 +11,8 @@ Page({
     rewardPaused: false,
     expiringSoonCount: 0,
     activeTab: 'orders',
+    loading: true,
+    error: false,
     rewardBalanceText: '0.00',
     todayRewardText: '0.00',
     totalInviteRewardText: '0.00',
@@ -36,6 +38,7 @@ Page({
   },
 
   loadData() {
+    this.setData({ loading: true, error: false })
     const user = wx.getStorageSync('user') || {}
     Promise.all([
       getRewardBalance(),
@@ -82,11 +85,17 @@ Page({
         expiringSoonCount: expiryInfo.expiring_soon_count || 0,
         rewardBalanceText: (rewardData.reward_balance || 0).toFixed(2),
         todayRewardText: (stats.today_reward || 0).toFixed(2),
-        totalInviteRewardText: (stats.total_invite_reward || 0).toFixed(2)
+        totalInviteRewardText: (stats.total_invite_reward || 0).toFixed(2),
+        loading: false
       })
     }).catch(err => {
       console.error(err)
+      this.setData({ loading: false, error: true })
     })
+  },
+
+  onRetry() {
+    this.loadData()
   },
 
   switchTab(e) {
