@@ -16,7 +16,6 @@ Page({
     cartQtyMap: {},
     loading: true,
     error: false,
-    activeCategory: '',
     tabbar: {
       current: 0,
       list: [
@@ -72,10 +71,8 @@ Page({
           priceText: p.price.toFixed(2)
         }))
       })
-      const activeCategory = categories.length > 0 ? categories[0] : ''
-      this.setData({ shop, products, categories, productsByCategory, loading: false, activeCategory })
+      this.setData({ shop, products, categories, productsByCategory, loading: false })
       this.updateCartInfo()
-      this.setupCategoryObserver()
     }).catch(err => {
       console.error(err)
       this.setData({ loading: false, error: true })
@@ -171,30 +168,6 @@ Page({
       fail: () => {
         wx.showToast({ title: '扫码失败', icon: 'none' })
       }
-    })
-  },
-
-  onCategoryTap(e) {
-    const cat = e.currentTarget.dataset.cat
-    this.setData({ activeCategory: cat })
-    const query = wx.createSelectorQuery()
-    query.select('#panel-' + cat).boundingClientRect()
-    query.selectViewport().scrollOffset()
-    query.exec((res) => {
-      if (res[0] && res[1]) {
-        wx.pageScrollTo({ scrollTop: res[1].scrollTop + res[0].top - 80, duration: 300 })
-      }
-    })
-  },
-
-  setupCategoryObserver() {
-    const observer = wx.createIntersectionObserver(this, { observeAll: true })
-    this.data.categories.forEach(cat => {
-      observer.relativeToViewport({ top: 80, bottom: 80 }).observe('#panel-' + cat, (res) => {
-        if (res.intersectionRatio > 0) {
-          this.setData({ activeCategory: cat })
-        }
-      })
     })
   },
 

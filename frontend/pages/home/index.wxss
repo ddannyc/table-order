@@ -33,50 +33,17 @@
   text-align: center;
 }
 
-/* Category sticky tabs */
-.category-tabs {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--color-bg-surface);
-  white-space: nowrap;
-  padding: var(--space-sm) var(--space-sm) 0;
-  border-bottom: 1rpx solid var(--color-border-light);
-}
-.cat-tab {
-  display: inline-block;
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--font-body);
-  color: var(--color-text-secondary);
-  position: relative;
-}
-.cat-tab-on {
-  color: var(--weui-primary);
-  font-weight: 600;
-}
-.cat-tab-on::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40rpx;
-  height: 4rpx;
-  background: var(--weui-primary);
-  border-radius: 2rpx;
-}
-
 /* WeUI panel overrides for dish list */
 .weui-panel {
   margin-top: 0;
   margin-bottom: 8rpx;
 }
 .weui-panel__hd {
-  font-size: var(--font-body);
+  font-size: 28rpx;
   padding: 20rpx 32rpx 14rpx;
 }
 .weui-media-box {
-  padding: var(--space-md) var(--space-lg);
+  padding: 24rpx 32rpx;
 }
 .weui-media-box_appmsg .weui-media-box__hd {
   width: 120rpx;
@@ -133,20 +100,20 @@
   justify-content: center;
   font-size: 36rpx;
   font-weight: bold;
-  color: var(--color-bg-surface);
+  color: #fff;
   box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.3); /* custom shadow, --weui-primary-light is too light */
 }
 
 .qty-control {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 16rpx;
 }
 
 .qty-btn {
   width: 56rpx;
   height: 56rpx;
-  background: var(--color-bg-surface);
+  background: #fff;
   border: 2rpx solid var(--weui-primary);
   border-radius: 50%;
   display: flex;
@@ -182,7 +149,7 @@
 /* cart-bar 在 form-page button slot 中，不需要 fixed 定位 */
 .cart-bar {
   background: var(--weui-primary);
-  color: var(--color-bg-surface);
+  color: #fff;
   padding: 28rpx 40rpx;
   display: flex;
   justify-content: space-between;
@@ -218,19 +185,19 @@
 }
 
 .cart-count {
-  font-size: var(--font-body);
+  font-size: 28rpx;
 }
 
 .cart-total {
-  font-size: var(--font-h2);
+  font-size: 40rpx;
   font-weight: bold;
 }
 
 .cart-btn {
   background: rgba(255, 255, 255, 0.2);
-  padding: var(--space-sm) 40rpx;
+  padding: 16rpx 40rpx;
   border-radius: 40rpx;
-  font-size: var(--font-body);
+  font-size: 28rpx;
   font-weight: 500;
 }
 

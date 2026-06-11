@@ -2,7 +2,7 @@
 <view class="page login-page">
   <view class="login-brand-area">
     <view class="login-logo">
-      <text class="logo-icon">食</text>
+      <text class="logo-icon">🍽</text>
     </view>
     <view class="login-info">
       <view class="app-name">餐饮点餐</view>
@@ -11,15 +11,15 @@
   </view>
   <view class="login-features">
     <view class="feature-item">
-      <view class="feature-icon">&#10003;</view>
+      <view class="feature-icon">✓</view>
       <view class="feature-text">扫码即点，无需排队</view>
     </view>
     <view class="feature-item">
-      <view class="feature-icon">&#10003;</view>
+      <view class="feature-icon">✓</view>
       <view class="feature-text">邀请好友，赚取福利金</view>
     </view>
     <view class="feature-item">
-      <view class="feature-icon">&#10003;</view>
+      <view class="feature-icon">✓</view>
       <view class="feature-text">消费返利，最高13%</view>
     </view>
   </view>

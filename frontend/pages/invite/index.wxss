@@ -40,7 +40,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--space-lg);
+  margin: 0 auto 32rpx;
   font-size: 80rpx;
 }
 
@@ -105,7 +105,7 @@
 .qr-image-wrap {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-md);
+  margin-bottom: 24rpx;
 }
 
 .qr-image {

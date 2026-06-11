@@ -4,7 +4,7 @@
   <!-- 未绑定桌号：扫码引导 -->
   <view wx:if="{{!boundShopId}}" class="scan-prompt">
     <view class="prompt-icon">
-      <text class="icon-text">扫</text>
+      <text class="icon-emoji">📱</text>
     </view>
     <view class="prompt-title">扫码点餐</view>
     <view class="prompt-desc">请扫描餐桌上的二维码开始点餐</view>
@@ -36,7 +36,7 @@
 
   <!-- 空菜单 -->
   <view wx:elif="{{products.length === 0}}" class="empty-state">
-    <view class="empty-icon">--</view>
+    <view class="empty-icon">🍽</view>
     <view class="empty-title">暂无菜品</view>
     <view class="empty-desc">该店铺还没有上架菜品，请稍后再来</view>
   </view>
@@ -49,15 +49,8 @@
       <text class="change-table-btn" bind:tap="changeTable">换桌</text>
     </view>
 
-    <!-- 分类导航 -->
-    <scroll-view scroll-x class="category-tabs" wx:if="{{categories.length > 1}}">
-      <view wx:for="{{categories}}" wx:key="this"
-            class="cat-tab {{activeCategory === item ? 'cat-tab-on' : ''}}"
-            bindtap="onCategoryTap" data-cat="{{item}}">{{item}}</view>
-    </scroll-view>
-
     <!-- 菜品分类列表 -->
-    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access" id="panel-{{item}}">
+    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access">
       <view class="weui-panel__hd">{{item}}</view>
       <view class="weui-panel__bd">
         <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="weui-media-box weui-media-box_appmsg">
@@ -87,7 +80,7 @@
     <!-- 去结算 (form-page button 插槽，在文档流中，不会被 tabbar 遮挡) -->
     <view slot="button" wx:if="{{cartCount > 0}}" class="cart-bar" bindtap="goCart">
       <view class="cart-info">
-        <view class="cart-icon">购</view>
+        <view class="cart-icon">🛒</view>
         <view class="cart-count">{{cartCount}} 件</view>
         <view class="cart-total">¥{{cartTotal}}</view>
       </view>
