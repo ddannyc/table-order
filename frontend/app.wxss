@@ -38,6 +38,7 @@ page {
   --font-caption: 24rpx;
   --font-body: 28rpx;
   --font-subhead: 30rpx;
+  --font-lg: 32rpx;
   --font-title: 36rpx;
   --font-h2: 40rpx;
   --font-h1: 48rpx;
