@@ -3,7 +3,6 @@ package router
 import (
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/api/handler"
@@ -32,18 +31,8 @@ func Setup(r *gin.Engine) {
 	r.GET("/scan", handler.ScanRedirect)
 
 	// Static file serving — serve files from backend root by path
-	r.GET("/*filename", func(c *gin.Context) {
-		name := c.Param("filename")[1:] // strip leading /
-		if name == "" {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		// Only allow exact filenames (no subdirectories)
-		if filepath.Base(name) != name {
-			c.Status(http.StatusNotFound)
-			return
-		}
-		data, err := os.ReadFile(name)
+	r.GET("/GP1H2hwSZU.txt", func(c *gin.Context) {
+		data, err := os.ReadFile("GP1H2hwSZU.txt")
 		if err != nil {
 			c.Status(http.StatusNotFound)
 			return
