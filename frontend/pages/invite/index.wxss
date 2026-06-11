@@ -1,10 +1,10 @@
 /* pages/invite/index.wxss */
 .header-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #07c160 0%, #059a4c 100%);
   border-radius: 0 0 32rpx 32rpx;
   padding: 56rpx 32rpx;
-  color: #fff;
-  margin-bottom: 24rpx;
+  color: var(--color-bg-surface);
+  margin-bottom: var(--space-md);
 }
 
 .stats-row {
@@ -22,9 +22,9 @@
 }
 
 .stat .label {
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   opacity: 0.8;
-  margin-top: 8rpx;
+  margin-top: var(--space-xs);
 }
 
 .share-card {
@@ -45,47 +45,47 @@
 }
 
 .share-title {
-  font-size: 36rpx;
+  font-size: var(--font-title);
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
   margin-bottom: 12rpx;
 }
 
 .share-desc {
-  font-size: 28rpx;
-  color: #999;
-  margin-bottom: 48rpx;
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
+  margin-bottom: var(--space-xl);
 }
 
 .rules-title {
-  font-size: 32rpx;
+  font-size: var(--font-lg);
   font-weight: 600;
-  color: #333;
-  margin-bottom: 32rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
 }
 
 .rules-list {
   display: flex;
   flex-direction: column;
-  gap: 24rpx;
+  gap: var(--space-md);
 }
 
 .rule-item {
   display: flex;
   align-items: flex-start;
-  gap: 24rpx;
+  gap: var(--space-md);
 }
 
 .rule-num {
   width: 44rpx;
   height: 44rpx;
   background: var(--weui-primary);
-  color: #fff;
+  color: var(--color-bg-surface);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   font-weight: bold;
   flex-shrink: 0;
 }
@@ -96,10 +96,10 @@
 }
 
 .qr-title {
-  font-size: 32rpx;
+  font-size: var(--font-lg);
   font-weight: 600;
-  color: #333;
-  margin-bottom: 32rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-lg);
 }
 
 .qr-image-wrap {
@@ -115,19 +115,19 @@
 
 .qr-desc {
   font-size: 26rpx;
-  color: #999;
+  color: var(--color-text-hint);
 }
 
 .rule-text {
-  font-size: 28rpx;
-  color: #666;
+  font-size: var(--font-body);
+  color: var(--color-text-secondary);
   line-height: 1.5;
   padding-top: 4rpx;
 }
 
 .reward-paused-bar {
-  background: #fff3cd;
-  color: #856404;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
   padding: 20rpx 32rpx;
-  font-size: 24rpx;
+  font-size: var(--font-caption);
 }

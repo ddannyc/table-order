@@ -21,15 +21,14 @@
 }
 
 .prompt-title {
-  font-size: 40rpx;
+  font-size: var(--font-h2);
   font-weight: 600;
-  color: #333;
-  margin-bottom: 16rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
 }
-
 .prompt-desc {
-  font-size: 28rpx;
-  color: #999;
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
   margin-bottom: 80rpx;
   text-align: center;
 }
@@ -53,33 +52,33 @@
   margin-right: 24rpx;
 }
 .weui-media-box__thumb {
-  border-radius: 12rpx;
-  background: #f5f5f5;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-page);
 }
 .weui-media-box__title {
-  font-size: 30rpx;
+  font-size: var(--font-subhead);
   font-weight: 500;
-  color: #333;
+  color: var(--color-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .weui-media-box__title.inactive {
-  color: #ccc;
+  color: var(--color-text-disabled);
   text-decoration: line-through;
 }
 .weui-media-box__desc {
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   padding-top: 6rpx;
 }
 .product-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8rpx;
+  margin-top: var(--space-xs);
 }
 .product-price {
-  font-size: 34rpx;
+  font-size: var(--font-price);
   color: var(--weui-primary);
   font-weight: bold;
 }
@@ -130,13 +129,13 @@
   font-weight: 600;
   min-width: 48rpx;
   text-align: center;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .sold-out {
-  font-size: 24rpx;
-  color: #999;
-  background: #f5f5f5;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
+  background: var(--color-bg-page);
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
 }
@@ -190,12 +189,11 @@
   align-items: center;
   justify-content: space-between;
 }
-
 .change-table-btn {
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   color: var(--weui-primary);
   background: var(--weui-primary-light);
   padding: 6rpx 20rpx;
   border-radius: 24rpx;
-  margin-left: 16rpx;
+  margin-left: var(--space-sm);
 }

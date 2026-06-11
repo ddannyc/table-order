@@ -2,14 +2,10 @@
 .user-header {
   display: flex;
   align-items: center;
-  gap: 32rpx;
-  background: #fff;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
-}
-
-.avatar-box {
-  position: relative;
+  gap: var(--space-lg);
+  background: var(--color-bg-surface);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .avatar {
@@ -22,11 +18,11 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #07c160 0%, #059a4c 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-bg-surface);
   font-size: 44rpx;
   font-weight: bold;
 }
@@ -36,23 +32,23 @@
 }
 
 .nickname {
-  font-size: 36rpx;
+  font-size: var(--font-title);
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .user-desc {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 8rpx;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
+  margin-top: var(--space-xs);
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-  border-radius: 24rpx;
+  background: linear-gradient(135deg, #059a4c 0%, #047a3d 100%);
+  border-radius: var(--space-md);
   padding: 40rpx;
   display: flex;
-  margin-bottom: 24rpx;
+  margin-bottom: var(--space-md);
 }
 
 .balance-item {
@@ -61,27 +57,27 @@
 }
 
 .balance-label {
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   color: rgba(255, 255, 255, 0.7);
-  margin-bottom: 16rpx;
+  margin-bottom: var(--space-sm);
 }
 
 .balance-amount {
-  font-size: 48rpx;
+  font-size: var(--font-price-large);
   font-weight: bold;
-  color: #fff;
+  color: var(--color-bg-surface);
 }
 
 .balance-amount.gold {
-  color: #FFD700;
+  color: var(--color-gold);
 }
 
 .stats-row {
   display: flex;
-  background: #fff;
-  border-radius: 16rpx;
-  padding: 32rpx;
-  margin-bottom: 24rpx;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .stat-item {
@@ -90,45 +86,45 @@
 }
 
 .stat-value {
-  font-size: 36rpx;
+  font-size: var(--font-title);
   font-weight: bold;
-  color: #333;
-  margin-bottom: 8rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-xs);
 }
 
 .stat-label {
-  font-size: 24rpx;
-  color: #999;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
 }
 
 .stat-divider {
   width: 2rpx;
-  background: #eee;
+  background: var(--color-border-light);
 }
 
 .weui-tabs {
-  background: #fff;
-  border-radius: 16rpx;
-  margin-bottom: 24rpx;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
 }
 
 .weui-tabs__header {
   display: flex;
-  padding: 8rpx;
+  padding: var(--space-xs);
 }
 
 .weui-tabs__item {
   flex: 1;
   text-align: center;
-  padding: 16rpx;
-  font-size: 28rpx;
-  color: #999;
-  border-radius: 8rpx;
+  padding: var(--space-sm);
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
+  border-radius: var(--radius-sm);
 }
 
 .weui-tabs__item_on {
   background: var(--weui-primary);
-  color: #fff;
+  color: var(--color-bg-surface);
   font-weight: 600;
 }
 
@@ -136,21 +132,9 @@
   min-height: 600rpx;
 }
 
-.log-item {
-  padding: 24rpx 32rpx;
-  display: flex;
-  align-items: center;
-}
-
-.log-info {
-  display: flex;
-  flex-direction: column;
-  gap: 8rpx;
-}
-
 .log-remark {
-  font-size: 24rpx;
-  color: #999;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
 }
 
 .log-amount {
@@ -167,24 +151,24 @@
 }
 
 .order-item {
-  margin-bottom: 24rpx;
+  margin-bottom: var(--space-md);
   overflow: hidden;
 }
 
 .order-header {
   display: flex;
   justify-content: space-between;
-  padding: 20rpx 32rpx;
-  background: #fafafa;
+  padding: 20rpx var(--space-lg);
+  background: var(--color-bg-hover);
 }
 
 .order-no {
-  font-size: 24rpx;
-  color: #999;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
 }
 
 .order-status {
-  font-size: 24rpx;
+  font-size: var(--font-caption);
   color: var(--weui-primary);
 }
 
@@ -192,7 +176,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx 32rpx;
+  padding: var(--space-md) var(--space-lg);
 }
 
 .order-info {
@@ -201,14 +185,14 @@
 }
 
 .shop-name {
-  font-size: 28rpx;
+  font-size: var(--font-body);
   font-weight: 500;
 }
 
 .order-time {
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 8rpx;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
+  margin-top: var(--space-xs);
 }
 
 .order-amount .amount {
@@ -217,63 +201,63 @@
 }
 
 .order-detail {
-  padding: 16rpx 32rpx 24rpx;
-  border-top: 2rpx solid #f0f0f0;
-  background: #fafafa;
+  padding: var(--space-sm) var(--space-lg) var(--space-md);
+  border-top: 2rpx solid var(--color-border-light);
+  background: var(--color-bg-hover);
 }
 
 .detail-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8rpx 0;
+  padding: var(--space-xs) 0;
 }
 
 .detail-name {
-  font-size: 24rpx;
-  color: #666;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
 }
 
 .detail-price {
-  font-size: 24rpx;
-  color: #666;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
 }
 
 .reward-paused-bar {
-  background: #fff3cd;
-  color: #856404;
-  padding: 20rpx 32rpx;
-  font-size: 24rpx;
-  margin-bottom: 16rpx;
-  border-radius: 8rpx;
+  background: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  padding: 20rpx var(--space-lg);
+  font-size: var(--font-caption);
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-sm);
 }
 
 .expiring-soon-bar {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 20rpx 32rpx;
-  font-size: 24rpx;
-  margin-bottom: 16rpx;
-  border-radius: 8rpx;
+  background: var(--color-danger-bg);
+  color: var(--color-danger-text);
+  padding: 20rpx var(--space-lg);
+  font-size: var(--font-caption);
+  margin-bottom: var(--space-sm);
+  border-radius: var(--radius-sm);
 }
 
 .reward-rules {
-  padding: 24rpx 32rpx;
-  margin-bottom: 24rpx;
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-md);
 }
 
 .rule-title {
-  font-size: 28rpx;
+  font-size: var(--font-body);
   font-weight: 600;
-  color: #333;
-  margin-bottom: 16rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
 }
 
 .rule-item {
-  font-size: 24rpx;
-  color: #666;
-  padding: 8rpx 0;
-  padding-left: 16rpx;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
+  padding: var(--space-xs) 0;
+  padding-left: var(--space-sm);
   border-left: 4rpx solid var(--weui-primary);
-  margin-bottom: 8rpx;
+  margin-bottom: var(--space-xs);
 }

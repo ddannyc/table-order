@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: #fff;
+  background: linear-gradient(180deg, #f0faf4 0%, #fff 40%);
 }
 
 .login-logo {
@@ -16,7 +16,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 48rpx;
+  margin-bottom: var(--space-xl);
   font-size: 80rpx;
 }
 
@@ -26,15 +26,15 @@
 }
 
 .app-name {
-  font-size: 48rpx;
+  font-size: var(--font-h1);
   font-weight: bold;
-  color: #333;
-  margin-bottom: 16rpx;
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-sm);
 }
 
 .app-desc {
-  font-size: 28rpx;
-  color: #999;
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
 }
 
 .login-btn-wrap {
