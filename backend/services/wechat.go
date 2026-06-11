@@ -241,7 +241,7 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 		JumpWxa: generateSchemeJumpWxa{
 			Path:       "/pages/home/index",
 			Query:      "shop_id=" + shopID + "&table_no=" + tableNo,
-			EnvVersion: "develop",
+			EnvVersion: "trial",
 		},
 		IsExpire: false, // permanent scheme
 	}
