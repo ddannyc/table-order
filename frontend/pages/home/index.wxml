@@ -20,26 +20,31 @@
     </view>
 
     <!-- 菜品分类列表 -->
-    <view wx:for="{{categories}}" wx:key="this" class="category-section">
-      <mp-cells title="{{item}}">
-        <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="product-row">
-          <image wx:if="{{p.image}}" src="{{p.image}}" mode="aspectFill" class="product-img" />
-          <view class="product-info {{p.image ? 'product-info-with-img' : ''}}">
-            <view class="product-name {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
-            <view class="product-desc">{{p.description || '美味菜品'}}</view>
-            <view class="product-price">¥{{p.priceText}}</view>
+    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access">
+      <view class="weui-panel__hd">{{item}}</view>
+      <view class="weui-panel__bd">
+        <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="weui-media-box weui-media-box_appmsg">
+          <view class="weui-media-box__hd" wx:if="{{p.image}}">
+            <image class="weui-media-box__thumb" src="{{p.image}}" mode="aspectFill" />
           </view>
-          <view class="product-action">
-            <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" bindtap="onAdd" data-id="{{p.id}}">+</view>
-            <view wx:elif="{{p.status !== 2}}" class="qty-control">
-              <view class="qty-btn" bindtap="onDec" data-id="{{p.id}}">−</view>
-              <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
-              <view class="qty-btn" bindtap="onInc" data-id="{{p.id}}">+</view>
+          <view class="weui-media-box__bd">
+            <view class="weui-media-box__title {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
+            <view class="weui-media-box__desc">{{p.description || '美味菜品'}}</view>
+            <view class="product-bottom">
+              <view class="product-price">¥{{p.priceText}}</view>
+              <view class="product-action">
+                <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" bindtap="onAdd" data-id="{{p.id}}">+</view>
+                <view wx:elif="{{p.status !== 2}}" class="qty-control">
+                  <view class="qty-btn" bindtap="onDec" data-id="{{p.id}}">−</view>
+                  <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
+                  <view class="qty-btn" bindtap="onInc" data-id="{{p.id}}">+</view>
+                </view>
+                <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
+              </view>
             </view>
-            <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
           </view>
         </view>
-      </mp-cells>
+      </view>
     </view>
 
     <!-- 去结算 (form-page button 插槽，在文档流中，不会被 tabbar 遮挡) -->
