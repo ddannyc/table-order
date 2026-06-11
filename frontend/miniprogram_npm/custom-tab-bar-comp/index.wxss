@@ -4,9 +4,9 @@
   left: 0;
   right: 0;
   display: flex;
-  background: #fff;
+  background: var(--color-bg-surface);
   padding-bottom: env(safe-area-inset-bottom);
-  border-top: 1rpx solid #e5e5e5;
+  border-top: 1rpx solid var(--color-border);
   z-index: 100;
 }
 
@@ -16,7 +16,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16rpx 0;
+  padding: var(--space-sm) 0;
   min-height: 100rpx;
 }
 
@@ -34,8 +34,8 @@
 }
 
 .icon-text {
-  font-size: 22rpx;
-  color: #999;
+  font-size: var(--font-caption);
+  color: var(--color-text-hint);
   transition: color 0.2s;
 }
 
@@ -45,7 +45,7 @@
 
 .tab-item.active .icon-text,
 .icon-text.active {
-  color: #07c160;
+  color: var(--weui-primary);
   font-weight: 600;
 }
 
