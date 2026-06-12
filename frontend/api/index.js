@@ -7,21 +7,22 @@ const { API_BASE } = require('../config.js')
 
 const request = (options) => {
   return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('token') || ''
+    const token = (options.auth !== false) ? (wx.getStorageSync('token') || '') : ''
+    const url = API_BASE + options.url
     wx.request({
-      url: API_BASE + options.url,
+      url,
       method: options.method || 'GET',
       data: options.data || {},
-      header: {
-        'Content-Type': 'application/json',
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
+      responseType: options.responseType || undefined,
+      header: Object.assign(
+        { 'Content-Type': 'application/json' },
+        token ? { 'Authorization': `Bearer ${token}` } : {}
+      ),
       success: (res) => {
         if (res.statusCode === 200) {
           resolve(res.data)
         } else if (res.statusCode === 401) {
           wx.removeStorageSync('token')
-          wx.reLaunch({ url: '/pages/login/index' })
           reject(new Error('未登录'))
         } else {
           reject(res.data)
@@ -43,7 +44,8 @@ export const getUserInfo = () => request({ url: '/auth/userinfo' })
 export const loginByCode = (code) => request({
   url: '/auth/login',
   method: 'POST',
-  data: { code }
+  data: { code },
+  auth: false
 })
 
 // 钱包
@@ -75,31 +77,10 @@ export const getInviteStats = () => request({ url: '/invites/stats' })
 
 export const bindInviteCode = (code, shopId) => request({ url: '/invites/bind', method: 'POST', data: { code, shop_id: shopId || 0 } })
 
-export const getInviteQR = () => {
-  return new Promise((resolve, reject) => {
-    const token = wx.getStorageSync('token') || ''
-    wx.request({
-      url: API_BASE + '/invites/qrcode',
-      method: 'GET',
-      responseType: 'arraybuffer',
-      header: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      },
-      success: (res) => {
-        if (res.statusCode === 200) {
-          resolve(res.data)
-        } else if (res.statusCode === 401) {
-          wx.removeStorageSync('token')
-          wx.reLaunch({ url: '/pages/login/index' })
-          reject(new Error('未登录'))
-        } else {
-          reject(res.data)
-        }
-      },
-      fail: (err) => reject(err)
-    })
-  })
-}
+export const getInviteQR = () => request({
+  url: '/invites/qrcode',
+  responseType: 'arraybuffer'
+})
 
 // 手机号验证
 export const verifyPhone = (phone) => request({

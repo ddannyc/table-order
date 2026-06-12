@@ -6,26 +6,39 @@
     <view class="header-sub">分享给好友，消费即返利</view>
   </view>
 
-  <!-- QR Code -->
-  <view class="qr-section card">
-    <view class="qr-image-wrap" wx:if="{{qrCodeSrc}}">
-      <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
+  <!-- 未登录：授权提示 -->
+  <view wx:if="{{needLogin}}" class="login-prompt-card card">
+    <view class="prompt-icon-wrap">
+      <text class="prompt-icon">🔐</text>
     </view>
-    <view wx:else class="qr-placeholder">加载中...</view>
-    <view class="qr-tip">扫一扫二维码，锁定邀请关系</view>
+    <view class="prompt-title">授权登录</view>
+    <view class="prompt-desc">登录后查看推广码和福利金币</view>
+    <button class="weui-btn" type="primary" bind:tap="handleLogin">微信授权登录</button>
   </view>
 
-  <!-- Reward Info -->
-  <view class="reward-info card">
-    <view class="info-row">
-      <text class="info-label">当前福利金币</text>
-      <text class="info-value gold">¥{{rewardBalance}}</text>
+  <!-- 已登录内容 -->
+  <block wx:else>
+    <!-- QR Code -->
+    <view class="qr-section card">
+      <view class="qr-image-wrap" wx:if="{{qrCodeSrc}}">
+        <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />
+      </view>
+      <view wx:else class="qr-placeholder">加载中...</view>
+      <view class="qr-tip">扫一扫二维码，锁定邀请关系</view>
     </view>
-    <view class="info-row">
-      <text class="info-label">邀请关系</text>
-      <text class="info-value">终身绑定，不可解绑</text>
+
+    <!-- Reward Info -->
+    <view class="reward-info card">
+      <view class="info-row">
+        <text class="info-label">当前福利金币</text>
+        <text class="info-value gold">¥{{rewardBalance}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-label">邀请关系</text>
+        <text class="info-value">终身绑定，不可解绑</text>
+      </view>
     </view>
-  </view>
+  </block>
 
   <!-- Reward Rates -->
   <view class="rates-card card">
@@ -50,7 +63,7 @@
   </view>
 
   <!-- Actions -->
-  <view class="actions">
+  <view wx:if="{{!needLogin}}" class="actions">
     <button class="weui-btn" type="primary" open-type="share">分享给好友</button>
     <button class="weui-btn weui-btn_default" bind:tap="copyLink">复制邀请码</button>
   </view>

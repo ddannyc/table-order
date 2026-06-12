@@ -1,9 +1,11 @@
 // pages/order-confirm/index.js
 const { getShop, getRewardBalance, createOrder, getTableBinding } = require('../../api/index.js')
 const { getCart, clearCart, getCartTotal } = require('../../api/product.js')
+const { doLogin, handleAuthError } = require('../../utils/storage.js')
 
 Page({
   data: {
+    needLogin: false,
     shopId: 0,
     tableNo: '',
     shop: {},
@@ -24,12 +26,14 @@ Page({
         shopId: Number(options.shop_id) || 1,
         tableNo: options.table_no || ''
       })
-      this.loadData()
+      this.refreshCartDisplay()
+      this.checkAuthAndLoad()
     } else {
       const { shopId, tableNo } = getTableBinding()
       if (shopId) {
         this.setData({ shopId, tableNo })
-        this.loadData()
+        this.refreshCartDisplay()
+        this.checkAuthAndLoad()
       } else {
         wx.showModal({
           title: '请先扫码绑定桌号',
@@ -44,6 +48,25 @@ Page({
         })
       }
     }
+  },
+
+  checkAuthAndLoad() {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ needLogin: true })
+      return
+    }
+    this.setData({ needLogin: false })
+    this.loadData()
+  },
+
+  handleLogin() {
+    doLogin()
+      .then(() => {
+        this.setData({ needLogin: false })
+        this.loadData()
+      })
+      .catch(() => {})
   },
 
   onShow() {
@@ -91,7 +114,7 @@ Page({
       })
       this.refreshCartDisplay()
     }).catch(err => {
-      console.error(err)
+      if (!handleAuthError(err, this)) { console.error(err) }
     })
   },
 
@@ -103,6 +126,11 @@ Page({
 
   handlePay() {
     if (this.data.loading) return
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ needLogin: true })
+      return
+    }
     const { cart, totalAmount } = this.data
     if (cart.length === 0) {
       wx.showToast({ title: '购物车为空', icon: 'none' })
@@ -159,8 +187,10 @@ Page({
         })
       })
       .catch((err) => {
-        console.error(err)
-        wx.showToast({ title: '下单失败', icon: 'none' })
+        if (!handleAuthError(err, this)) {
+          console.error(err)
+          wx.showToast({ title: '下单失败', icon: 'none' })
+        }
       })
       .finally(() => {
         this.setData({ loading: false })

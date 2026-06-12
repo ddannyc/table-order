@@ -1,8 +1,10 @@
 // pages/share-code/index.js
 const { getInviteQR, getRewardBalance } = require('../../api/index.js')
+const { doLogin, handleAuthError } = require('../../utils/storage.js')
 
 Page({
   data: {
+    needLogin: false,
     qrCodeSrc: '',
     inviteURL: '',
     rewardPaused: false,
@@ -10,7 +12,21 @@ Page({
   },
 
   onLoad() {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ needLogin: true })
+      return
+    }
     this.loadData()
+  },
+
+  handleLogin() {
+    doLogin()
+      .then(() => {
+        this.setData({ needLogin: false })
+        this.loadData()
+      })
+      .catch(() => {})
   },
 
   loadData() {
@@ -19,7 +35,7 @@ Page({
       const base64 = wx.arrayBufferToBase64(data)
       this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + base64 })
     }).catch(err => {
-      console.error('load invite qr failed:', err)
+      if (!handleAuthError(err, this)) { console.error('load invite qr failed:', err) }
     })
 
     const cached = wx.getStorageSync('invite_url')
@@ -39,7 +55,9 @@ Page({
         rewardPaused: rb.reward_paused || false,
         rewardBalance: (rb.reward_balance || 0).toFixed(2)
       })
-    }).catch(() => {})
+    }).catch(err => {
+      if (!handleAuthError(err, this)) { console.error(err) }
+    })
   },
 
   onShareAppMessage() {

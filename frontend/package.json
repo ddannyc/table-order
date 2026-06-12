@@ -5,9 +5,19 @@
   "description": "WeChat mini-program for restaurant member referral",
   "scripts": {
     "dev": "echo 'Open frontend/ in WeChat DevTools directly'",
-    "build": "echo 'No build step needed - native WeChat mini-program'"
+    "build": "echo 'No build step needed - native WeChat mini-program'",
+    "test": "jest"
   },
   "dependencies": {
     "weui-miniprogram": "^1.2.3"
-  }
+  },
+  "main": "app.js",
+  "devDependencies": {
+    "@babel/preset-env": "^7.29.7",
+    "jest": "^30.4.2"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
 }

@@ -1,8 +1,10 @@
 // pages/invite/index.js
 const { getInviteStats, bindInviteCode, getInviteQR, getRewardBalance } = require('../../api/index.js')
+const { doLogin, handleAuthError } = require('../../utils/storage.js')
 
 Page({
   data: {
+    needLogin: false,
     stats: { invite_count: 0, total_invite_reward: 0, today_reward: 0 },
     statsText: { totalInviteReward: '0.00', todayReward: '0.00' },
     rewardPaused: false,
@@ -19,6 +21,12 @@ Page({
   },
 
   onLoad(options) {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ needLogin: true })
+      return
+    }
+
     // Check if opened from share link with invite_code
     if (options && options.invite_code) {
       bindInviteCode(options.invite_code).catch(err => console.error(err))
@@ -30,6 +38,15 @@ Page({
       bindInviteCode(pendingCode).catch(err => console.error(err))
     }
     this.loadData()
+  },
+
+  handleLogin() {
+    doLogin()
+      .then(() => {
+        this.setData({ needLogin: false })
+        this.loadData()
+      })
+      .catch(() => {})
   },
 
   onShareAppMessage() {
@@ -63,12 +80,14 @@ Page({
         }
       })
     }).catch(err => {
-      console.error(err)
+      if (!handleAuthError(err, this)) { console.error(err) }
     })
 
     getRewardBalance().then(rb => {
       this.setData({ rewardPaused: rb.reward_paused || false })
-    }).catch(() => {})
+    }).catch(err => {
+      if (!handleAuthError(err, this)) { console.error(err) }
+    })
 
     // Invite URL: construct from cached invite_code (generated at user creation)
     const cached = wx.getStorageSync('invite_url')
@@ -88,7 +107,7 @@ Page({
       const base64 = wx.arrayBufferToBase64(data)
       this.setData({ qrCodeSrc: 'data:image/jpeg;base64,' + base64 })
     }).catch(err => {
-      console.error('load invite qr failed:', err)
+      if (!handleAuthError(err, this)) { console.error('load invite qr failed:', err) }
     })
   },
 

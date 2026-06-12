@@ -131,3 +131,25 @@
   padding: 20rpx 32rpx;
   font-size: var(--font-caption);
 }
+
+/* 未登录提示 */
+.login-tip-inline {
+  text-align: center;
+  padding: 40rpx 48rpx;
+}
+
+.login-tip-text {
+  display: block;
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
+  margin-bottom: var(--space-lg);
+}
+
+.login-tip-btn {
+  display: inline-block;
+  padding: 16rpx 48rpx;
+  background: var(--weui-primary);
+  color: var(--color-bg-surface);
+  font-size: var(--font-body);
+  border-radius: var(--radius-sm);
+}

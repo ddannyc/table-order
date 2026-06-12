@@ -1,8 +1,10 @@
 // pages/profile/index.js
 const { getWalletLogs, getOrders, getInviteStats, getRewardBalance, getRewardLogs, getRewardExpiryInfo } = require('../../api/index.js')
+const { doLogin, handleAuthError } = require('../../utils/storage.js')
 
 Page({
   data: {
+    needLogin: false,
     user: {},
     stats: { invite_count: 0, total_invite_reward: 0, today_reward: 0 },
     logs: [],
@@ -25,7 +27,22 @@ Page({
   },
 
   onShow() {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ needLogin: true })
+      return
+    }
+    this.setData({ needLogin: false })
     this.loadData()
+  },
+
+  handleLogin() {
+    doLogin()
+      .then(() => {
+        this.setData({ needLogin: false })
+        this.loadData()
+      })
+      .catch(() => {})
   },
 
   tabChange(e) {
@@ -85,7 +102,7 @@ Page({
         totalInviteRewardText: (stats.total_invite_reward || 0).toFixed(2)
       })
     }).catch(err => {
-      console.error(err)
+      if (!handleAuthError(err, this)) { console.error(err) }
     })
   },
 

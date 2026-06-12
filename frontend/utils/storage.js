@@ -45,3 +45,6 @@ export const clearCart = (shopId) => {
   const key = `cart_${shopId}`
   wx.setStorageSync(key, [])
 }
+
+// 认证函数已迁移至 utils/auth.js，此处重导出以保持向后兼容
+export { doLogin, isLoggedIn, requireLogin, handleAuthError } from './auth.js'

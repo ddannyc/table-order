@@ -147,3 +147,35 @@
   flex-direction: column;
   gap: var(--space-sm);
 }
+
+/* 登录提示卡片 */
+.login-prompt-card {
+  text-align: center;
+  padding: 80rpx 48rpx;
+  margin: 40rpx 32rpx;
+}
+
+.prompt-icon-wrap {
+  width: 128rpx;
+  height: 128rpx;
+  background: var(--weui-primary-light);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 32rpx;
+  font-size: 64rpx;
+}
+
+.prompt-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin-bottom: 12rpx;
+}
+
+.prompt-desc {
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
+  margin-bottom: var(--space-xl);
+}

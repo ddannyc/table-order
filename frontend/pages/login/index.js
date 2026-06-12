@@ -1,5 +1,6 @@
 // pages/login/index.js
-const { loginByCode, bindInviteCode } = require('../../api/index.js')
+const { bindInviteCode } = require('../../api/index.js')
+const { doLogin } = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -9,42 +10,34 @@ Page({
   onLoad() {
     const token = wx.getStorageSync('token')
     if (token) {
-      this.redirectAfterLogin()
+      const returnPath = wx.getStorageSync('return_path')
+      if (returnPath) {
+        wx.removeStorageSync('return_path')
+        wx.redirectTo({ url: returnPath })
+      } else {
+        this.redirectAfterLogin()
+      }
     }
   },
 
   handleLogin() {
     if (this.data.loading) return
     this.setData({ loading: true })
-
-    wx.login({
-      success: (loginRes) => {
-        loginByCode(loginRes.code)
-          .then((res) => {
-            if (res.token) {
-              wx.setStorageSync('token', res.token)
-              wx.setStorageSync('user', res.user || {})
-              this.bindPendingInvite()
-              this.redirectAfterLogin()
-            } else {
-              wx.showToast({ title: '登录失败', icon: 'none' })
-            }
-          })
-          .catch((err) => {
-            console.error(err)
-            wx.showToast({ title: '登录失败', icon: 'none' })
-          })
-          .finally(() => {
-            this.setData({ loading: false })
-          })
-      },
-      fail: () => {
-        wx.showToast({ title: '微信登录失败', icon: 'none' })
+    doLogin()
+      .then(() => {
         this.setData({ loading: false })
-      }
-    })
+        this.redirectAfterLogin()
+      })
+      .catch(() => {
+        this.setData({ loading: false })
+      })
   },
 
+  /**
+   * 绑定待处理邀请码。
+   * doLogin() 内部已在登录时绑定 pending_invite_code，此处仅处理
+   * "已有 token 直接进入登录页"的边界情况（无需重新登录）。
+   */
   bindPendingInvite() {
     const pendingCode = wx.getStorageSync('pending_invite_code')
     if (pendingCode) {
@@ -54,6 +47,15 @@ Page({
   },
 
   redirectAfterLogin() {
+    // 优先返回来源页面
+    const returnPath = wx.getStorageSync('return_path')
+    if (returnPath) {
+      wx.removeStorageSync('return_path')
+      this.bindPendingInvite()
+      wx.redirectTo({ url: returnPath })
+      return
+    }
+    // 有待绑定邀请码 → 去邀请页
     const pendingCode = wx.getStorageSync('pending_invite_code')
     if (pendingCode) {
       this.bindPendingInvite()

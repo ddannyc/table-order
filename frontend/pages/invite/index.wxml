@@ -4,22 +4,28 @@
   <view class="header-card">
     <view class="stats-row">
       <view class="stat">
-        <view class="value">{{stats.invite_count}}</view>
+        <view class="value">{{needLogin ? '--' : stats.invite_count}}</view>
         <view class="label">邀请人数</view>
       </view>
       <view class="stat">
-        <view class="value">{{statsText.totalInviteReward}}</view>
+        <view class="value">{{needLogin ? '--' : statsText.totalInviteReward}}</view>
         <view class="label">累计奖励</view>
       </view>
       <view class="stat">
-        <view class="value">{{statsText.todayReward}}</view>
+        <view class="value">{{needLogin ? '--' : statsText.todayReward}}</view>
         <view class="label">今日奖励</view>
       </view>
     </view>
   </view>
 
+  <!-- 未登录提示 -->
+  <view wx:if="{{needLogin}}" class="login-tip-inline card">
+    <text class="login-tip-text">登录后查看邀请统计和推广二维码</text>
+    <view class="login-tip-btn" bind:tap="handleLogin">微信授权登录</view>
+  </view>
+
   <!-- Reward Paused Warning -->
-  <view wx:if="{{rewardPaused}}" class="reward-paused-bar">
+  <view wx:if="{{!needLogin && rewardPaused}}" class="reward-paused-bar">
     账户连续90天未消费，返利已暂停。消费一笔即可恢复。
   </view>
 
@@ -31,12 +37,12 @@
     <view class="share-title">邀请好友赚福利金币</view>
     <view class="share-desc">直推10% · 间推4% · 自购3%</view>
 
-    <button class="weui-btn" type="primary" open-type="share">分享到微信</button>
+    <button wx:if="{{!needLogin}}" class="weui-btn" type="primary" open-type="share">分享到微信</button>
     <button class="weui-btn weui-btn_default" bind:tap="goShareCode" style="margin-top:16rpx">我的推广码</button>
   </view>
 
-  <!-- 邀请二维码 -->
-  <view class="qr-card card" wx:if="{{qrCodeSrc}}">
+  <!-- 邀请二维码（需要登录） -->
+  <view class="qr-card card" wx:if="{{!needLogin && qrCodeSrc}}">
     <view class="qr-title">邀请二维码</view>
     <view class="qr-image-wrap">
       <image class="qr-image" src="{{qrCodeSrc}}" mode="widthFix" />

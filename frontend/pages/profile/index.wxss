@@ -261,3 +261,35 @@
   border-left: 4rpx solid var(--weui-primary);
   margin-bottom: var(--space-xs);
 }
+
+/* 未登录：用户名点击登录 */
+.login-link {
+  color: var(--weui-primary);
+}
+
+/* 未登录：福利金灰色 */
+.balance-amount.muted {
+  color: var(--color-text-disabled);
+}
+
+/* 未登录：tab 内容区登录提示 */
+.login-tip-inline {
+  text-align: center;
+  padding: 80rpx 48rpx;
+}
+
+.login-tip-text {
+  display: block;
+  font-size: var(--font-body);
+  color: var(--color-text-hint);
+  margin-bottom: var(--space-lg);
+}
+
+.login-tip-btn {
+  display: inline-block;
+  padding: 16rpx 48rpx;
+  background: var(--weui-primary);
+  color: var(--color-bg-surface);
+  font-size: var(--font-body);
+  border-radius: var(--radius-sm);
+}

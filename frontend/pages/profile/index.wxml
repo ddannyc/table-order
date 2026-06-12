@@ -7,7 +7,8 @@
       <view wx:else class="avatar-placeholder">{{user.nickname ? user.nickname[0] : 'V'}}</view>
     </view>
     <view class="user-info">
-      <view class="nickname">{{user.nickname || 'VIP会员'}}</view>
+      <view wx:if="{{!needLogin}}" class="nickname">{{user.nickname || 'VIP会员'}}</view>
+      <view wx:else class="nickname login-link" bind:tap="handleLogin">点击登录</view>
       <view class="user-desc">福利会员·随时消费随时返</view>
     </view>
   </view>
@@ -16,24 +17,24 @@
   <view class="balance-card">
     <view class="balance-item">
       <view class="balance-label">福利金</view>
-      <view class="balance-amount gold">¥{{rewardBalanceText}}</view>
+      <view class="balance-amount {{needLogin ? 'muted' : 'gold'}}">¥{{needLogin ? '0.00' : rewardBalanceText}}</view>
     </view>
   </view>
 
   <!-- Stats Row -->
   <view class="stats-row">
     <view class="stat-item">
-      <view class="stat-value">{{todayRewardText}}</view>
+      <view class="stat-value">{{needLogin ? '--' : todayRewardText}}</view>
       <view class="stat-label">今日收益</view>
     </view>
     <view class="stat-divider"></view>
     <view class="stat-item">
-      <view class="stat-value">{{stats.invite_count}}</view>
+      <view class="stat-value">{{needLogin ? '--' : stats.invite_count}}</view>
       <view class="stat-label">邀请人数</view>
     </view>
     <view class="stat-divider"></view>
     <view class="stat-item">
-      <view class="stat-value">{{totalInviteRewardText}}</view>
+      <view class="stat-value">{{needLogin ? '--' : totalInviteRewardText}}</view>
       <view class="stat-label">累计奖励</view>
     </view>
   </view>
@@ -59,18 +60,24 @@
 
   <!-- Tab Content: 收支明细 -->
   <view wx:if="{{activeTab === 'logs'}}" class="tab-content">
-    <mp-cells>
-      <view wx:for="{{logs}}" wx:key="id">
-        <mp-cell>
-          <view slot="title" class="log-cell">
-            <view class="log-type">{{item.typeLabel}}</view>
-            <view class="log-remark">{{item.remark}}</view>
-          </view>
-          <view slot="footer" class="log-amount {{item.amount < 0 ? 'minus' : 'plus'}}">{{item.amountText}}</view>
-        </mp-cell>
-      </view>
-    </mp-cells>
-    <view wx:if="{{logs.length === 0}}" class="empty-tip">暂无记录</view>
+    <view wx:if="{{needLogin}}" class="login-tip-inline">
+      <text class="login-tip-text">登录后可查看</text>
+      <view class="login-tip-btn" bind:tap="handleLogin">微信授权登录</view>
+    </view>
+    <block wx:else>
+      <mp-cells>
+        <view wx:for="{{logs}}" wx:key="id">
+          <mp-cell>
+            <view slot="title" class="log-cell">
+              <view class="log-type">{{item.typeLabel}}</view>
+              <view class="log-remark">{{item.remark}}</view>
+            </view>
+            <view slot="footer" class="log-amount {{item.amount < 0 ? 'minus' : 'plus'}}">{{item.amountText}}</view>
+          </mp-cell>
+        </view>
+      </mp-cells>
+      <view wx:if="{{logs.length === 0}}" class="empty-tip">暂无记录</view>
+    </block>
   </view>
 
   <!-- Tab Content: 福利金币 -->
@@ -83,45 +90,57 @@
       <view class="rule-item">有效期：180 天</view>
       <view class="rule-item">抵扣上限：单笔订单 50%</view>
     </view>
-    <mp-cells>
-      <view wx:for="{{rewardLogs}}" wx:key="id">
-        <mp-cell>
-          <view slot="title" class="log-cell">
-            <view class="log-type">{{item.typeLabel}}</view>
-            <view class="log-remark">{{item.dateText}} 过期</view>
-          </view>
-          <view slot="footer" class="log-amount plus">{{item.amountText}}</view>
-        </mp-cell>
-      </view>
-    </mp-cells>
-    <view wx:if="{{rewardLogs.length === 0}}" class="empty-tip">暂无金币记录</view>
+    <view wx:if="{{needLogin}}" class="login-tip-inline">
+      <text class="login-tip-text">登录后可查看</text>
+      <view class="login-tip-btn" bind:tap="handleLogin">微信授权登录</view>
+    </view>
+    <block wx:else>
+      <mp-cells>
+        <view wx:for="{{rewardLogs}}" wx:key="id">
+          <mp-cell>
+            <view slot="title" class="log-cell">
+              <view class="log-type">{{item.typeLabel}}</view>
+              <view class="log-remark">{{item.dateText}} 过期</view>
+            </view>
+            <view slot="footer" class="log-amount plus">{{item.amountText}}</view>
+          </mp-cell>
+        </view>
+      </mp-cells>
+      <view wx:if="{{rewardLogs.length === 0}}" class="empty-tip">暂无金币记录</view>
+    </block>
   </view>
 
   <!-- Tab Content: 消费订单 -->
   <view wx:if="{{activeTab === 'orders'}}" class="tab-content">
-    <view wx:for="{{orders}}" wx:key="id" class="order-item card">
-      <view class="order-header">
-        <text class="order-no">{{item.order_no}}</text>
-        <text class="order-status">{{item.statusText}}</text>
-      </view>
-      <view class="order-body">
-        <view class="order-info">
-          <text class="shop-name">店铺消费</text>
-          <text class="order-time">{{item.dateText}}</text>
-        </view>
-        <view class="order-amount">
-          <text class="amount">{{item.amountText}}</text>
-        </view>
-      </view>
-      <!-- 订单明细 -->
-      <view wx:if="{{item.items && item.items.length > 0}}" class="order-detail">
-        <view wx:for="{{item.items}}" wx:for-item="oi" wx:key="id" class="detail-row">
-          <text class="detail-name">{{oi.product_name}} x{{oi.quantity}}</text>
-          <text class="detail-price">{{oi.subtotalText}}</text>
-        </view>
-      </view>
+    <view wx:if="{{needLogin}}" class="login-tip-inline">
+      <text class="login-tip-text">登录后可查看</text>
+      <view class="login-tip-btn" bind:tap="handleLogin">微信授权登录</view>
     </view>
-    <view wx:if="{{orders.length === 0}}" class="empty-tip">暂无订单</view>
+    <block wx:else>
+      <view wx:for="{{orders}}" wx:key="id" class="order-item card">
+        <view class="order-header">
+          <text class="order-no">{{item.order_no}}</text>
+          <text class="order-status">{{item.statusText}}</text>
+        </view>
+        <view class="order-body">
+          <view class="order-info">
+            <text class="shop-name">店铺消费</text>
+            <text class="order-time">{{item.dateText}}</text>
+          </view>
+          <view class="order-amount">
+            <text class="amount">{{item.amountText}}</text>
+          </view>
+        </view>
+        <!-- 订单明细 -->
+        <view wx:if="{{item.items && item.items.length > 0}}" class="order-detail">
+          <view wx:for="{{item.items}}" wx:for-item="oi" wx:key="id" class="detail-row">
+            <text class="detail-name">{{oi.product_name}} x{{oi.quantity}}</text>
+            <text class="detail-price">{{oi.subtotalText}}</text>
+          </view>
+        </view>
+      </view>
+      <view wx:if="{{orders.length === 0}}" class="empty-tip">暂无订单</view>
+    </block>
   </view>
 
   <!-- 底部tabbar -->
