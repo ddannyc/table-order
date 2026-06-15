@@ -44,6 +44,13 @@ Page({
   },
 
   onShow() {
+    // Detect binding changes from URL Scheme warm start (App.onShow → handleScene stores new params)
+    const { shopId, tableNo } = getTableBinding()
+    if (shopId && tableNo && (shopId !== this.data.boundShopId || tableNo !== this.data.boundTableNo)) {
+      this.setData({ boundShopId: shopId, boundTableNo: tableNo })
+      this.loadData()
+      return
+    }
     if (this.data.boundShopId) {
       this.updateCartInfo()
     }

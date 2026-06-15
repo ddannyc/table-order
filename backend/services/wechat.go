@@ -137,11 +137,16 @@ func GetWXACodeUnlimited(scene, page string) (*WXACodeUnlimitedResponse, error) 
 
 	url := fmt.Sprintf("https://api.weixin.qq.com/wxa/getwxacodeunlimit?access_token=%s", token)
 
+	envVersion := "develop"
+	if config.AppConfig != nil && config.AppConfig.WeChat.EnvVersion != "" {
+		envVersion = config.AppConfig.WeChat.EnvVersion
+	}
+
 	body := map[string]interface{}{
 		"scene": scene,
 		"page":  page,
 		"check_path": false,
-		"env_version": "develop",
+		"env_version": envVersion,
 		"width": 280,
 	}
 
@@ -237,11 +242,16 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 
 	url := fmt.Sprintf("https://api.weixin.qq.com/wxa/generatescheme?access_token=%s", token)
 
+	envVersion := "release"
+	if config.AppConfig != nil && config.AppConfig.WeChat.EnvVersion != "" {
+		envVersion = config.AppConfig.WeChat.EnvVersion
+	}
+
 	body := generateSchemeRequest{
 		JumpWxa: generateSchemeJumpWxa{
 			Path:       "/pages/home/index",
 			Query:      "shop_id=" + shopID + "&table_no=" + tableNo,
-			EnvVersion: "release",
+			EnvVersion: envVersion,
 		},
 		IsExpire: false, // permanent scheme
 	}

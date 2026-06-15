@@ -5,7 +5,7 @@
 
 const { API_BASE } = require('../config.js')
 
-const request = (options) => {
+export const request = (options) => {
   return new Promise((resolve, reject) => {
     const token = (options.auth !== false) ? (wx.getStorageSync('token') || '') : ''
     const url = API_BASE + options.url

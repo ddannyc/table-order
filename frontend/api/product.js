@@ -4,19 +4,12 @@
 
 import { getCart, setCart, clearCart } from '../utils/storage.js'
 
-const { API_BASE } = require('../config.js')
+const { request } = require('../api/index.js')
 
 export { getCart, clearCart }
 
 export const getShopProducts = (shopId) => {
-  return new Promise((resolve, reject) => {
-    wx.request({
-      url: `${API_BASE}/shops/${shopId}/products`,
-      method: 'GET',
-      success: (res) => resolve(res.data),
-      fail: reject
-    })
-  })
+  return request({ url: `/shops/${shopId}/products` })
 }
 
 export const getCartTotal = (shopId) => {

@@ -46,6 +46,8 @@ type WeChatConfig struct {
 	WechatPayPublicKeyPath    string `mapstructure:"wechatpay_public_key_path"`
 	WechatPayPublicKeyContent string `mapstructure:"wechatpay_public_key_content"`
 	MchPrivateKeyContent      string `mapstructure:"mch_private_key_content"`
+	// Mini-program env version for QR codes and URL Schemes: "develop", "trial", or "release"
+	EnvVersion string `mapstructure:"env_version"`
 }
 
 func getEnv(key, defaultVal string) string {
@@ -96,6 +98,7 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.WeChat.WechatPayPublicKeyPath = getEnv("WECHATPAY_PUBLIC_KEY_PATH", cfg.WeChat.WechatPayPublicKeyPath)
 	cfg.WeChat.WechatPayPublicKeyContent = getEnv("WECHATPAY_PUBLIC_KEY_CONTENT", cfg.WeChat.WechatPayPublicKeyContent)
 	cfg.WeChat.MchPrivateKeyContent = getEnv("WECHAT_MCH_PRIVATE_KEY_CONTENT", cfg.WeChat.MchPrivateKeyContent)
+	cfg.WeChat.EnvVersion = getEnv("WECHAT_ENV_VERSION", cfg.WeChat.EnvVersion)
 
 	return &cfg, nil
 }

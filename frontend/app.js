@@ -19,6 +19,7 @@ App({
       wx.setStorageSync('current_shop_id', Number(shopId))
       wx.setStorageSync('current_table_no', tableNo)
       wx.removeStorageSync('pending_invite_code')
+      wx.reLaunch({ url: `/pages/home/index?shop_id=${shopId}&table_no=${tableNo}` })
       return
     }
 
