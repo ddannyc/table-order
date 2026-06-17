@@ -246,11 +246,12 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 	if config.AppConfig != nil && config.AppConfig.WeChat.EnvVersion != "" {
 		envVersion = config.AppConfig.WeChat.EnvVersion
 	}
+	fmt.Printf("[scan] env_version=%s path=/pages/home/index query=shop_id=%s&table_no=%s\n", envVersion, shopID, tableNo)
 
 	body := generateSchemeRequest{
 		JumpWxa: generateSchemeJumpWxa{
 			Path:       "/pages/home/index",
-			Query:      "shop_id=" + shopID + "&table_no=" + tableNo,
+			Query:      "a=1",
 			EnvVersion: envVersion,
 		},
 		IsExpire: false, // permanent scheme
@@ -282,7 +283,7 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 	}
 
 	if result.ErrCode != 0 {
-		return "", fmt.Errorf("wechat scheme error %d: %s", result.ErrCode, result.ErrMsg)
+		return "", fmt.Errorf("wechat scheme error %d: %s (response: %s)", result.ErrCode, result.ErrMsg, string(respBody))
 	}
 
 	if result.OpenLink == "" {
