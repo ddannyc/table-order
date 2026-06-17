@@ -1,5 +1,5 @@
 // pages/order-confirm/index.js
-const { getShop, getRewardBalance, createOrder, getTableBinding } = require('../../api/index.js')
+const { getShop, getRewardBalance, createOrder, getTableBinding, setTableBinding } = require('../../api/index.js')
 const { getCart, clearCart, getCartTotal } = require('../../api/product.js')
 const { doLogin, handleAuthError } = require('../../utils/storage.js')
 
@@ -208,6 +208,7 @@ Page({
         })
         const shopId = Number(params.shop_id) || 1
         const tableNo = params.table_no || 'A01'
+        setTableBinding(shopId, tableNo)
         this.setData({ shopId, tableNo })
         this.loadData()
       },

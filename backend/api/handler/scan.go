@@ -3,7 +3,6 @@ package handler
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/services"
@@ -192,8 +191,10 @@ func ScanRedirect(c *gin.Context) {
 		return
 	}
 
-	escapedScheme := url.QueryEscape(schemeURL)
-
+	// schemeURL is a WeChat URL Scheme like "weixin://dl/business/?t=TOKEN".
+	// Do NOT url.QueryEscape it — that would encode :// and ? as %3A%2F%2F
+	// and %3F, which browsers interpret as a relative path, not a URL scheme.
+	// The token from WeChat is already base64-encoded and URL-safe.
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, fmt.Sprintf(scanHTMLTemplate, escapedScheme, escapedScheme))
+	c.String(http.StatusOK, fmt.Sprintf(scanHTMLTemplate, schemeURL, schemeURL))
 }
