@@ -255,7 +255,16 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 		IsExpire: false, // permanent scheme
 	}
 
-	bodyBytes, _ := json.Marshal(body)
+	// Do NOT use json.Marshal — it HTML-escapes & < > (e.g. the "&" between
+	// query params becomes "&"), which WeChat's parser rejects with
+	// errcode 40212 "invalid query". SetEscapeHTML(false) keeps "&" literal.
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(body); err != nil {
+		return "", fmt.Errorf("marshal scheme request: %w", err)
+	}
+	bodyBytes := buf.Bytes()
 	fmt.Printf("[scan] generatescheme request body: %s\n", string(bodyBytes))
 
 	client := &http.Client{Timeout: 10 * time.Second}
