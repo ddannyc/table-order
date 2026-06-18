@@ -94,6 +94,37 @@ describe('handleScene — QR code scene string (WeChat link rule)', () => {
   })
 })
 
+describe('handleScene — "扫普通链接二维码打开小程序" q param (URL-encoded)', () => {
+  it('extracts shop_id and table_no from the encoded scan URL', () => {
+    const url = 'https://example.com/scan?shop_id=1&table_no=A01&token=6f28f1a172ed4971e883889590c99c20'
+    appConfig.onLaunch({ query: { q: encodeURIComponent(url) } })
+
+    expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 1)
+    expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'A01')
+    expect(wx.removeStorageSync).toHaveBeenCalledWith('pending_invite_code')
+    expect(wx.reLaunch).toHaveBeenCalledWith({
+      url: '/pages/home/index?shop_id=1&table_no=A01',
+    })
+  })
+
+  it('handles q on warm start via onShow', () => {
+    const url = 'https://example.com/scan?shop_id=42&table_no=B07&token=abc'
+    appConfig.onShow({ query: { q: encodeURIComponent(url) } })
+
+    expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 42)
+    expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'B07')
+    expect(wx.reLaunch).toHaveBeenCalledWith({
+      url: '/pages/home/index?shop_id=42&table_no=B07',
+    })
+  })
+
+  it('does nothing when q URL lacks shop_id', () => {
+    const url = 'https://example.com/scan?table_no=A01&token=abc'
+    appConfig.onLaunch({ query: { q: encodeURIComponent(url) } })
+    expect(wx.reLaunch).not.toHaveBeenCalled()
+  })
+})
+
 describe('handleScene — invite code scene string', () => {
   it('navigates to invite page for ic=CODE format', () => {
     appConfig.onLaunch({

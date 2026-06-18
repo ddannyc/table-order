@@ -23,10 +23,13 @@ App({
       return
     }
 
-    // Handle scene string from QR code scan
-    // WeChat's "扫普通链接二维码打开小程序" passes the URL query string
-    // as the scene value, e.g. "shop_id=1&table_no=A01&token=xxx"
-    const scene = options.query.scene
+    // Handle scene string from QR code scan.
+    //   scene: from wxacode.getUnlimited QR, e.g. "shop_id=1&table_no=A01&token=xxx"
+    //   q:     full URL from "扫普通链接二维码打开小程序" rule (URL-encoded),
+    //          e.g. "https://host/scan?shop_id=1&table_no=A01&token=xxx" — no /scan
+    //          request hits the backend in this path. The shop_id/table_no regexes
+    //          below match inside the decoded URL just as they do a bare scene.
+    const scene = options.query.scene || (options.query.q && decodeURIComponent(options.query.q))
     if (!scene) return
 
     // shop_id=XXX&table_no=YYY (table QR code via WeChat link rule)
