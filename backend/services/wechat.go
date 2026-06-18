@@ -246,8 +246,6 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 	if config.AppConfig != nil && config.AppConfig.WeChat.EnvVersion != "" {
 		envVersion = config.AppConfig.WeChat.EnvVersion
 	}
-	fmt.Printf("[scan] env_version=%s path=/pages/home/index query=shop_id=%s&table_no=%s\n", envVersion, shopID, tableNo)
-
 	body := generateSchemeRequest{
 		JumpWxa: generateSchemeJumpWxa{
 			Path:       "/pages/home/index",
@@ -258,6 +256,7 @@ func GenerateURLScheme(shopID, tableNo string) (string, error) {
 	}
 
 	bodyBytes, _ := json.Marshal(body)
+	fmt.Printf("[scan] generatescheme request body: %s\n", string(bodyBytes))
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("POST", url, bytes.NewReader(bodyBytes))
