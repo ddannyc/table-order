@@ -15,6 +15,8 @@ npm run build    # 产出 dist/
 
 这是一个纯静态 SPA，推荐用 Cloudflare Pages（与 R2 / bestluckbox.com 同账号）。
 
+**当前已上线**：https://table-order-admin.pages.dev （项目名 `table-order-admin`，production branch `main`）。
+
 ### 方式一：Git 集成（推荐）
 在 Cloudflare Dashboard → Pages → Create project → 连接本仓库，按下表填**构建设置**：
 
@@ -34,11 +36,20 @@ npm run build    # 产出 dist/
 
 > ⚠️ `VITE_*` 是**构建时**注入的，改了要重新部署。若不设此变量，则回退到 `admin/.env.production` 里的默认值。
 
-### 方式二：Wrangler CLI（手动一次性部署）
+### 方式二：Wrangler CLI（手动部署，实际使用的步骤）
 ```bash
+# 1. 登录 Cloudflare（首次，会打开浏览器 OAuth）
+npx wrangler login
+
+# 2. 创建 Pages 项目（仅首次；新版 wrangler 不会在 deploy 时自动创建）
+npx wrangler pages project create table-order-admin --production-branch main
+
+# 3. 构建并部署（之后每次更新只需这两步）
 npm run build
 npx wrangler pages deploy dist --project-name table-order-admin
 ```
+
+> 工作目录有未提交改动时 wrangler 会告警，加 `--commit-dirty=true` 可静默。
 
 ### SPA 回退
 `public/_redirects`（`/* /index.html 200`）已配置，Pages 会把所有路径回退到 `index.html`，刷新子路由不会 404。
