@@ -11,6 +11,15 @@ type Config struct {
 	Database DatabaseConfig
 	JWT      JWTConfig
 	WeChat   WeChatConfig
+	R2       R2Config
+}
+
+type R2Config struct {
+	AccountID       string `mapstructure:"account_id"`
+	AccessKeyID     string `mapstructure:"access_key_id"`
+	SecretAccessKey string `mapstructure:"secret_access_key"`
+	Bucket          string `mapstructure:"bucket"`
+	PublicBase      string `mapstructure:"public_base"` // e.g. https://bestluckbox.com
 }
 
 type ServerConfig struct {
@@ -99,6 +108,13 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.WeChat.WechatPayPublicKeyContent = getEnv("WECHATPAY_PUBLIC_KEY_CONTENT", cfg.WeChat.WechatPayPublicKeyContent)
 	cfg.WeChat.MchPrivateKeyContent = getEnv("WECHAT_MCH_PRIVATE_KEY_CONTENT", cfg.WeChat.MchPrivateKeyContent)
 	cfg.WeChat.EnvVersion = getEnv("WECHAT_ENV_VERSION", cfg.WeChat.EnvVersion)
+
+	// Cloudflare R2 env vars (Railway)
+	cfg.R2.AccountID = getEnv("R2_ACCOUNT_ID", cfg.R2.AccountID)
+	cfg.R2.AccessKeyID = getEnv("R2_ACCESS_KEY_ID", cfg.R2.AccessKeyID)
+	cfg.R2.SecretAccessKey = getEnv("R2_SECRET_ACCESS_KEY", cfg.R2.SecretAccessKey)
+	cfg.R2.Bucket = getEnv("R2_BUCKET", cfg.R2.Bucket)
+	cfg.R2.PublicBase = getEnv("R2_PUBLIC_BASE", cfg.R2.PublicBase)
 
 	return &cfg, nil
 }

@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/api/router"
 	"github.com/example/table-order/config"
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -28,6 +28,8 @@ func main() {
 	if err := config.InitWechatPay(cfg.WeChat); err != nil {
 		log.Fatalf("WeChat Pay init failed: %v", err)
 	}
+
+	config.InitR2(cfg.R2)
 
 	gin.SetMode(cfg.Server.Mode)
 	r := gin.Default()

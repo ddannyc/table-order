@@ -3,9 +3,9 @@ package handler
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"github.com/gin-gonic/gin"
 )
 
 func GetShopProducts(c *gin.Context) {
@@ -91,7 +91,7 @@ type UpdateProductRequest struct {
 	Description string  `json:"description"`
 	Image       string  `json:"image"`
 	Category    string  `json:"category"`
-	Status      int     `json:"status"`
+	Status      *int    `json:"status"` // pointer so 0 (下架) is distinguishable from "not provided"
 }
 
 func UpdateProduct(c *gin.Context) {
@@ -133,8 +133,8 @@ func UpdateProduct(c *gin.Context) {
 	if req.Category != "" {
 		updates["category"] = req.Category
 	}
-	if req.Status > 0 {
-		updates["status"] = req.Status
+	if req.Status != nil {
+		updates["status"] = *req.Status
 	}
 
 	if len(updates) > 0 {

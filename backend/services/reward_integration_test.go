@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -16,8 +17,14 @@ import (
 
 var testDB *gorm.DB
 
+// uniqSeq guarantees unique test ids even when time.Now().UnixNano() collides
+// across rapid calls (low-resolution clock on Windows).
+var uniqSeq int64
+
 func TestMain(m *testing.M) {
-	dsn := "host=localhost port=5432 user=postgres dbname=table_order_test sslmode=disable"
+	// Own DB (separate from the handler package's table_order_test) so the two
+	// packages' parallel test binaries don't drop each other's tables.
+	dsn := "host=localhost port=5432 user=postgres password=postgres dbname=table_order_test_svc sslmode=disable"
 	var err error
 	testDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -63,7 +70,7 @@ func TestMain(m *testing.M) {
 
 func setupUser(t *testing.T, overrides map[string]interface{}) models.User {
 	t.Helper()
-	suffix := time.Now().UnixNano()
+	suffix := time.Now().UnixNano() + atomic.AddInt64(&uniqSeq, 1)
 	inviteCode := fmt.Sprintf("T%d", suffix%1000000000)
 	if len(inviteCode) > 12 {
 		inviteCode = inviteCode[:12]
