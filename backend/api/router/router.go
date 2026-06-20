@@ -2,18 +2,25 @@ package router
 
 import (
 	"net/http"
+	"slices"
 
 	"github.com/example/table-order/api/handler"
+	"github.com/example/table-order/config"
 	"github.com/example/table-order/middleware"
 	"github.com/gin-gonic/gin"
 )
 
 func Setup(r *gin.Engine) {
-	// CORS
+	// CORS — restrict to the configured admin origins. The WeChat mini-program is
+	// not a browser and ignores CORS, so tightening this only affects the SPA.
 	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		origin := c.Request.Header.Get("Origin")
+		if origin != "" && slices.Contains(config.AppConfig.Server.AllowedOrigins, origin) {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
+			c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		}
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
 			return

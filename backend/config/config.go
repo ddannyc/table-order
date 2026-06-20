@@ -2,6 +2,7 @@ package config
 
 import (
 	"os"
+	"strings"
 
 	"github.com/spf13/viper"
 )
@@ -23,9 +24,10 @@ type R2Config struct {
 }
 
 type ServerConfig struct {
-	Port    string
-	Mode    string
-	BaseURL string // Public base URL for QR code generation (e.g. https://example.com)
+	Port           string
+	Mode           string
+	BaseURL        string   // Public base URL for QR code generation (e.g. https://example.com)
+	AllowedOrigins []string // CORS allowlist for browser clients (the merchant admin SPA)
 }
 
 type DatabaseConfig struct {
@@ -89,6 +91,12 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
 	cfg.Server.Mode = getEnv("MODE", cfg.Server.Mode)
 	cfg.Server.BaseURL = getEnv("BASE_URL", cfg.Server.BaseURL)
+	// CORS allowlist: comma-separated origins. Defaults cover the deployed admin SPA and local dev.
+	for _, o := range strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "https://table-order-admin.pages.dev,http://localhost:5173"), ",") {
+		if o = strings.TrimSpace(o); o != "" {
+			cfg.Server.AllowedOrigins = append(cfg.Server.AllowedOrigins, o)
+		}
+	}
 	cfg.Database.Host = getEnv("PGHOST", getEnv("DB_HOST", cfg.Database.Host))
 	cfg.Database.Port = getEnv("PGPORT", getEnv("DB_PORT", cfg.Database.Port))
 	cfg.Database.User = getEnv("POSTGRES_USER", getEnv("DB_USER", cfg.Database.User))
