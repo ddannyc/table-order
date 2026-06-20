@@ -138,7 +138,10 @@ func UpdateProduct(c *gin.Context) {
 	}
 
 	if len(updates) > 0 {
-		config.DB.Model(&product).Updates(updates)
+		if err := config.DB.Model(&product).Updates(updates).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
+			return
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})

@@ -96,6 +96,14 @@ func UpdateShop(c *gin.Context) {
 		return
 	}
 
+	// Reward rates are fractions — reject out-of-range values (they feed the reward engine).
+	for _, r := range []*float64{req.RewardRateSelf, req.RewardRateLevel1, req.RewardRateLevel2, req.RewardCeiling} {
+		if r != nil && (*r < 0 || *r > 1) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "reward rates must be between 0 and 1"})
+			return
+		}
+	}
+
 	updates := map[string]interface{}{}
 	if req.Name != "" {
 		updates["name"] = req.Name
@@ -134,7 +142,10 @@ func UpdateShop(c *gin.Context) {
 		updates["reward_exclude_categories"] = *req.RewardExcludeCategories
 	}
 
-	config.DB.Model(&models.Shop{}).Where("id = ?", shopID).Updates(updates)
+	if err := config.DB.Model(&models.Shop{}).Where("id = ?", shopID).Updates(updates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }

@@ -5,6 +5,8 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
@@ -22,6 +24,33 @@ var allowedImageTypes = map[string]string{
 	"image/webp": ".webp",
 }
 
+var (
+	errFileTooLarge = errors.New("file too large (max 5MB)")
+	errBadImageType = errors.New("only jpg/png/webp allowed")
+)
+
+// validateAndReadImage reads r fully (bounded), then validates size and the
+// server-sniffed content type. Returns the bytes, detected MIME type, and ext.
+func validateAndReadImage(r io.Reader, declaredSize int64) (data []byte, contentType, ext string, err error) {
+	if declaredSize > maxUploadSize {
+		return nil, "", "", errFileTooLarge
+	}
+	// Read up to one byte past the limit so an understated declaredSize can't slip through.
+	data, err = io.ReadAll(io.LimitReader(r, maxUploadSize+1))
+	if err != nil {
+		return nil, "", "", err
+	}
+	if int64(len(data)) > maxUploadSize {
+		return nil, "", "", errFileTooLarge
+	}
+	contentType = http.DetectContentType(data) // tolerates inputs shorter than 512 bytes
+	ext, ok := allowedImageTypes[contentType]
+	if !ok {
+		return nil, "", "", errBadImageType
+	}
+	return data, contentType, ext, nil
+}
+
 // UploadImage accepts a multipart "file" field, stores it in Cloudflare R2,
 // and returns the public URL. Used for merchant product images.
 func UploadImage(c *gin.Context) {
@@ -30,13 +59,12 @@ func UploadImage(c *gin.Context) {
 		return
 	}
 
+	// Hard-bound the request body regardless of the declared part size.
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, maxUploadSize+8192)
+
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "file required"})
-		return
-	}
-	if fileHeader.Size > maxUploadSize {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "file too large (max 5MB)"})
 		return
 	}
 
@@ -47,29 +75,17 @@ func UploadImage(c *gin.Context) {
 	}
 	defer f.Close()
 
-	// Sniff content type from the first 512 bytes (don't trust the client header)
-	head := make([]byte, 512)
-	n, _ := f.Read(head)
-	contentType := http.DetectContentType(head[:n])
-	ext, ok := allowedImageTypes[contentType]
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "only jpg/png/webp allowed"})
+	data, contentType, ext, err := validateAndReadImage(f, fileHeader.Size)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Reassemble the full file (head + remainder) for upload
-	rest := new(bytes.Buffer)
-	if _, err := rest.ReadFrom(f); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "read file failed"})
-		return
-	}
-	body := bytes.NewReader(append(head[:n], rest.Bytes()...))
 
 	key := "products/" + randomHex(16) + ext
 	_, err = config.R2Client.PutObject(context.Background(), &s3.PutObjectInput{
 		Bucket:      aws.String(config.AppConfig.R2.Bucket),
 		Key:         aws.String(key),
-		Body:        body,
+		Body:        bytes.NewReader(data),
 		ContentType: aws.String(contentType),
 	})
 	if err != nil {

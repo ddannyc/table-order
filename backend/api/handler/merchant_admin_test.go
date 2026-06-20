@@ -52,6 +52,34 @@ func TestUpdateShop_PersistsRewardRates(t *testing.T) {
 	}
 }
 
+// ① UpdateShop rejects reward rates outside [0, 1].
+func TestUpdateShop_RejectsOutOfRangeReward(t *testing.T) {
+	setupTestDB(t)
+
+	const merchantID = uint(905)
+	shop := models.Shop{Name: "Bounds Shop", MerchantID: merchantID, Status: 1, RewardRateSelf: 0.03}
+	config.DB.Create(&shop)
+
+	r := setupRouter()
+	setAuthContext(r, "PUT", "/api/merchant/shops/:id", UpdateShop, merchantID)
+
+	body, _ := json.Marshal(map[string]interface{}{"reward_rate_self": 5.0}) // 500% — invalid
+	req, _ := http.NewRequest("PUT", "/api/merchant/shops/"+itoa(shop.ID), bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for out-of-range reward, got %d", w.Code)
+	}
+	// And the rate must be unchanged.
+	var saved models.Shop
+	config.DB.First(&saved, shop.ID)
+	if saved.RewardRateSelf != 0.03 {
+		t.Errorf("expected reward_rate_self unchanged at 0.03, got %v", saved.RewardRateSelf)
+	}
+}
+
 // ① UpdateShop rejects a merchant editing a shop they don't own.
 func TestUpdateShop_RejectsNonOwner(t *testing.T) {
 	setupTestDB(t)
