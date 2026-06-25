@@ -27,5 +27,7 @@
   </view>
 
   <!-- 底部 tabbar -->
-  <mp-tabbar list="{{tabbarList}}" current="{{tabbarCurrent}}" bindchange="tabChange" />
+  <view class="tabbar-fixed">
+    <mp-tabbar list="{{tabbarList}}" current="{{tabbarCurrent}}" bindchange="tabChange" />
+  </view>
 </view>
