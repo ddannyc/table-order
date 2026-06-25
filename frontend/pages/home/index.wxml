@@ -1,28 +1,23 @@
 <!-- pages/home/index.wxml — 选餐入口启动页 -->
-<view class="page">
+<view class="page home-page">
 
   <view class="home-hd">
     <view class="home-title">欢迎光临</view>
     <view class="home-sub">请选择您的点餐方式</view>
   </view>
 
-  <view class="weui-cells weui-cells_after-title">
-    <view class="weui-cell weui-cell_access" hover-class="weui-cell_active" bindtap="scanDineIn">
-      <view class="weui-cell__hd home-emoji">🍽️</view>
-      <view class="weui-cell__bd">
-        <view class="home-entry-name">堂食</view>
-        <view class="home-entry-desc">扫码点餐 · 桌边享用</view>
-      </view>
-      <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+  <view class="home-entries">
+    <view class="entry-card" hover-class="entry-card_tap" hover-stay-time="120" bindtap="scanDineIn">
+      <view class="entry-emoji">🍽️</view>
+      <view class="entry-name">堂食</view>
+      <view class="entry-desc">扫码点餐 · 桌边享用</view>
     </view>
 
-    <view class="weui-cell weui-cell_access" hover-class="weui-cell_active" bindtap="chooseDelivery">
-      <view class="weui-cell__hd home-emoji">🛵</view>
-      <view class="weui-cell__bd">
-        <view class="home-entry-name">外卖<text class="home-badge">即将上线</text></view>
-        <view class="home-entry-desc">送货上门 · 在家品尝</view>
-      </view>
-      <view class="weui-cell__ft weui-cell__ft_in-access"></view>
+    <view class="entry-card entry-card_soon" bindtap="chooseDelivery">
+      <view class="entry-badge">即将上线</view>
+      <view class="entry-emoji">🛵</view>
+      <view class="entry-name">外卖</view>
+      <view class="entry-desc">送货上门 · 在家品尝</view>
     </view>
   </view>
 

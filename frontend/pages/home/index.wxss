@@ -1,6 +1,11 @@
 /* pages/home/index.wxss — 选餐入口启动页 */
+.home-page {
+  display: flex;
+  flex-direction: column;
+}
+
 .home-hd {
-  padding: 60rpx var(--space-lg) 40rpx;
+  padding: 48rpx var(--space-lg) 32rpx;
 }
 
 .home-title {
@@ -15,25 +20,60 @@
   color: var(--weui-FG-2);
 }
 
-.home-emoji {
-  font-size: 56rpx;
-  margin-right: var(--space-md);
+/* 两个大入口卡，纵向居中填充剩余空间 */
+.home-entries {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-lg);
+  padding: 0 var(--space-lg) 200rpx;
 }
 
-.home-entry-name {
-  font-size: var(--font-title);
+.entry-card {
+  position: relative;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 64rpx var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+}
+
+.entry-card_tap {
+  opacity: 0.85;
+}
+
+.entry-emoji {
+  font-size: 104rpx;
+  line-height: 1;
+}
+
+.entry-name {
+  font-size: var(--font-h2);
   font-weight: 600;
   color: var(--weui-FG-0);
 }
 
-.home-entry-desc {
-  margin-top: 4rpx;
+.entry-desc {
   font-size: var(--font-caption);
   color: var(--weui-FG-2);
 }
 
-.home-badge {
-  margin-left: var(--space-xs);
+/* 外卖：即将上线，整体置灰 */
+.entry-card_soon {
+  opacity: 0.5;
+}
+
+.entry-badge {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
   font-size: var(--font-caption);
-  color: var(--weui-BRAND);
+  color: var(--weui-FG-1);
+  background: var(--weui-BG-2);
+  padding: 2rpx 16rpx;
+  border-radius: var(--radius-lg);
 }

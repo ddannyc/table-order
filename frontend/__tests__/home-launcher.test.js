@@ -31,24 +31,14 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('home launcher — 外卖 entry (chooseAddress → delivery menu)', () => {
-  it('caches the chosen address and routes to the delivery menu with the resolved shop', async () => {
-    wx.chooseAddress.mockImplementation(({ success }) =>
-      success({ userName: '张三', telNumber: '13800000000', provinceName: '上海', detailInfo: '世纪广场' })
-    )
-    // resolveDeliveryShop() -> request() -> wx.request success with the shop
-    wx.request.mockImplementation(({ success }) => success({ statusCode: 200, data: { id: 7 } }))
-
+describe('home launcher — 外卖 entry (coming soon, gated)', () => {
+  it('shows a coming-soon hint and does not enter the delivery flow', () => {
     pageConfig.chooseDelivery()
-    await new Promise((r) => setTimeout(r, 0)) // flush the resolve promise
-
-    expect(wx.setStorageSync).toHaveBeenCalledWith(
-      'last_delivery_address',
-      expect.objectContaining({ userName: '张三' })
-    )
-    expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/menu/index?order_type=delivery&shop_id=7',
-    })
+    const notified = wx.showModal.mock.calls.length + wx.showToast.mock.calls.length
+    expect(notified).toBeGreaterThan(0)
+    expect(wx.reLaunch).not.toHaveBeenCalled()
+    expect(wx.navigateTo).not.toHaveBeenCalled()
+    expect(wx.chooseAddress).not.toHaveBeenCalled()
   })
 })
 
