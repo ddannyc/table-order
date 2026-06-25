@@ -22,5 +22,5 @@
   </view>
 
   <!-- 底部 tabbar -->
-  <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />
+  <mp-tabbar list="{{tabbarList}}" current="{{tabbarCurrent}}" bindchange="tabChange" />
 </view>

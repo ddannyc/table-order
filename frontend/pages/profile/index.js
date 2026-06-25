@@ -1,6 +1,7 @@
 // pages/profile/index.js
 const { getWalletLogs, getOrders, getInviteStats, getRewardBalance, getRewardLogs, getRewardExpiryInfo } = require('../../api/index.js')
 const { doLogin, handleAuthError } = require('../../utils/storage.js')
+const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
@@ -16,14 +17,8 @@ Page({
     rewardBalanceText: '0.00',
     todayRewardText: '0.00',
     totalInviteRewardText: '0.00',
-    tabbar: {
-      current: 2,
-      list: [
-        { text: '点餐', key: 'home' },
-        { text: '邀请', key: 'invite' },
-        { text: '我的', key: 'profile' }
-      ]
-    }
+    tabbarList: TAB_LIST,
+    tabbarCurrent: 2
   },
 
   onShow() {
@@ -47,7 +42,7 @@ Page({
 
   tabChange(e) {
     const index = e.detail.index
-    this.setData({ 'tabbar.current': index })
+    this.setData({ tabbarCurrent: index })
     const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
     wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
   },

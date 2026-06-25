@@ -1,17 +1,12 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
 const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
 const { setLastDeliveryAddress } = require('../../utils/storage.js')
+const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
-    tabbar: {
-      current: 0,
-      list: [
-        { text: '点餐', key: 'home' },
-        { text: '邀请', key: 'invite' },
-        { text: '我的', key: 'profile' }
-      ]
-    }
+    tabbarList: TAB_LIST,
+    tabbarCurrent: 0
   },
 
   onLoad(options) {
@@ -66,7 +61,7 @@ Page({
 
   tabChange(e) {
     const index = e.detail.index
-    this.setData({ 'tabbar.current': index })
+    this.setData({ tabbarCurrent: index })
     const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
     wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
   }

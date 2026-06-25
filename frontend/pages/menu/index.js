@@ -1,6 +1,7 @@
 // pages/menu/index.js — 点餐菜单页（左分类栏 + 右列表）
 const { getShop, getTableBinding, setTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
+const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
@@ -21,14 +22,8 @@ Page({
     specPickerProduct: null,
     loading: true,
     error: false,
-    tabbar: {
-      current: 0,
-      list: [
-        { text: '点餐', key: 'home' },
-        { text: '邀请', key: 'invite' },
-        { text: '我的', key: 'profile' }
-      ]
-    }
+    tabbarList: TAB_LIST,
+    tabbarCurrent: 0
   },
 
   onLoad(options) {
@@ -249,7 +244,7 @@ Page({
 
   tabChange(e) {
     const index = e.detail.index
-    this.setData({ 'tabbar.current': index })
+    this.setData({ tabbarCurrent: index })
     const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
     wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
   }
