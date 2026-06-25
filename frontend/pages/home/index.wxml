@@ -1,92 +1,26 @@
-<!-- pages/home/index.wxml -->
-<view class="page">
+<!-- pages/home/index.wxml — 选餐入口启动页 -->
+<view class="page launcher">
 
-  <!-- 未绑定桌号：扫码引导 -->
-  <view wx:if="{{!boundShopId}}" class="scan-prompt">
-    <view class="prompt-icon">
-      <text class="icon-emoji">📱</text>
-    </view>
-    <view class="prompt-title">扫码点餐</view>
-    <view class="prompt-desc">请扫描餐桌上的二维码开始点餐</view>
-    <button class="weui-btn" type="primary" bind:tap="scanQR">扫码绑定桌号</button>
+  <view class="hero">
+    <view class="hero-title">欢迎光临</view>
+    <view class="hero-sub">请选择您的点餐方式</view>
   </view>
 
-  <!-- 加载骨架屏 -->
-  <view wx:elif="{{loading}}" class="skeleton-page">
-    <view wx:for="{{[1,2,3]}}" wx:key="this" class="skeleton-section">
-      <view class="skeleton-hd"></view>
-      <view wx:for="{{[1,2,3]}}" wx:key="this" class="skeleton-row">
-        <view class="skeleton-img"></view>
-        <view class="skeleton-content">
-          <view class="skeleton-line skeleton-line-short"></view>
-          <view class="skeleton-line skeleton-line-long"></view>
-          <view class="skeleton-line skeleton-line-medium"></view>
-        </view>
-      </view>
+  <view class="entry-cards">
+    <view class="entry-card dine-in" hover-class="entry-press" hover-stay-time="120" bindtap="scanDineIn">
+      <view class="entry-emoji">🍽️</view>
+      <view class="entry-name">堂食</view>
+      <view class="entry-desc">扫码点餐 · 桌边享用</view>
+    </view>
+
+    <view class="entry-card delivery" hover-class="entry-press" hover-stay-time="120" bindtap="chooseDelivery">
+      <view class="entry-badge">即将上线</view>
+      <view class="entry-emoji">🛵</view>
+      <view class="entry-name">外卖</view>
+      <view class="entry-desc">送货上门 · 在家品尝</view>
     </view>
   </view>
 
-  <!-- 错误状态 -->
-  <view wx:elif="{{error}}" class="error-state">
-    <view class="error-icon">!</view>
-    <view class="error-title">加载失败</view>
-    <view class="error-desc">网络开小差了，请检查后重试</view>
-    <button class="weui-btn" type="primary" bind:tap="onRetry">重新加载</button>
-  </view>
-
-  <!-- 空菜单 -->
-  <view wx:elif="{{products.length === 0}}" class="empty-state">
-    <view class="empty-icon">🍽</view>
-    <view class="empty-title">暂无菜品</view>
-    <view class="empty-desc">该店铺还没有上架菜品，请稍后再来</view>
-  </view>
-
-  <!-- 已绑定桌号：点餐页面 -->
-  <mp-form-page wx:else>
-    <!-- 标题 -->
-    <view slot="title" class="header-title">
-      <text>{{shop.name || '店铺'}} · 桌{{boundTableNo}}</text>
-    </view>
-
-    <!-- 菜品分类列表 -->
-    <view wx:for="{{categories}}" wx:key="this" class="weui-panel weui-panel_access">
-      <view class="weui-panel__hd">{{item}}</view>
-      <view class="weui-panel__bd">
-        <view wx:for="{{productsByCategory[item]}}" wx:for-item="p" wx:key="id" class="weui-media-box weui-media-box_appmsg">
-          <view class="weui-media-box__hd" wx:if="{{p.image}}">
-            <image class="weui-media-box__thumb" src="{{p.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImgError" data-id="{{p.id}}" />
-          </view>
-          <view class="weui-media-box__bd">
-            <view class="weui-media-box__title {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
-            <view class="weui-media-box__desc">{{p.description || '美味菜品'}}</view>
-            <view class="product-bottom">
-              <view class="product-price">¥{{p.priceText}}</view>
-              <view class="product-action">
-                <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onAdd" data-id="{{p.id}}">+</view>
-                <view wx:elif="{{p.status !== 2}}" class="qty-control">
-                  <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onDec" data-id="{{p.id}}">−</view>
-                  <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
-                  <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onInc" data-id="{{p.id}}">+</view>
-                </view>
-                <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <!-- 去结算 (form-page button 插槽，在文档流中，不会被 tabbar 遮挡) -->
-    <view slot="button" wx:if="{{cartCount > 0}}" class="cart-bar" bindtap="goCart">
-      <view class="cart-info">
-        <view class="cart-icon">🛒</view>
-        <view class="cart-count">{{cartCount}} 件</view>
-        <view class="cart-total">¥{{cartTotal}}</view>
-      </view>
-      <view class="cart-btn">去结算</view>
-    </view>
-  </mp-form-page>
-
-  <!-- 底部tabbar -->
+  <!-- 底部 tabbar -->
   <custom-tab-bar current="{{tabbar.current}}" bindchange="tabChange" list="{{tabbar.list}}" />
 </view>

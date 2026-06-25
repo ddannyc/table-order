@@ -1,21 +1,8 @@
-// pages/home/index.js
-const { getShop, getTableBinding, setTableBinding, bindInviteCode } = require('../../api/index.js')
-const { getShopProducts, getCartCount, getCartTotal, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
+// pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
+const { setTableBinding, bindInviteCode } = require('../../api/index.js')
 
 Page({
   data: {
-    boundShopId: 0,
-    boundTableNo: '',
-    shop: {},
-    products: [],
-    categories: [],
-    productsByCategory: {},
-    cartCount: 0,
-    cartTotal: '0.00',
-    cartMap: {},
-    cartQtyMap: {},
-    loading: true,
-    error: false,
     tabbar: {
       current: 0,
       list: [
@@ -27,125 +14,19 @@ Page({
   },
 
   onLoad(options) {
-    // Bind invite code from share card
+    // 分享卡片带邀请码进入
     if (options && options.invite_code) {
       bindInviteCode(options.invite_code).catch(err => console.error('bind invite failed:', err))
     }
-    // Handle direct URL Scheme params (when mini-program already running)
+    // 深链带桌号（防御性：通常 app.js handleScene 已直达 menu）
     if (options && options.shop_id && options.table_no) {
-      const shopId = Number(options.shop_id)
-      const tableNo = options.table_no
-      setTableBinding(shopId, tableNo)
-      this.setData({ boundShopId: shopId, boundTableNo: tableNo })
-      this.loadData()
-      return
-    }
-    this.checkTableBinding()
-  },
-
-  onShow() {
-    // Detect binding changes from URL Scheme warm start (App.onShow → handleScene stores new params)
-    const { shopId, tableNo } = getTableBinding()
-    if (shopId && tableNo && (shopId !== this.data.boundShopId || tableNo !== this.data.boundTableNo)) {
-      this.setData({ boundShopId: shopId, boundTableNo: tableNo })
-      this.loadData()
-      return
-    }
-    if (this.data.boundShopId) {
-      this.updateCartInfo()
+      setTableBinding(Number(options.shop_id), options.table_no)
+      wx.reLaunch({ url: '/pages/menu/index' })
     }
   },
 
-  tabChange(e) {
-    const index = e.detail.index
-    this.setData({ 'tabbar.current': index })
-    const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
-    wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
-  },
-
-  checkTableBinding() {
-    const { shopId, tableNo } = getTableBinding()
-    if (shopId && tableNo) {
-      this.setData({ boundShopId: shopId, boundTableNo: tableNo })
-      this.loadData()
-    }
-  },
-
-  loadData() {
-    const { boundShopId } = this.data
-    if (!boundShopId) return
-    this.setData({ loading: true, error: false })
-    Promise.all([
-      getShop(boundShopId),
-      getShopProducts(boundShopId)
-    ]).then(([shop, products]) => {
-      const categories = [...new Set(products.map(p => p.category))]
-      const productsByCategory = {}
-      categories.forEach(cat => {
-        productsByCategory[cat] = products.filter(p => p.category === cat).map(p => ({
-          ...p,
-          priceText: p.price.toFixed(2)
-        }))
-      })
-      this.setData({ shop, products, categories, productsByCategory, loading: false })
-      this.updateCartInfo()
-    }).catch(err => {
-      console.error(err)
-      this.setData({ loading: false, error: true })
-      wx.showToast({ title: '加载失败', icon: 'none' })
-    })
-  },
-
-  updateCartInfo() {
-    const { boundShopId } = this.data
-    const cart = getCart(boundShopId)
-    let cartMap = {}
-    let cartCount = 0
-    let cartTotal = 0
-    cart.forEach(item => {
-      cartMap[item.id] = item.quantity
-      cartCount += item.quantity
-      cartTotal += item.price * item.quantity
-    })
-    this.setData({ cartMap, cartQtyMap: cartMap, cartCount, cartTotal: cartTotal.toFixed(2) })
-  },
-
-  getCartQty(productId) {
-    return this.data.cartMap[productId] || 0
-  },
-
-  onAdd(e) {
-    const productId = e.currentTarget.dataset.id
-    const product = this.data.products.find(p => String(p.id) === String(productId))
-    if (!product) return
-    addToCart(this.data.boundShopId, product, 1)
-    this.updateCartInfo()
-    wx.showToast({ title: '已加入', icon: 'success' })
-  },
-
-  onInc(e) {
-    const productId = e.currentTarget.dataset.id
-    const product = this.data.products.find(p => String(p.id) === String(productId))
-    if (!product) return
-    const qty = (this.data.cartQtyMap[product.id] || 0) + 1
-    updateCartQuantity(this.data.boundShopId, product.id, qty)
-    this.updateCartInfo()
-  },
-
-  onDec(e) {
-    const productId = e.currentTarget.dataset.id
-    const product = this.data.products.find(p => String(p.id) === String(productId))
-    if (!product) return
-    const qty = this.data.cartQtyMap[product.id] || 0
-    if (qty <= 1) {
-      updateCartQuantity(this.data.boundShopId, product.id, 0)
-    } else {
-      updateCartQuantity(this.data.boundShopId, product.id, qty - 1)
-    }
-    this.updateCartInfo()
-  },
-
-  scanQR() {
+  // 堂食：扫码绑桌 → 菜单
+  scanDineIn() {
     wx.scanCode({
       success: (res) => {
         const query = res.result.split('?')[1] || ''
@@ -157,8 +38,7 @@ Page({
         const shopId = Number(params.shop_id) || 1
         const tableNo = params.table_no || 'A01'
         setTableBinding(shopId, tableNo)
-        this.setData({ boundShopId: shopId, boundTableNo: tableNo })
-        this.loadData()
+        wx.reLaunch({ url: '/pages/menu/index' })
       },
       fail: () => {
         wx.showToast({ title: '扫码失败', icon: 'none' })
@@ -166,22 +46,19 @@ Page({
     })
   },
 
-  onRetry() {
-    this.loadData()
-  },
-
-  onImgError(e) {
-    const id = e.currentTarget.dataset.id
-    const key = `productsByCategory`
-    // mark image as failed so fallback shows
-    const fallback = '/assets/img-fallback.png'
-    e.target.src = fallback
-  },
-
-  goCart() {
-    const { boundShopId, boundTableNo } = this.data
-    wx.navigateTo({
-      url: `/pages/order-confirm/index?shop_id=${boundShopId}&table_no=${boundTableNo}`
+  // 外卖：Phase 4 接入，先占位
+  chooseDelivery() {
+    wx.showModal({
+      title: '外卖即将上线',
+      content: '外卖配送功能正在开发中，敬请期待',
+      showCancel: false
     })
+  },
+
+  tabChange(e) {
+    const index = e.detail.index
+    this.setData({ 'tabbar.current': index })
+    const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
+    wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
   }
 })
