@@ -22,6 +22,8 @@ function blankForm() {
     address: '',
     phone: '',
     hours: '',
+    latitude: 0,
+    longitude: 0,
     rewardSelf: 3,
     rewardL1: 10,
     rewardL2: 4,
@@ -37,6 +39,8 @@ function fillForm(shop) {
     address: shop.address || '',
     phone: shop.phone || '',
     hours: shop.hours || '',
+    latitude: shop.latitude || 0,
+    longitude: shop.longitude || 0,
     rewardSelf: toPercent(shop.reward_rate_self),
     rewardL1: toPercent(shop.reward_rate_level1),
     rewardL2: toPercent(shop.reward_rate_level2),
@@ -94,6 +98,8 @@ async function save() {
         address: form.value.address,
         phone: form.value.phone,
         hours: form.value.hours,
+        latitude: form.value.latitude,
+        longitude: form.value.longitude,
         reward_rate_self: toDecimal(form.value.rewardSelf),
         reward_rate_level1: toDecimal(form.value.rewardL1),
         reward_rate_level2: toDecimal(form.value.rewardL2),
@@ -139,6 +145,12 @@ async function save() {
       </el-form-item>
       <el-form-item label="营业时间">
         <el-input v-model="form.hours" placeholder="如：10:00-22:00" />
+      </el-form-item>
+      <el-form-item label="门店坐标">
+        <el-input-number v-model="form.latitude" :precision="6" :step="0.0001" :controls="false" placeholder="纬度" />
+        <span class="unit">纬度</span>
+        <el-input-number v-model="form.longitude" :precision="6" :step="0.0001" :controls="false" placeholder="经度" style="margin-left: 12px" />
+        <span class="unit">经度</span>
       </el-form-item>
 
       <template v-if="hasShop">

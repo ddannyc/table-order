@@ -73,6 +73,9 @@ func Setup(r *gin.Engine) {
 		// QR code generation/listing is merchant-authenticated — see /merchant/shops/:id/qrcodes
 	}
 
+	// Delivery (外卖) — resolve the shop for a delivery order (single-shop stub)
+	api.GET("/delivery/shop", handler.ResolveDeliveryShop)
+
 	// Orders (authenticated)
 	orders := api.Group("/orders")
 	orders.Use(middleware.AuthMiddleware())

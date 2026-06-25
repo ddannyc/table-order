@@ -13,6 +13,8 @@ type Shop struct {
 	Phone       string    `gorm:"size:32" json:"phone"`
 	Hours       string    `gorm:"size:128" json:"hours"`
 	Logo        string    `gorm:"size:512" json:"logo"`
+	Latitude    float64   `gorm:"type:numeric(10,6);default:0" json:"latitude"`  // 门店纬度（外卖寄件方）
+	Longitude   float64   `gorm:"type:numeric(10,6);default:0" json:"longitude"` // 门店经度
 	RewardRateSelf  float64 `gorm:"type:numeric(5,4);default:0.03" json:"reward_rate_self"`   // 自购返利 3%
 	RewardRateLevel1 float64 `gorm:"type:numeric(5,4);default:0.10" json:"reward_rate_level1"` // 直推返利 10%
 	RewardRateLevel2 float64 `gorm:"type:numeric(5,4);default:0.04" json:"reward_rate_level2"` // 间推返利 4%

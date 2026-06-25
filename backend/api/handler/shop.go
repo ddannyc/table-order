@@ -72,6 +72,8 @@ type UpdateShopRequest struct {
 	Hours       string `json:"hours"`
 	Logo        string `json:"logo"`
 	Status      int    `json:"status"`
+	Latitude    *float64 `json:"latitude"`
+	Longitude   *float64 `json:"longitude"`
 	// Reward config — pointers so 0 is a valid, persisted value
 	RewardRateSelf          *float64 `json:"reward_rate_self"`
 	RewardRateLevel1        *float64 `json:"reward_rate_level1"`
@@ -141,6 +143,12 @@ func UpdateShop(c *gin.Context) {
 	if req.RewardExcludeCategories != nil {
 		updates["reward_exclude_categories"] = *req.RewardExcludeCategories
 	}
+	if req.Latitude != nil {
+		updates["latitude"] = *req.Latitude
+	}
+	if req.Longitude != nil {
+		updates["longitude"] = *req.Longitude
+	}
 
 	if err := config.DB.Model(&models.Shop{}).Where("id = ?", shopID).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
@@ -148,6 +156,18 @@ func UpdateShop(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}
+
+// ResolveDeliveryShop returns the shop a delivery order should be placed
+// against. Single-shop reality: returns the active shop ordered by id.
+// Forward stub for nearest-shop ranking once multiple shops + geocoding exist.
+func ResolveDeliveryShop(c *gin.Context) {
+	var shop models.Shop
+	if err := config.DB.Where("status = 1").Order("id").First(&shop).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "no available shop"})
+		return
+	}
+	c.JSON(http.StatusOK, shop)
 }
 
 // merchantOwnsShop reports whether shopID belongs to merchantID.
