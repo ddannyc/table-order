@@ -163,9 +163,17 @@ func UpdateShop(c *gin.Context) {
 // Forward stub for nearest-shop ranking once multiple shops + geocoding exist.
 func ResolveDeliveryShop(c *gin.Context) {
 	var shop models.Shop
-	if err := config.DB.Where("status = 1").Order("id").First(&shop).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "no available shop"})
-		return
+	// Prefer an active shop that actually has active products (don't route
+	// delivery to an empty menu); fall back to any active shop.
+	withProducts := config.DB.Model(&models.Product{}).
+		Select("DISTINCT shop_id").Where("status = 1")
+	err := config.DB.Where("status = 1 AND id IN (?)", withProducts).
+		Order("id").First(&shop).Error
+	if err != nil {
+		if err2 := config.DB.Where("status = 1").Order("id").First(&shop).Error; err2 != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "no available shop"})
+			return
+		}
 	}
 	c.JSON(http.StatusOK, shop)
 }

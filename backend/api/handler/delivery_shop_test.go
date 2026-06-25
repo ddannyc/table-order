@@ -40,6 +40,32 @@ func TestResolveDeliveryShop_ReturnsActiveShop(t *testing.T) {
 	}
 }
 
+// Prefer an active shop that actually has products over an empty one.
+func TestResolveDeliveryShop_PrefersShopWithProducts(t *testing.T) {
+	setupTestDB(t)
+
+	empty := models.Shop{Name: "空店", Status: 1} // lower id, no products
+	config.DB.Create(&empty)
+	stocked := models.Shop{Name: "有菜店", Status: 1}
+	config.DB.Create(&stocked)
+	config.DB.Create(&models.Product{ShopID: stocked.ID, Name: "奶茶", Price: 12, Status: 1})
+
+	r := setupRouter()
+	r.GET("/api/delivery/shop", ResolveDeliveryShop)
+	req, _ := http.NewRequest("GET", "/api/delivery/shop", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var resp map[string]interface{}
+	json.Unmarshal(w.Body.Bytes(), &resp)
+	if id, _ := resp["id"].(float64); uint(id) != stocked.ID {
+		t.Errorf("expected shop with products (id %d), got %v", stocked.ID, resp["id"])
+	}
+}
+
 func TestResolveDeliveryShop_NoneActive(t *testing.T) {
 	setupTestDB(t)
 	closed := models.Shop{Name: "closed", Status: 1}
