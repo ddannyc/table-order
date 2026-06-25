@@ -60,11 +60,12 @@ export const getOrders = (page = 1, pageSize = 20) => request({
   url: `/orders?page=${page}&page_size=${pageSize}`
 })
 
-export const createOrder = (shopId, tableNo, totalAmount, items, useReward) => request({
+export const createOrder = (shopId, tableNo, totalAmount, items, useReward, orderType = 'dine_in') => request({
   url: '/orders',
   method: 'POST',
   data: {
     shop_id: shopId,
+    order_type: orderType,
     table_no: tableNo,
     amount: totalAmount,
     items,

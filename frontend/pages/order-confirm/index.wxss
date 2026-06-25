@@ -4,6 +4,21 @@
   padding: 40rpx var(--space-lg);
 }
 
+.shop-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.order-type-tag {
+  background: var(--brand-accent);
+  color: var(--color-text-on-brand);
+  font-size: var(--font-caption);
+  padding: 2rpx 16rpx;
+  border-radius: var(--radius-lg);
+}
+
 .section-title {
   font-size: var(--font-body);
   font-weight: 600;

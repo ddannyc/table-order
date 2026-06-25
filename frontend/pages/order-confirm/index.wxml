@@ -2,8 +2,11 @@
 <view class="page">
   <!-- 店铺信息 -->
   <view class="shop-card card">
-    <view class="shop-name">{{shop.name || '店铺'}}</view>
-    <view class="table-no">桌号: {{tableNo}}</view>
+    <view class="shop-head">
+      <view class="shop-name">{{shop.name || '店铺'}}</view>
+      <view class="order-type-tag">{{orderTypeLabel}}</view>
+    </view>
+    <view wx:if="{{orderType !== 'delivery'}}" class="table-no">桌号: {{tableNo}}</view>
   </view>
 
   <!-- 订单商品列表 -->

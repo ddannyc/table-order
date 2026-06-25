@@ -8,6 +8,8 @@ Page({
     needLogin: false,
     shopId: 0,
     tableNo: '',
+    orderType: 'dine_in',
+    orderTypeLabel: '堂食',
     shop: {},
     cart: [],
     cartItems: [],
@@ -21,6 +23,11 @@ Page({
   },
 
   onLoad(options) {
+    const orderType = (options && options.order_type) || 'dine_in'
+    this.setData({
+      orderType,
+      orderTypeLabel: orderType === 'delivery' ? '外卖' : '堂食'
+    })
     if (options.shop_id) {
       this.setData({
         shopId: Number(options.shop_id) || 1,
@@ -142,7 +149,7 @@ Page({
       quantity: item.quantity,
       price: Number(item.price) || 0
     }))
-    createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward)
+    createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward, this.data.orderType)
       .then((res) => {
         if (res.error) {
           wx.showToast({ title: res.error === 'prepay failed' ? '支付配置异常' : '下单失败', icon: 'none' })
