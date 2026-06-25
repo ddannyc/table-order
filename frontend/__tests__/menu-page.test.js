@@ -28,15 +28,13 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('menu — selectCategory', () => {
-  it('sets the active category and scroll-into-view anchor by index', () => {
+describe('menu — selectCategory (weui navbar)', () => {
+  it('sets the active category (single panel; no scroll anchor)', () => {
     const ctx = { setData: jest.fn(), data: {} }
     pageConfig.selectCategory.call(ctx, {
       currentTarget: { dataset: { cat: '奶茶牛乳', index: 2 } },
     })
-    expect(ctx.setData).toHaveBeenCalledWith(
-      expect.objectContaining({ activeCategory: '奶茶牛乳', scrollIntoId: 'cat-2' })
-    )
+    expect(ctx.setData).toHaveBeenCalledWith({ activeCategory: '奶茶牛乳' })
   })
 })
 

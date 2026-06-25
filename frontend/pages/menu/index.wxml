@@ -1,126 +1,132 @@
-<!-- pages/menu/index.wxml — 点餐菜单页 -->
+<!-- pages/menu/index.wxml — 点餐菜单页（weui 原生） -->
 <view class="page">
 
   <!-- 未绑桌 -->
-  <view wx:if="{{!boundShopId && !loading}}" class="state-block">
-    <view class="state-emoji">📱</view>
-    <view class="state-title">未绑定桌号</view>
-    <view class="state-desc">请扫描餐桌二维码开始点餐</view>
-    <button class="state-btn" bind:tap="scanQR">扫码点餐</button>
-    <view class="state-link" bind:tap="goHome">返回首页</view>
+  <view wx:if="{{!boundShopId && !loading}}" class="weui-msg">
+    <view class="weui-msg__text-area">
+      <view class="weui-msg__title">未绑定桌号</view>
+      <view class="weui-msg__desc">请扫描餐桌二维码开始点餐</view>
+    </view>
+    <view class="weui-msg__opr-area">
+      <view class="weui-btn-area">
+        <button class="weui-btn" type="primary" bind:tap="scanQR">扫码点餐</button>
+        <button class="weui-btn" type="default" bind:tap="goHome">返回首页</button>
+      </view>
+    </view>
   </view>
 
   <!-- 加载中 -->
-  <view wx:elif="{{loading}}" class="state-block">
-    <view class="state-desc">加载中…</view>
+  <view wx:elif="{{loading}}" class="weui-loadmore">
+    <view class="weui-loading"></view>
+    <view class="weui-loadmore__tips">加载中…</view>
   </view>
 
   <!-- 加载失败 -->
-  <view wx:elif="{{error}}" class="state-block">
-    <view class="state-emoji">!</view>
-    <view class="state-title">加载失败</view>
-    <view class="state-desc">网络开小差了，请重试</view>
-    <button class="state-btn" bind:tap="onRetry">重新加载</button>
+  <view wx:elif="{{error}}" class="weui-msg">
+    <view class="weui-msg__text-area">
+      <view class="weui-msg__title">加载失败</view>
+      <view class="weui-msg__desc">网络开小差了，请重试</view>
+    </view>
+    <view class="weui-msg__opr-area">
+      <view class="weui-btn-area">
+        <button class="weui-btn" type="primary" bind:tap="onRetry">重新加载</button>
+      </view>
+    </view>
   </view>
 
   <!-- 空菜单 -->
-  <view wx:elif="{{products.length === 0}}" class="state-block">
-    <view class="state-emoji">🍽</view>
-    <view class="state-title">暂无菜品</view>
-    <view class="state-desc">该店铺还没有上架菜品</view>
+  <view wx:elif="{{products.length === 0}}" class="weui-msg">
+    <view class="weui-msg__text-area">
+      <view class="weui-msg__title">暂无菜品</view>
+      <view class="weui-msg__desc">该店铺还没有上架菜品</view>
+    </view>
   </view>
 
   <!-- 菜单主体 -->
   <view wx:else class="menu-main">
 
     <!-- 门店栏 + 堂食/外卖切换 -->
-    <view class="menu-header">
-      <view class="shop-meta">
-        <view class="shop-name">{{shop.name || '店铺'}}</view>
-        <view class="shop-table">{{orderType === 'delivery' ? '外卖配送' : '桌号 ' + boundTableNo}}</view>
-      </view>
-      <view class="order-type-toggle">
-        <view class="seg {{orderType === 'dine_in' ? 'seg-active' : ''}}" bindtap="switchOrderType" data-type="dine_in">堂食</view>
-        <view class="seg {{orderType === 'delivery' ? 'seg-active' : ''}}" bindtap="switchOrderType" data-type="delivery">外卖</view>
+    <view class="menu-shopbar">
+      <view class="menu-shopname">{{shop.name || '店铺'}} · {{orderType === 'delivery' ? '外卖配送' : '桌号 ' + boundTableNo}}</view>
+      <view class="menu-typetoggle">
+        <view class="weui-btn weui-btn_mini {{orderType === 'dine_in' ? 'weui-btn_primary' : 'weui-btn_default'}}" bindtap="switchOrderType" data-type="dine_in">堂食</view>
+        <view class="weui-btn weui-btn_mini {{orderType === 'delivery' ? 'weui-btn_primary' : 'weui-btn_default'}}" bindtap="switchOrderType" data-type="delivery">外卖</view>
       </view>
     </view>
 
-    <!-- 左分类栏 + 右菜品列表 -->
-    <view class="menu-body">
-      <scroll-view scroll-y class="cat-rail">
-        <view
-          wx:for="{{categories}}"
-          wx:key="this"
-          class="cat-item {{activeCategory === item ? 'cat-active' : ''}}"
-          bindtap="selectCategory"
-          data-cat="{{item}}"
-          data-index="{{index}}"
-        >{{item}}</view>
-      </scroll-view>
+    <!-- 分类页签 -->
+    <scroll-view scroll-x class="weui-navbar menu-navbar" enable-flex>
+      <view
+        wx:for="{{categories}}"
+        wx:key="this"
+        class="weui-navbar__item {{activeCategory === item ? 'weui-bar__item_on' : ''}}"
+        bindtap="selectCategory"
+        data-cat="{{item}}"
+      >{{item}}</view>
+    </scroll-view>
 
-      <scroll-view scroll-y class="product-list" scroll-into-view="{{scrollIntoId}}" scroll-with-animation>
-        <view wx:for="{{categories}}" wx:key="this" wx:for-item="cat" wx:for-index="ci" id="cat-{{ci}}" class="product-group">
-          <view class="group-title">{{cat}}</view>
-          <view wx:for="{{productsByCategory[cat]}}" wx:for-item="p" wx:key="id" class="product-row">
-            <image wx:if="{{p.image}}" class="product-thumb" src="{{p.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImgError" data-id="{{p.id}}" />
-            <view wx:else class="product-thumb product-thumb-empty">🍽</view>
-            <view class="product-info">
-              <view class="product-name {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
-              <view class="product-desc">{{p.description || '美味菜品'}}</view>
-              <view class="product-bottom">
-                <view class="product-price">
-                  <block wx:if="{{p.hasSpecs}}">¥{{p.specMinText}}<text class="price-from">起</text></block>
-                  <block wx:else>¥{{p.priceText}}</block>
-                </view>
-                <view class="product-action">
-                  <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
-                  <block wx:elif="{{p.hasSpecs}}">
-                    <view wx:if="{{cartQtyByProduct[p.id]}}" class="spec-qty-badge">{{cartQtyByProduct[p.id]}}</view>
-                    <view class="spec-btn" hover-class="btn-press" hover-stay-time="150" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
-                  </block>
-                  <block wx:else>
-                    <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onAdd" data-id="{{p.id}}">+</view>
-                    <view wx:else class="qty-control">
-                      <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onDec" data-id="{{p.id}}">−</view>
-                      <text class="qty-value">{{cartQtyByKey[p.noSpecKey]}}</text>
-                      <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onInc" data-id="{{p.id}}">+</view>
-                    </view>
-                  </block>
-                </view>
+    <!-- 当前分类菜品列表 -->
+    <view class="weui-panel menu-panel">
+      <view class="weui-panel__bd">
+        <view class="weui-media-box weui-media-box_appmsg" wx:for="{{productsByCategory[activeCategory]}}" wx:for-item="p" wx:key="id">
+          <view class="weui-media-box__hd weui-media-box__hd_in-appmsg" wx:if="{{p.image}}">
+            <image class="weui-media-box__thumb" src="{{p.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImgError" data-id="{{p.id}}" />
+          </view>
+          <view class="weui-media-box__bd weui-media-box__bd_in-appmsg">
+            <view class="weui-media-box__title {{p.status === 2 ? 'menu-soldout' : ''}}">{{p.name}}</view>
+            <view class="weui-media-box__desc">{{p.description || '美味菜品'}}</view>
+            <view class="menu-row-bottom">
+              <view class="menu-price">¥{{p.hasSpecs ? p.specMinText : p.priceText}}<text wx:if="{{p.hasSpecs}}" class="menu-price-from">起</text></view>
+              <view class="menu-action">
+                <view wx:if="{{p.status === 2}}" class="menu-soldout">售罄</view>
+                <block wx:elif="{{p.hasSpecs}}">
+                  <text wx:if="{{cartQtyByProduct[p.id]}}" class="menu-qbadge">{{cartQtyByProduct[p.id]}}</text>
+                  <view class="weui-btn weui-btn_mini weui-btn_primary" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
+                </block>
+                <block wx:else>
+                  <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="weui-btn weui-btn_mini weui-btn_primary" bindtap="onAdd" data-id="{{p.id}}">加入</view>
+                  <view wx:else class="menu-stepper">
+                    <view class="weui-btn weui-btn_mini weui-btn_default" bindtap="onDec" data-id="{{p.id}}">−</view>
+                    <text class="menu-qty">{{cartQtyByKey[p.noSpecKey]}}</text>
+                    <view class="weui-btn weui-btn_mini weui-btn_default" bindtap="onInc" data-id="{{p.id}}">+</view>
+                  </view>
+                </block>
               </view>
             </view>
           </view>
         </view>
-        <view class="list-foot-pad"></view>
-      </scroll-view>
+      </view>
     </view>
 
     <!-- 购物车结算条 -->
-    <view wx:if="{{cartCount > 0}}" class="cart-bar" bindtap="goCart">
-      <view class="cart-info">
-        <view class="cart-icon">🛒</view>
-        <view class="cart-count">{{cartCount}} 件</view>
-        <view class="cart-total">¥{{cartTotal}}</view>
-      </view>
-      <view class="cart-btn">去结算</view>
+    <view wx:if="{{cartCount > 0}}" class="menu-cartbar">
+      <view class="menu-cart-summary" bindtap="goCart">🛒 {{cartCount}} 件 · ¥{{cartTotal}}</view>
+      <view class="weui-btn weui-btn_primary weui-btn_mini menu-cart-go" bindtap="goCart">去结算</view>
     </view>
   </view>
 
-  <!-- 规格选择层 -->
-  <view wx:if="{{specPickerVisible}}" class="spec-mask" bindtap="closeSpecPicker">
-    <view class="spec-sheet" catchtap="noop">
-      <view class="spec-sheet-hd">
-        <text class="spec-sheet-title">{{specPickerProduct.name}}</text>
-        <text class="spec-close" bindtap="closeSpecPicker">✕</text>
+  <!-- 规格选择（weui half-screen-dialog） -->
+  <view wx:if="{{specPickerVisible}}">
+    <view class="weui-mask" bindtap="closeSpecPicker"></view>
+    <view class="weui-half-screen-dialog">
+      <view class="weui-half-screen-dialog__hd">
+        <view class="weui-half-screen-dialog__hd__side">
+          <view class="weui-btn_icon" bindtap="closeSpecPicker"><i class="weui-icon-close-thin"></i></view>
+        </view>
+        <view class="weui-half-screen-dialog__hd__main">
+          <strong class="weui-half-screen-dialog__title">{{specPickerProduct.name}} · 选规格</strong>
+        </view>
       </view>
-      <view class="spec-list">
-        <view wx:for="{{specPickerProduct.specs}}" wx:key="id" class="spec-opt">
-          <view class="spec-opt-info">
-            <text class="spec-opt-name">{{item.name}}</text>
-            <text class="spec-opt-price">¥{{item.priceText}}</text>
+      <view class="weui-half-screen-dialog__bd">
+        <view class="weui-cells">
+          <view class="weui-cell" wx:for="{{specPickerProduct.specs}}" wx:key="id">
+            <view class="weui-cell__bd">{{item.name}}</view>
+            <view class="weui-cell__ft menu-spec-price">¥{{item.priceText}}</view>
+            <view class="weui-cell__ft menu-spec-add">
+              <view wx:if="{{item.status === 2}}" class="menu-soldout">售罄</view>
+              <view wx:else class="weui-btn weui-btn_mini weui-btn_primary" catchtap="pickSpec" data-spec-id="{{item.id}}">加入</view>
+            </view>
           </view>
-          <view wx:if="{{item.status === 2}}" class="sold-out">售罄</view>
-          <view wx:else class="spec-add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="pickSpec" data-spec-id="{{item.id}}">加入</view>
         </view>
       </view>
     </view>

@@ -12,7 +12,6 @@ Page({
     categories: [],
     productsByCategory: {},
     activeCategory: '',
-    scrollIntoId: '',
     orderType: 'dine_in', // dine_in | delivery（事实来源在首页/菜单，订单确认页只读）
     cartCount: 0,
     cartTotal: '0.00',
@@ -130,10 +129,9 @@ Page({
     this.setData({ cartQtyByKey, cartQtyByProduct, cartCount, cartTotal: cartTotal.toFixed(2) })
   },
 
-  // 左侧分类点击 → 高亮 + 右侧滚动到锚点
+  // 分类页签切换 → 显示该分类列表
   selectCategory(e) {
-    const { cat, index } = e.currentTarget.dataset
-    this.setData({ activeCategory: cat, scrollIntoId: 'cat-' + index })
+    this.setData({ activeCategory: e.currentTarget.dataset.cat })
   },
 
   // 顶部堂食/外卖切换；外卖暂未上线，先占位不切换（Phase 4 接入）
