@@ -4,6 +4,6 @@
 
 - [x] **T1** TabBar 钉底（`.tabbar-fixed` 包裹 mp-tabbar，4 页）— M【bug】✅
 - [x] **T2** 导航栏橙→绿 `#07c160`（6 处）— S【bug】✅
-- [ ] **T3** 首页入口放大成大卡 + 外卖态 —— ⏸ **待决策：外卖是上线还是「即将上线」？**
+- [x] **T3** 首页两大入口卡 + 外卖置灰「即将上线」(点击弹提示) — M ✅
 - [x] **T4** tab 图标加内边距重生成（尺寸协调）— S ✅
-- [ ] **Checkpoint**：jest 全绿；人工 DevTools 验收
+- [x] **Checkpoint**：✅ jest 82 全绿；⚠️ 人工 DevTools 验收（recompile 后看图标/钉底/绿色/入口）
