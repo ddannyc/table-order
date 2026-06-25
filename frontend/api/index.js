@@ -38,6 +38,9 @@ export const request = (options) => {
 // 店铺
 export const getShop = (shopId) => request({ url: `/shops/${shopId}` })
 
+// 外卖：解析配送门店（当前单门店）
+export const resolveDeliveryShop = () => request({ url: '/delivery/shop' })
+
 // 用户
 export const getUserInfo = () => request({ url: '/auth/userinfo' })
 

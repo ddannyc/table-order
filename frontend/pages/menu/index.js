@@ -38,6 +38,12 @@ Page({
     if (options && options.order_type) {
       this.setData({ orderType: options.order_type })
     }
+    // 外卖：带 shop_id、无桌号
+    if (options && options.order_type === 'delivery' && options.shop_id) {
+      this.setData({ boundShopId: Number(options.shop_id), boundTableNo: '', orderType: 'delivery' })
+      this.loadData()
+      return
+    }
     if (options && options.shop_id && options.table_no) {
       const shopId = Number(options.shop_id)
       const tableNo = options.table_no
@@ -50,6 +56,11 @@ Page({
   },
 
   onShow() {
+    // 配送态不跟随桌号绑定（避免被历史堂食绑定覆盖）
+    if (this.data.orderType === 'delivery') {
+      if (this.data.boundShopId) this.updateCartInfo()
+      return
+    }
     const { shopId, tableNo } = getTableBinding()
     if (shopId && tableNo && (shopId !== this.data.boundShopId || tableNo !== this.data.boundTableNo)) {
       this.setData({ boundShopId: shopId, boundTableNo: tableNo })

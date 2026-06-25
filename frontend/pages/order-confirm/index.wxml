@@ -7,6 +7,10 @@
       <view class="order-type-tag">{{orderTypeLabel}}</view>
     </view>
     <view wx:if="{{orderType !== 'delivery'}}" class="table-no">桌号: {{tableNo}}</view>
+    <view wx:elif="{{deliveryAddress}}" class="delivery-addr">
+      <view class="addr-line">{{deliveryAddress.userName}} {{deliveryAddress.telNumber}}</view>
+      <view class="addr-detail">{{deliveryAddress.provinceName}}{{deliveryAddress.cityName}}{{deliveryAddress.countyName}}{{deliveryAddress.detailInfo}}</view>
+    </view>
   </view>
 
   <!-- 订单商品列表 -->

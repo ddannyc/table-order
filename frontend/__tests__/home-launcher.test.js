@@ -13,6 +13,8 @@ global.wx = {
   navigateTo: jest.fn(),
   switchTab: jest.fn(),
   scanCode: jest.fn(),
+  chooseAddress: jest.fn(),
+  request: jest.fn(),
   showToast: jest.fn(),
   showModal: jest.fn(),
 }
@@ -29,14 +31,24 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('home launcher — 外卖 entry (placeholder)', () => {
-  it('notifies coming-soon and does not enter an unfinished flow', () => {
+describe('home launcher — 外卖 entry (chooseAddress → delivery menu)', () => {
+  it('caches the chosen address and routes to the delivery menu with the resolved shop', async () => {
+    wx.chooseAddress.mockImplementation(({ success }) =>
+      success({ userName: '张三', telNumber: '13800000000', provinceName: '上海', detailInfo: '世纪广场' })
+    )
+    // resolveDeliveryShop() -> request() -> wx.request success with the shop
+    wx.request.mockImplementation(({ success }) => success({ statusCode: 200, data: { id: 7 } }))
+
     pageConfig.chooseDelivery()
-    const notified =
-      wx.showToast.mock.calls.length + wx.showModal.mock.calls.length
-    expect(notified).toBeGreaterThan(0)
-    expect(wx.reLaunch).not.toHaveBeenCalled()
-    expect(wx.navigateTo).not.toHaveBeenCalled()
+    await new Promise((r) => setTimeout(r, 0)) // flush the resolve promise
+
+    expect(wx.setStorageSync).toHaveBeenCalledWith(
+      'last_delivery_address',
+      expect.objectContaining({ userName: '张三' })
+    )
+    expect(wx.reLaunch).toHaveBeenCalledWith({
+      url: '/pages/menu/index?order_type=delivery&shop_id=7',
+    })
   })
 })
 

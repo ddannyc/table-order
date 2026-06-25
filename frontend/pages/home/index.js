@@ -1,5 +1,6 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
-const { setTableBinding, bindInviteCode } = require('../../api/index.js')
+const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
+const { setLastDeliveryAddress } = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -46,12 +47,20 @@ Page({
     })
   },
 
-  // 外卖：Phase 4 接入，先占位
+  // 外卖：选地址 → 缓存 → 解析门店 → 进入配送态菜单
   chooseDelivery() {
-    wx.showModal({
-      title: '外卖即将上线',
-      content: '外卖配送功能正在开发中，敬请期待',
-      showCancel: false
+    wx.chooseAddress({
+      success: (addr) => {
+        setLastDeliveryAddress(addr)
+        resolveDeliveryShop()
+          .then(shop => {
+            wx.reLaunch({ url: `/pages/menu/index?order_type=delivery&shop_id=${shop.id}` })
+          })
+          .catch(() => {
+            wx.showToast({ title: '暂无可配送门店', icon: 'none' })
+          })
+      },
+      fail: () => {}
     })
   },
 

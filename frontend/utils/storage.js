@@ -15,6 +15,14 @@ export const setTableBinding = (shopId, tableNo) => {
   wx.setStorageSync('current_table_no', tableNo)
 }
 
+export const getLastDeliveryAddress = () => {
+  return wx.getStorageSync('last_delivery_address') || null
+}
+
+export const setLastDeliveryAddress = (addr) => {
+  wx.setStorageSync('last_delivery_address', addr)
+}
+
 export const getToken = () => {
   return wx.getStorageSync('token') || ''
 }

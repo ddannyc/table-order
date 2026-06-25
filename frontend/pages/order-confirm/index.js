@@ -1,7 +1,7 @@
 // pages/order-confirm/index.js
 const { getShop, getRewardBalance, createOrder, getTableBinding, setTableBinding } = require('../../api/index.js')
 const { getCart, clearCart, getCartTotal } = require('../../api/product.js')
-const { doLogin, handleAuthError } = require('../../utils/storage.js')
+const { doLogin, handleAuthError, getLastDeliveryAddress } = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -10,6 +10,7 @@ Page({
     tableNo: '',
     orderType: 'dine_in',
     orderTypeLabel: '堂食',
+    deliveryAddress: null,
     shop: {},
     cart: [],
     cartItems: [],
@@ -26,7 +27,8 @@ Page({
     const orderType = (options && options.order_type) || 'dine_in'
     this.setData({
       orderType,
-      orderTypeLabel: orderType === 'delivery' ? '外卖' : '堂食'
+      orderTypeLabel: orderType === 'delivery' ? '外卖' : '堂食',
+      deliveryAddress: orderType === 'delivery' ? getLastDeliveryAddress() : null
     })
     if (options.shop_id) {
       this.setData({

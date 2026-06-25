@@ -19,6 +19,22 @@
   border-radius: var(--radius-lg);
 }
 
+.delivery-addr {
+  margin-top: var(--space-sm);
+  text-align: left;
+}
+
+.addr-line {
+  font-size: var(--font-body);
+  color: var(--color-text-primary);
+}
+
+.addr-detail {
+  margin-top: 4rpx;
+  font-size: var(--font-caption);
+  color: var(--color-text-secondary);
+}
+
 .section-title {
   font-size: var(--font-body);
   font-weight: 600;

@@ -37,7 +37,7 @@
     <view class="menu-header">
       <view class="shop-meta">
         <view class="shop-name">{{shop.name || '店铺'}}</view>
-        <view class="shop-table">桌号 {{boundTableNo}}</view>
+        <view class="shop-table">{{orderType === 'delivery' ? '外卖配送' : '桌号 ' + boundTableNo}}</view>
       </view>
       <view class="order-type-toggle">
         <view class="seg {{orderType === 'dine_in' ? 'seg-active' : ''}}" bindtap="switchOrderType" data-type="dine_in">堂食</view>

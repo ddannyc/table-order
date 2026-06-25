@@ -15,6 +15,7 @@
     "backgroundColor": "#f5f5f5"
   },
   "lazyCodeLoading": "requiredComponents",
+  "requiredPrivateInfos": ["chooseAddress"],
   "usingComponents": {
     "custom-tab-bar": "miniprogram_npm/custom-tab-bar-comp",
     "mp-cells": "miniprogram_npm/weui-miniprogram/cells/cells",
