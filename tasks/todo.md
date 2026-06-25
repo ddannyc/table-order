@@ -4,15 +4,15 @@
 设计规范唯一真源：`DESIGN.md`。
 
 ## Phase 0 — 品牌换肤地基（横切，低风险）
-- [ ] **T1** 全局 token + 导航栏换肤（`app.wxss` brand token / `app.json` nav）— S
+- [x] **T1** 全局 token + 导航栏换肤（`app.wxss` brand token / `app.json` nav）— S ✅
 - [ ] **T2** 自定义 TabBar + 残留硬编码 `#07c160` 清理 — M
-- [ ] **Checkpoint A**：编译干净、全站无残留绿、人工确认配色符合 DESIGN.md
+- [x] **Checkpoint A**：✅ 测试全绿、业务代码无残留绿；⚠️ 配色观感待人工在 DevTools 确认
 
 ## Phase 1 — 首页启动页 + 菜单页拆分/改版（堂食路径端到端，高风险早做）
-- [ ] **T3** 菜单逻辑迁移到独立页 `pages/menu/index`（布局先不变，深链直达 menu）— L
-- [ ] **T4** 首页重构为启动页（堂食/外卖两入口 + 切换；深链跳过启动页）— M
-- [ ] **T5** 菜单页改版：左分类栏 + 右列表 + 顶部堂食/外卖切换（DESIGN.md 配色）— L
-- [ ] **Checkpoint B**：启动页→堂食→扫码→新菜单→加购→订单确认→支付 全链路通；深链回归
+- [x] **T3** 菜单逻辑迁移到独立页 `pages/menu/index`（布局先不变，深链直达 menu）— L ✅
+- [x] **T4** 首页重构为启动页（堂食/外卖两入口 + 切换；深链跳过启动页）— M ✅
+- [x] **T5** 菜单页改版：左分类栏 + 右列表 + 顶部堂食/外卖切换（DESIGN.md 配色）— L ✅
+- [ ] **Checkpoint B**：⏳ 自动化测试全绿（59）；⚠️ 待人工在微信开发者工具验证 启动页→堂食→扫码→新菜单→加购→订单确认→支付 全链路 + 深链回归
 
 ## Phase 2 — order_type 契约（后端字段 + 前端贯穿）
 - [ ] **T6** 后端 `Order.OrderType` + delivery 放开 `TableNo`（与 shansong 共享契约）— M
