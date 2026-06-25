@@ -1,6 +1,6 @@
 {
   "navigationBarTitleText": "点餐",
-  "navigationBarBackgroundColor": "#07c160",
+  "navigationBarBackgroundColor": "#189CA8",
   "navigationBarTextStyle": "white",
   "usingComponents": {
     "mp-form-page": "../../miniprogram_npm/weui-miniprogram/form-page/form-page"

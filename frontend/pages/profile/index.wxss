@@ -18,7 +18,7 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, #07c160 0%, #059a4c 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -44,7 +44,7 @@
 }
 
 .balance-card {
-  background: linear-gradient(135deg, #059a4c 0%, #047a3d 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
   border-radius: var(--space-md);
   padding: 40rpx;
   display: flex;

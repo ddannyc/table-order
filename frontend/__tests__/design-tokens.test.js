@@ -48,3 +48,30 @@ describe('app.json navigation bar', () => {
     expect(appJson.window.navigationBarBackgroundColor).toBe('#189CA8')
   })
 })
+
+describe('Task 2 — no residual WeChat green in business styles', () => {
+  const businessFiles = [
+    'miniprogram_npm/custom-tab-bar-comp/index.wxss',
+    'pages/invite/index.wxss',
+    'pages/profile/index.wxss',
+    'pages/share-code/index.wxss',
+    'pages/home/index.json',
+    'pages/invite/index.json',
+    'pages/profile/index.json',
+    'pages/order-confirm/index.json',
+  ]
+
+  it.each(businessFiles)('%s contains no #07c160', (rel) => {
+    const content = fs.readFileSync(path.join(__dirname, '..', rel), 'utf8')
+    expect(content).not.toMatch(/#07c160/i)
+    expect(content).not.toMatch(/#059a4c/i) // green gradient tail
+  })
+
+  it('custom tab-bar active state references the brand token', () => {
+    const css = fs.readFileSync(
+      path.join(__dirname, '..', 'miniprogram_npm/custom-tab-bar-comp/index.wxss'),
+      'utf8'
+    )
+    expect(css).toMatch(/var\(--brand-primary/)
+  })
+})

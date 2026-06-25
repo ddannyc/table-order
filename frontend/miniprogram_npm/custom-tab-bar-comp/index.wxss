@@ -45,7 +45,7 @@
 
 .tab-item.active .icon-text,
 .icon-text.active {
-  color: #07c160;
+  color: var(--brand-primary, #189CA8);
   font-weight: 600;
 }
 
