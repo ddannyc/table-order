@@ -9,6 +9,8 @@ type OrderItem struct {
 	OrderID     uint      `gorm:"index" json:"order_id"`
 	ProductID   uint      `gorm:"index" json:"product_id"`
 	ProductName string    `gorm:"size:128" json:"product_name"`
+	SpecID      uint      `gorm:"index" json:"spec_id"`
+	SpecName    string    `gorm:"size:64" json:"spec_name"`
 	Price       float64   `gorm:"type:numeric(12,2)" json:"price"`
 	Quantity    int       `json:"quantity"`
 	Subtotal    float64   `gorm:"type:numeric(12,2)" json:"subtotal"`

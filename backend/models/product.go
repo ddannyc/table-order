@@ -13,6 +13,7 @@ type Product struct {
 	Image       string    `gorm:"size:512" json:"image"`
 	Category    string    `gorm:"size:64" json:"category"`
 	Status      int       `gorm:"default:1" json:"status"` // 1=上架, 0=下架, 2=售罄
+	Specs       []ProductSpec `gorm:"foreignKey:ProductID" json:"specs"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }

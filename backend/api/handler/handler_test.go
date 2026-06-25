@@ -31,6 +31,7 @@ func setupTestDB(t *testing.T) {
 	sqlDB.Exec("DROP TABLE IF EXISTS wallet_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS order_items")
 	sqlDB.Exec("DROP TABLE IF EXISTS orders")
+	sqlDB.Exec("DROP TABLE IF EXISTS product_specs")
 	sqlDB.Exec("DROP TABLE IF EXISTS products")
 	sqlDB.Exec("DROP TABLE IF EXISTS table_qrcodes")
 	sqlDB.Exec("DROP TABLE IF EXISTS shops")
@@ -40,7 +41,7 @@ func setupTestDB(t *testing.T) {
 	config.DB = db
 
 	// Recreate tables
-	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.Order{}, &models.OrderItem{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
+	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
 
 	// Wait for any lingering goroutines from previous tests to finish
 	time.Sleep(300 * time.Millisecond)
@@ -64,6 +65,8 @@ func setAuthContext(r *gin.Engine, method, path string, handler gin.HandlerFunc,
 		r.GET(path, handlerWrapper)
 	case "PUT":
 		r.PUT(path, handlerWrapper)
+	case "DELETE":
+		r.DELETE(path, handlerWrapper)
 	default:
 		r.GET(path, handlerWrapper)
 	}

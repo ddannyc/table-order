@@ -52,6 +52,7 @@ func MigrateDB() error {
 		&models.Order{},
 		&models.OrderItem{},
 		&models.Product{},
+		&models.ProductSpec{},
 		&models.InviteRelation{},
 		&models.WalletLog{},
 		&models.RewardLog{},

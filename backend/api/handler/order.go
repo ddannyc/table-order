@@ -18,8 +18,9 @@ import (
 )
 
 type OrderItemRequest struct {
-	ProductID uint   `json:"product_id" binding:"required"`
-	Quantity  int    `json:"quantity" binding:"required,gt=0"`
+	ProductID uint `json:"product_id" binding:"required"`
+	SpecID    uint `json:"spec_id"` // 0 = no spec (single default spec at product price)
+	Quantity  int  `json:"quantity" binding:"required,gt=0"`
 }
 
 type CreateOrderRequest struct {
@@ -55,32 +56,53 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// Resolve each line to a product (+ optional spec) and price it server-side.
+	type resolvedLine struct {
+		product  models.Product
+		specID   uint
+		specName string
+		price    float64
+		quantity int
+	}
+	var lines []resolvedLine
 	var calculatedAmount float64
-	var productMap map[uint]models.Product
 
 	if len(req.Items) > 0 {
-		productIDs := make([]uint, len(req.Items))
-		quantityMap := map[uint]int{}
-		for i, item := range req.Items {
-			productIDs[i] = item.ProductID
-			quantityMap[item.ProductID] = item.Quantity
-		}
-
-		var products []models.Product
-		config.DB.Where("id IN ? AND shop_id = ?", productIDs, req.ShopID).Find(&products)
-		if len(products) != len(req.Items) {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid products"})
-			return
-		}
-
-		productMap = make(map[uint]models.Product, len(products))
-		for _, p := range products {
-			if p.Status != 1 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("product %s not available", p.Name)})
+		productCache := map[uint]models.Product{}
+		for _, item := range req.Items {
+			product, cached := productCache[item.ProductID]
+			if !cached {
+				if err := config.DB.Where("id = ? AND shop_id = ?", item.ProductID, req.ShopID).First(&product).Error; err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "invalid products"})
+					return
+				}
+				productCache[item.ProductID] = product
+			}
+			if product.Status != 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("product %s not available", product.Name)})
 				return
 			}
-			productMap[p.ID] = p
-			calculatedAmount += p.Price * float64(quantityMap[p.ID])
+
+			price := product.Price
+			var specID uint
+			var specName string
+			if item.SpecID != 0 {
+				var spec models.ProductSpec
+				if err := config.DB.Where("id = ? AND product_id = ?", item.SpecID, item.ProductID).First(&spec).Error; err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "invalid spec"})
+					return
+				}
+				if spec.Status != 1 {
+					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec %s not available", spec.Name)})
+					return
+				}
+				price = spec.Price
+				specID = spec.ID
+				specName = spec.Name
+			}
+
+			calculatedAmount += price * float64(item.Quantity)
+			lines = append(lines, resolvedLine{product: product, specID: specID, specName: specName, price: price, quantity: item.Quantity})
 		}
 
 		req.Amount = calculatedAmount
@@ -126,15 +148,16 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
-	for _, item := range req.Items {
-		product := productMap[item.ProductID]
+	for _, ln := range lines {
 		orderItem := models.OrderItem{
 			OrderID:     order.ID,
-			ProductID:   product.ID,
-			ProductName: product.Name,
-			Price:       product.Price,
-			Quantity:    item.Quantity,
-			Subtotal:    product.Price * float64(item.Quantity),
+			ProductID:   ln.product.ID,
+			ProductName: ln.product.Name,
+			SpecID:      ln.specID,
+			SpecName:    ln.specName,
+			Price:       ln.price,
+			Quantity:    ln.quantity,
+			Subtotal:    ln.price * float64(ln.quantity),
 		}
 		if err := tx.Create(&orderItem).Error; err != nil {
 			tx.Rollback()
