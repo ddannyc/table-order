@@ -32,17 +32,17 @@ export const setUser = (user) => {
 }
 
 export const getCart = (shopId) => {
-  const key = `cart_${shopId}`
+  const key = `cart_v2_${shopId}`
   return wx.getStorageSync(key) || []
 }
 
 export const setCart = (shopId, cart) => {
-  const key = `cart_${shopId}`
+  const key = `cart_v2_${shopId}`
   wx.setStorageSync(key, cart)
 }
 
 export const clearCart = (shopId) => {
-  const key = `cart_${shopId}`
+  const key = `cart_v2_${shopId}`
   wx.setStorageSync(key, [])
 }
 

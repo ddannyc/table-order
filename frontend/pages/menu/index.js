@@ -15,8 +15,10 @@ Page({
     orderType: 'dine_in', // dine_in | delivery（事实来源在首页/菜单，订单确认页只读）
     cartCount: 0,
     cartTotal: '0.00',
-    cartMap: {},
-    cartQtyMap: {},
+    cartQtyByKey: {},      // `${productId}_${specId}` -> qty
+    cartQtyByProduct: {},  // productId -> total qty (for spec products)
+    specPickerVisible: false,
+    specPickerProduct: null,
     loading: true,
     error: false,
     tabbar: {
@@ -80,10 +82,18 @@ Page({
       const categories = [...new Set(products.map(p => p.category))]
       const productsByCategory = {}
       categories.forEach(cat => {
-        productsByCategory[cat] = products.filter(p => p.category === cat).map(p => ({
-          ...p,
-          priceText: p.price.toFixed(2)
-        }))
+        productsByCategory[cat] = products.filter(p => p.category === cat).map(p => {
+          const specs = (p.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
+          const hasSpecs = specs.length > 0
+          return {
+            ...p,
+            specs,
+            hasSpecs,
+            noSpecKey: `${p.id}_0`,
+            specMinText: hasSpecs ? Math.min(...specs.map(s => s.price)).toFixed(2) : null,
+            priceText: p.price.toFixed(2)
+          }
+        })
       })
       this.setData({
         shop, products, categories, productsByCategory,
@@ -101,15 +111,17 @@ Page({
   updateCartInfo() {
     const { boundShopId } = this.data
     const cart = getCart(boundShopId)
-    let cartMap = {}
+    let cartQtyByKey = {}
+    let cartQtyByProduct = {}
     let cartCount = 0
     let cartTotal = 0
     cart.forEach(item => {
-      cartMap[item.id] = item.quantity
+      cartQtyByKey[item.key] = item.quantity
+      cartQtyByProduct[item.productId] = (cartQtyByProduct[item.productId] || 0) + item.quantity
       cartCount += item.quantity
       cartTotal += item.price * item.quantity
     })
-    this.setData({ cartMap, cartQtyMap: cartMap, cartCount, cartTotal: cartTotal.toFixed(2) })
+    this.setData({ cartQtyByKey, cartQtyByProduct, cartCount, cartTotal: cartTotal.toFixed(2) })
   },
 
   // 左侧分类点击 → 高亮 + 右侧滚动到锚点
@@ -132,36 +144,57 @@ Page({
     this.setData({ orderType: 'dine_in' })
   },
 
+  // 无规格商品：直接加购（specId 0）
   onAdd(e) {
     const productId = e.currentTarget.dataset.id
     const product = this.data.products.find(p => String(p.id) === String(productId))
     if (!product) return
-    addToCart(this.data.boundShopId, product, 1)
+    addToCart(this.data.boundShopId, product, null, 1)
     this.updateCartInfo()
     wx.showToast({ title: '已加入', icon: 'success' })
   },
 
   onInc(e) {
     const productId = e.currentTarget.dataset.id
-    const product = this.data.products.find(p => String(p.id) === String(productId))
-    if (!product) return
-    const qty = (this.data.cartQtyMap[product.id] || 0) + 1
-    updateCartQuantity(this.data.boundShopId, product.id, qty)
+    const key = `${productId}_0`
+    const qty = (this.data.cartQtyByKey[key] || 0) + 1
+    updateCartQuantity(this.data.boundShopId, key, qty)
     this.updateCartInfo()
   },
 
   onDec(e) {
     const productId = e.currentTarget.dataset.id
-    const product = this.data.products.find(p => String(p.id) === String(productId))
-    if (!product) return
-    const qty = this.data.cartQtyMap[product.id] || 0
-    if (qty <= 1) {
-      updateCartQuantity(this.data.boundShopId, product.id, 0)
-    } else {
-      updateCartQuantity(this.data.boundShopId, product.id, qty - 1)
-    }
+    const key = `${productId}_0`
+    const qty = this.data.cartQtyByKey[key] || 0
+    updateCartQuantity(this.data.boundShopId, key, qty <= 1 ? 0 : qty - 1)
     this.updateCartInfo()
   },
+
+  // 有规格商品：打开规格选择层
+  openSpecPicker(e) {
+    const productId = e.currentTarget.dataset.id
+    const product = this.data.products.find(p => String(p.id) === String(productId))
+    if (!product) return
+    const specs = (product.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
+    this.setData({ specPickerVisible: true, specPickerProduct: { ...product, specs } })
+  },
+
+  closeSpecPicker() {
+    this.setData({ specPickerVisible: false })
+  },
+
+  pickSpec(e) {
+    const specId = e.currentTarget.dataset.specId
+    const product = this.data.specPickerProduct
+    if (!product) return
+    const spec = product.specs.find(s => String(s.id) === String(specId))
+    if (!spec) return
+    addToCart(this.data.boundShopId, product, spec, 1)
+    this.updateCartInfo()
+    wx.showToast({ title: '已加入', icon: 'success' })
+  },
+
+  noop() {},
 
   scanQR() {
     wx.scanCode({

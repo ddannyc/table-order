@@ -213,6 +213,106 @@
   opacity: 0.7;
 }
 
+.price-from {
+  font-size: var(--font-caption);
+  font-weight: 400;
+  margin-left: 2rpx;
+}
+
+/* 选规格按钮 + 数量徽标 */
+.spec-btn {
+  background: var(--brand-accent);
+  color: var(--color-text-on-brand);
+  font-size: var(--font-caption);
+  padding: 10rpx 24rpx;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+}
+
+.spec-qty-badge {
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 8rpx;
+  margin-right: var(--space-sm);
+  background: var(--brand-primary);
+  color: var(--color-text-on-brand);
+  border-radius: 18rpx;
+  font-size: var(--font-caption);
+  line-height: 36rpx;
+  text-align: center;
+  display: inline-block;
+}
+
+/* 规格选择层 */
+.spec-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+}
+
+.spec-sheet {
+  width: 100%;
+  background: var(--color-bg-surface);
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: var(--space-lg);
+  padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.spec-sheet-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+
+.spec-sheet-title {
+  font-size: var(--font-title);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.spec-close {
+  font-size: var(--font-title);
+  color: var(--color-text-hint);
+  padding: 0 var(--space-sm);
+}
+
+.spec-opt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0;
+  border-bottom: 1rpx solid var(--color-border-light);
+}
+
+.spec-opt-name {
+  font-size: var(--font-body);
+  color: var(--color-text-primary);
+}
+
+.spec-opt-price {
+  margin-left: var(--space-md);
+  font-size: var(--font-price);
+  font-weight: 600;
+  color: var(--color-price);
+}
+
+.spec-add-btn {
+  background: var(--brand-primary);
+  color: var(--color-text-on-brand);
+  font-size: var(--font-caption);
+  padding: 10rpx 32rpx;
+  border-radius: var(--radius-lg);
+}
+
 .list-foot-pad {
   height: 140rpx;
 }

@@ -145,9 +145,9 @@ Page({
     }
     this.setData({ loading: true })
     const orderItems = cart.map(item => ({
-      product_id: item.id,
-      quantity: item.quantity,
-      price: Number(item.price) || 0
+      product_id: item.productId,
+      spec_id: item.specId || 0,
+      quantity: item.quantity
     }))
     createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward, this.data.orderType)
       .then((res) => {

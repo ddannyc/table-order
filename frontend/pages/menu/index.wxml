@@ -68,15 +68,24 @@
               <view class="product-name {{p.status === 2 ? 'inactive' : ''}}">{{p.name}}</view>
               <view class="product-desc">{{p.description || '美味菜品'}}</view>
               <view class="product-bottom">
-                <view class="product-price">¥{{p.priceText}}</view>
+                <view class="product-price">
+                  <block wx:if="{{p.hasSpecs}}">¥{{p.specMinText}}<text class="price-from">起</text></block>
+                  <block wx:else>¥{{p.priceText}}</block>
+                </view>
                 <view class="product-action">
-                  <view wx:if="{{p.status !== 2 && (!cartQtyMap[p.id] || cartQtyMap[p.id] === 0)}}" class="add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onAdd" data-id="{{p.id}}">+</view>
-                  <view wx:elif="{{p.status !== 2}}" class="qty-control">
-                    <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onDec" data-id="{{p.id}}">−</view>
-                    <text class="qty-value">{{cartQtyMap[p.id] || 0}}</text>
-                    <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onInc" data-id="{{p.id}}">+</view>
-                  </view>
                   <view wx:if="{{p.status === 2}}" class="sold-out">售罄</view>
+                  <block wx:elif="{{p.hasSpecs}}">
+                    <view wx:if="{{cartQtyByProduct[p.id]}}" class="spec-qty-badge">{{cartQtyByProduct[p.id]}}</view>
+                    <view class="spec-btn" hover-class="btn-press" hover-stay-time="150" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
+                  </block>
+                  <block wx:else>
+                    <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onAdd" data-id="{{p.id}}">+</view>
+                    <view wx:else class="qty-control">
+                      <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onDec" data-id="{{p.id}}">−</view>
+                      <text class="qty-value">{{cartQtyByKey[p.noSpecKey]}}</text>
+                      <view class="qty-btn" hover-class="btn-press" hover-stay-time="150" bindtap="onInc" data-id="{{p.id}}">+</view>
+                    </view>
+                  </block>
                 </view>
               </view>
             </view>
@@ -94,6 +103,26 @@
         <view class="cart-total">¥{{cartTotal}}</view>
       </view>
       <view class="cart-btn">去结算</view>
+    </view>
+  </view>
+
+  <!-- 规格选择层 -->
+  <view wx:if="{{specPickerVisible}}" class="spec-mask" bindtap="closeSpecPicker">
+    <view class="spec-sheet" catchtap="noop">
+      <view class="spec-sheet-hd">
+        <text class="spec-sheet-title">{{specPickerProduct.name}}</text>
+        <text class="spec-close" bindtap="closeSpecPicker">✕</text>
+      </view>
+      <view class="spec-list">
+        <view wx:for="{{specPickerProduct.specs}}" wx:key="id" class="spec-opt">
+          <view class="spec-opt-info">
+            <text class="spec-opt-name">{{item.name}}</text>
+            <text class="spec-opt-price">¥{{item.priceText}}</text>
+          </view>
+          <view wx:if="{{item.status === 2}}" class="sold-out">售罄</view>
+          <view wx:else class="spec-add-btn" hover-class="btn-press" hover-stay-time="150" bindtap="pickSpec" data-spec-id="{{item.id}}">加入</view>
+        </view>
+      </view>
     </view>
   </view>
 

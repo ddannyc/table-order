@@ -16,7 +16,7 @@
       <view wx:for="{{cartItems}}" wx:key="id">
         <mp-cell>
           <view slot="title" class="order-item-cell">
-            <text class="item-name">{{item.name}}</text>
+            <text class="item-name">{{item.name}}{{item.specName ? ' · ' + item.specName : ''}}</text>
             <text class="item-qty">x{{item.quantity}}</text>
           </view>
           <view slot="footer" class="item-price">¥{{item.subtotal}}</view>
