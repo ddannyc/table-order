@@ -23,11 +23,12 @@ type OrderItemRequest struct {
 }
 
 type CreateOrderRequest struct {
-	ShopID  uint              `json:"shop_id" binding:"required"`
-	TableNo string            `json:"table_no" binding:"required"`
-	Amount  float64           `json:"amount" binding:"required,gt=0"`
-	Items   []OrderItemRequest `json:"items"`
-	UseReward bool            `json:"use_reward"`
+	ShopID    uint               `json:"shop_id" binding:"required"`
+	OrderType string             `json:"order_type"` // dine_in (default) | delivery
+	TableNo   string             `json:"table_no"`   // required for dine_in; empty allowed for delivery
+	Amount    float64            `json:"amount" binding:"required,gt=0"`
+	Items     []OrderItemRequest `json:"items"`
+	UseReward bool               `json:"use_reward"`
 }
 
 func CreateOrder(c *gin.Context) {
@@ -36,6 +37,15 @@ func CreateOrder(c *gin.Context) {
 	var req CreateOrderRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+
+	orderType := req.OrderType
+	if orderType == "" {
+		orderType = "dine_in"
+	}
+	if orderType != "delivery" && req.TableNo == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "table_no required for dine-in"})
 		return
 	}
 
@@ -97,6 +107,7 @@ func CreateOrder(c *gin.Context) {
 		OrderNo:      orderNo,
 		UserID:       userID,
 		ShopID:       req.ShopID,
+		OrderType:    orderType,
 		TableNo:      req.TableNo,
 		Amount:       req.Amount,
 		RewardAmount: 0,

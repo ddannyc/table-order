@@ -9,6 +9,7 @@ type Order struct {
 	OrderNo      string    `gorm:"uniqueIndex;size:64" json:"order_no"`
 	UserID       uint      `gorm:"index" json:"user_id"`
 	ShopID       uint      `gorm:"index" json:"shop_id"`
+	OrderType    string    `gorm:"size:16;default:dine_in" json:"order_type"` // dine_in | delivery
 	TableNo      string    `gorm:"size:32" json:"table_no"`
 	Amount       float64   `gorm:"type:numeric(12,2)" json:"amount"`
 	RewardAmount float64   `gorm:"type:numeric(12,2);default:0" json:"reward_amount"` // 返利金额
