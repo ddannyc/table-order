@@ -1,144 +1,39 @@
-# Task List: 点餐功能扩展
+# Todo: 堂食/外卖双模式 + 菜品页改版 + SKU + 全站换肤
 
-## Phase 1: Foundation
+详见 `tasks/plan.md`。每阶段后必须通过检查点（含人工确认）才进入下一阶段。
+设计规范唯一真源：`DESIGN.md`。
 
-### Task 1: DB migration + Product model
-**Acceptance:**
-- [ ] products 表创建，字段：id, shop_id, name, price, description, image, category, status, created_at, updated_at
-- [ ] order_items 表创建，字段：id, order_id, product_id, product_name, price, quantity, subtotal
-- [ ] Go models: product.go, order_item.go
+## Phase 0 — 品牌换肤地基（横切，低风险）
+- [ ] **T1** 全局 token + 导航栏换肤（`app.wxss` brand token / `app.json` nav）— S
+- [ ] **T2** 自定义 TabBar + 残留硬编码 `#07c160` 清理 — M
+- [ ] **Checkpoint A**：编译干净、全站无残留绿、人工确认配色符合 DESIGN.md
 
-**Verification:**
-- `PGPASSWORD=postgres psql -d table_order -c "\d products"` - 表存在
-- `PGPASSWORD=postgres psql -d table_order -c "\d order_items"` - 表存在
-- `cd backend && go build ./...` - 编译通过
+## Phase 1 — 首页启动页 + 菜单页拆分/改版（堂食路径端到端，高风险早做）
+- [ ] **T3** 菜单逻辑迁移到独立页 `pages/menu/index`（布局先不变，深链直达 menu）— L
+- [ ] **T4** 首页重构为启动页（堂食/外卖两入口 + 切换；深链跳过启动页）— M
+- [ ] **T5** 菜单页改版：左分类栏 + 右列表 + 顶部堂食/外卖切换（DESIGN.md 配色）— L
+- [ ] **Checkpoint B**：启动页→堂食→扫码→新菜单→加购→订单确认→支付 全链路通；深链回归
 
-**Files:**
-- `backend/models/product.go` (new)
-- `backend/models/order_item.go` (new)
-- SQL migration (auto via GORM)
+## Phase 2 — order_type 契约（后端字段 + 前端贯穿）
+- [ ] **T6** 后端 `Order.OrderType` + delivery 放开 `TableNo`（与 shansong 共享契约）— M
+- [ ] **T7** 前端贯穿 order_type（首页/菜单→订单确认只读→createOrder）— M
+- [ ] **Checkpoint C**：后端 build/test 全绿、堂食回归不变、堂食单携带 order_type
 
----
+## Phase 3 — 真实 SKU / 规格（全栈，最大块）
+- [ ] **T8** 后端 `ProductSpec` 模型 + 下单按规格校验/计价 + OrderItem 记录规格 — L
+- [ ] **T9** 管理后台规格管理（增删改 + api）— M
+- [ ] **T10** 小程序「选规格」选择 + 购物车按 SKU 重构（含缓存迁移）— L
+- [ ] **Checkpoint D**：含规格/无规格两路端到端、前后端金额一致、旧缓存不崩
 
-### Task 2: Seed test products
-**Acceptance:**
-- [ ] 店铺ID=1插入5个测试菜品（涵盖不同分类和状态）
-- [ ] 菜品状态含：上架(1)、售罄(2)
+## Phase 4 — 外卖 地址→门店（衔接 shansong 规格）
+- [ ] **T11** Shop 地理字段 + 单门店解析（预留 nearest-shop 钩子）— M
+- [ ] **T12** 外卖入口流程：chooseAddress → 门店 → 配送态菜单 → delivery 交接 — M
+- [ ] **Checkpoint E**：外卖路径到达订单确认（地址 + order_type=delivery）、堂食回归、与 shansong 对齐
 
-**Verification:**
-- `PGPASSWORD=postgres psql -d table_order -c "SELECT name, price, category, status FROM products;"` - 显示5条
-
-**Files:**
-- SQL insert (手动执行)
-
----
-
-## Phase 2: Core User Flow
-
-### Task 3: Product API (用户端)
-**Acceptance:**
-- [ ] `GET /api/shops/:id/products` 返回店铺所有上架(status=1)菜品
-- [ ] 按 category 分组返回
-
-**Verification:**
-- `curl --noproxy '*' http://localhost:8080/api/shops/1/products` - 返回菜品数组
-
-**Files:**
-- `backend/api/handler/product.go` (new)
-
----
-
-### Task 4: Frontend product API + scan.vue 改造
-**Acceptance:**
-- [ ] `frontend/src/api/product.js` 包含 `getShopProducts(shopId)`
-- [ ] scan.vue 调用 API 显示菜品列表（分类 + 名称 + 价格 + 图片）
-- [ ] 点击菜品弹出数量选择，加购后存到本地 storage
-- [ ] 底部购物车栏显示已选商品数量和总价
-
-**Verification:**
-- 启动 `npm run dev:h5`，扫码进入页面显示菜品列表
-
-**Files:**
-- `frontend/src/api/product.js` (new)
-- `frontend/src/pages/scan/scan.vue` (改造)
-
----
-
-### Task 5: Order API 扩展 (含 OrderItems)
-**Acceptance:**
-- [ ] CreateOrderRequest 新增 `items []OrderItemRequest`
-- [ ] 后端重算订单金额 = sum(item.price * item.quantity)
-- [ ] 订单创建时同时创建 order_items 记录
-- [ ] 前端传 product_id + quantity，后端取 price
-
-**Verification:**
-- 下单成功后 `PGPASSWORD=postgres psql -d table_order -c "SELECT * FROM order_items;"` 有记录
-
-**Files:**
-- `backend/api/handler/order.go` (改造)
-- `backend/models/order_item.go` (已创建)
-
----
-
-### Task 6: Balance pay API
-**Acceptance:**
-- [ ] `POST /api/orders/:id/pay` - 余额支付
-- [ ] 扣款前检查余额是否充足
-- [ ] 事务：扣余额 + 更新订单status=2 + 创建wallet_log
-- [ ] 余额不足返回 error
-
-**Verification:**
-- 余额充足时支付成功，订单status=2
-- 余额不足时返回 "balance not enough"
-
-**Files:**
-- `backend/api/handler/order.go` (改造)
-
----
-
-### Task 7: cart.vue + order-confirm.vue
-**Acceptance:**
-- [ ] cart.vue: 显示购物车商品列表，数量+/-，删除，单项小计，总价，预计返利
-- [ ] order-confirm.vue: 订单摘要（店铺/桌号/商品列表/金额），余额支付按钮
-- [ ] 支付成功后跳转到订单完成页
-
-**Verification:**
-- 完整流程：加购 → 购物车 → 确认订单 → 支付 → 显示订单完成
-
-**Files:**
-- `frontend/src/pages/cart/cart.vue` (new)
-- `frontend/src/pages/order-confirm/order-confirm.vue` (new)
-
----
-
-## Phase 3: Merchant CRUD
-
-### Task 8: Product CRUD (商户端)
-**Acceptance:**
-- [ ] `POST /api/merchant/products` - 创建菜品（需商户认证）
-- [ ] `GET /api/merchant/products` - 返回商户自己店铺的菜品
-- [ ] `PUT /api/merchant/products/:id` - 更新菜品（含 status 改为售罄）
-- [ ] `DELETE /api/merchant/products/:id` - 删除菜品（软删或硬删）
-
-**Verification:**
-- 商户登录后可以 CRUD 自己的菜品
-
-**Files:**
-- `backend/api/handler/product.go` (改造，商户端接口)
-
----
-
-## Checkpoints
-
-### Checkpoint 1 (After Task 1-2)
-- [ ] products, order_items 表存在
-- [ ] go build 通过
-- [ ] 测试数据就绪
-
-### Checkpoint 2 (After Task 3-7)
-- [ ] 用户完整流程可跑通
-- [ ] 余额支付正常
-
-### Checkpoint 3 (After Task 8)
-- [ ] 商户可管理菜品
-- [ ] 所有功能测试通过
+## 开工前待人工确认（见 plan.md Open Questions）
+- [ ] Q1 order_type 事实来源 = 首页/菜单（订单确认只读）？
+- [ ] Q2 `Order.OrderType`/`TableNo` 由本计划落地、shansong 消费？
+- [ ] Q3 SKU 上线购物车缓存：清空 or 键版本化？
+- [ ] Q4 无规格商品 = 单一默认规格/商品价？
+- [ ] Q5 `custom-tab-bar/tab-bar/` 是否废弃、换肤跳过？
+- [ ] Q6 外卖范围止于「地址→门店→delivery 交接」，运费/派单归 shansong？
