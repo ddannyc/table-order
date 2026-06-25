@@ -4,10 +4,10 @@
 }
 
 .header {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  background: var(--weui-BRAND);
   padding: 80rpx var(--space-lg) var(--space-xl);
   text-align: center;
-  color: var(--color-bg-surface);
+  color: #fff;
   margin-bottom: var(--space-md);
 }
 
@@ -46,14 +46,14 @@
   align-items: center;
   justify-content: center;
   margin: 0 auto var(--space-md);
-  background: var(--color-bg-page);
-  color: var(--color-text-hint);
+  background: var(--weui-BG-1);
+  color: var(--weui-FG-2);
   font-size: var(--font-body);
 }
 
 .qr-tip {
   font-size: 26rpx;
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .reward-info {
@@ -70,17 +70,17 @@
 
 .info-label {
   font-size: var(--font-body);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .info-value {
   font-size: var(--font-body);
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   font-weight: 500;
 }
 
 .info-value.gold {
-  color: var(--color-gold);
+  color: var(--weui-BRAND);
   font-size: var(--font-title);
   font-weight: bold;
 }
@@ -91,9 +91,9 @@
 }
 
 .rates-title {
-  font-size: var(--font-lg);
+  font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-md);
 }
 
@@ -102,7 +102,7 @@
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-sm) 0;
-  border-bottom: 2rpx solid var(--color-bg-page);
+  border-bottom: 2rpx solid var(--weui-BG-1);
 }
 
 .rate-item:last-child {
@@ -112,8 +112,8 @@
 .rate-pct {
   width: 80rpx;
   height: 48rpx;
-  background: #e8f5e9;
-  color: #2e7d32;
+  background: var(--weui-BG-2);
+  color: var(--weui-BRAND);
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
@@ -124,18 +124,18 @@
 }
 
 .rate-pct.primary {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--weui-BG-2);
+  color: var(--weui-BRAND);
 }
 
 .rate-desc {
   font-size: 26rpx;
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .paused-bar {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
+  background: var(--weui-BG-1);
+  color: var(--weui-FG-1);
   padding: 20rpx var(--space-lg);
   font-size: var(--font-caption);
   margin-bottom: var(--space-md);
@@ -158,7 +158,7 @@
 .prompt-icon-wrap {
   width: 128rpx;
   height: 128rpx;
-  background: var(--weui-primary-light);
+  background: var(--weui-BG-2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -170,12 +170,12 @@
 .prompt-title {
   font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: 12rpx;
 }
 
 .prompt-desc {
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-bottom: var(--space-xl);
 }

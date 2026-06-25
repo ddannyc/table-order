@@ -1,9 +1,9 @@
 /* pages/invite/index.wxss */
 .header-card {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  background: var(--weui-BRAND);
   border-radius: 0 0 32rpx 32rpx;
   padding: 56rpx 32rpx;
-  color: var(--color-bg-surface);
+  color: #fff;
   margin-bottom: var(--space-md);
 }
 
@@ -35,7 +35,7 @@
 .share-icon {
   width: 128rpx;
   height: 128rpx;
-  background: var(--weui-primary-light);
+  background: var(--weui-BG-2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -47,20 +47,20 @@
 .share-title {
   font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: 12rpx;
 }
 
 .share-desc {
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-bottom: var(--space-xl);
 }
 
 .rules-title {
-  font-size: var(--font-lg);
+  font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-lg);
 }
 
@@ -79,8 +79,8 @@
 .rule-num {
   width: 44rpx;
   height: 44rpx;
-  background: var(--weui-primary);
-  color: var(--color-bg-surface);
+  background: var(--weui-BRAND);
+  color: #fff;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -96,9 +96,9 @@
 }
 
 .qr-title {
-  font-size: var(--font-lg);
+  font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-lg);
 }
 
@@ -115,19 +115,19 @@
 
 .qr-desc {
   font-size: 26rpx;
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .rule-text {
   font-size: var(--font-body);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
   line-height: 1.5;
   padding-top: 4rpx;
 }
 
 .reward-paused-bar {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
+  background: var(--weui-BG-1);
+  color: var(--weui-FG-1);
   padding: 20rpx 32rpx;
   font-size: var(--font-caption);
 }
@@ -141,15 +141,15 @@
 .login-tip-text {
   display: block;
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-bottom: var(--space-lg);
 }
 
 .login-tip-btn {
   display: inline-block;
   padding: 16rpx 48rpx;
-  background: var(--weui-primary);
-  color: var(--color-bg-surface);
+  background: var(--weui-BRAND);
+  color: #fff;
   font-size: var(--font-body);
   border-radius: var(--radius-sm);
 }
