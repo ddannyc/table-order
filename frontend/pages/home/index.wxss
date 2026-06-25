@@ -1,85 +1,39 @@
 /* pages/home/index.wxss — 选餐入口启动页 */
-.launcher {
-  min-height: 100vh;
-  background: var(--color-bg-page);
-  padding-bottom: 160rpx;
+.home-hd {
+  padding: 60rpx var(--space-lg) 40rpx;
 }
 
-.hero {
-  background: var(--brand-gradient);
-  padding: 120rpx var(--space-lg) 80rpx;
-  color: var(--color-text-primary);
-  border-radius: 0 0 40rpx 40rpx;
-}
-
-.hero-title {
+.home-title {
   font-size: var(--font-h1);
   font-weight: 600;
+  color: var(--weui-FG-0);
 }
 
-.hero-sub {
-  margin-top: var(--space-sm);
+.home-sub {
+  margin-top: var(--space-xs);
   font-size: var(--font-body);
-  opacity: 0.85;
+  color: var(--weui-FG-2);
 }
 
-.entry-cards {
-  padding: var(--space-lg);
-  margin-top: -40rpx;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+.home-emoji {
+  font-size: 56rpx;
+  margin-right: var(--space-md);
 }
 
-.entry-card {
-  position: relative;
-  background: var(--color-bg-surface);
-  border-radius: var(--radius-lg);
-  padding: 56rpx var(--space-lg);
-  box-shadow: 0 2rpx 12rpx rgba(0, 48, 60, 0.06);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-xs);
-  transition: transform 0.12s, opacity 0.12s;
-}
-
-.entry-press {
-  transform: scale(0.98);
-  opacity: 0.9;
-}
-
-.entry-card.dine-in {
-  border-top: 8rpx solid var(--brand-primary);
-}
-
-.entry-card.delivery {
-  border-top: 8rpx solid var(--brand-accent);
-}
-
-.entry-emoji {
-  font-size: 96rpx;
-  line-height: 1;
-}
-
-.entry-name {
+.home-entry-name {
   font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
 }
 
-.entry-desc {
+.home-entry-desc {
+  margin-top: 4rpx;
   font-size: var(--font-caption);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-2);
 }
 
-.entry-badge {
-  position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
-  background: var(--brand-accent);
-  color: var(--color-text-on-brand);
+.home-badge {
+  margin-left: var(--space-xs);
   font-size: var(--font-caption);
-  padding: 4rpx 16rpx;
-  border-radius: var(--radius-lg);
+  color: var(--weui-BRAND);
 }
