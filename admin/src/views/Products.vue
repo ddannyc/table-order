@@ -7,6 +7,9 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  createProductSpec,
+  updateProductSpec,
+  deleteProductSpec,
 } from '../api/product'
 import { uploadImage } from '../api/upload'
 
@@ -118,6 +121,74 @@ async function remove(row) {
   }
 }
 
+// ---- Spec (variant) management ----
+const specDialogVisible = ref(false)
+const specProduct = ref(null)
+const newSpec = ref({ name: '', price: 0, status: 1 })
+const specSaving = ref(false)
+
+function openSpecs(row) {
+  specProduct.value = row
+  newSpec.value = { name: '', price: 0, status: 1 }
+  specDialogVisible.value = true
+}
+
+// Reload products and re-point specProduct at the refreshed row.
+async function reloadSpecProduct() {
+  await load()
+  if (specProduct.value) {
+    const fresh = allProducts.value.find((p) => p.id === specProduct.value.id)
+    if (fresh) specProduct.value = fresh
+  }
+}
+
+async function addSpec() {
+  if (!newSpec.value.name) {
+    ElMessage.warning('请输入规格名称')
+    return
+  }
+  if (!(newSpec.value.price > 0)) {
+    ElMessage.warning('价格必须大于 0')
+    return
+  }
+  specSaving.value = true
+  try {
+    await createProductSpec(specProduct.value.id, { ...newSpec.value })
+    ElMessage.success('已添加规格')
+    newSpec.value = { name: '', price: 0, status: 1 }
+    await reloadSpecProduct()
+  } catch {
+    // handled by interceptor
+  } finally {
+    specSaving.value = false
+  }
+}
+
+async function saveSpec(spec) {
+  try {
+    await updateProductSpec(spec.id, { name: spec.name, price: spec.price, status: spec.status })
+    ElMessage.success('已保存')
+    await reloadSpecProduct()
+  } catch {
+    // handled by interceptor
+  }
+}
+
+async function removeSpec(spec) {
+  try {
+    await ElMessageBox.confirm(`删除规格「${spec.name}」？`, '删除规格', { type: 'warning' })
+  } catch {
+    return // cancelled
+  }
+  try {
+    await deleteProductSpec(spec.id)
+    ElMessage.success('已删除')
+    await reloadSpecProduct()
+  } catch {
+    // handled by interceptor
+  }
+}
+
 // ---- Image upload ----
 function beforeUpload(file) {
   const okType = ['image/jpeg', 'image/png', 'image/webp'].includes(file.type)
@@ -185,6 +256,13 @@ async function customUpload(option) {
           <el-tag :type="STATUS[row.status]?.type">{{ STATUS[row.status]?.label }}</el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="规格" width="90">
+        <template #default="{ row }">
+          <el-button link type="primary" @click="openSpecs(row)">
+            规格({{ row.specs ? row.specs.length : 0 }})
+          </el-button>
+        </template>
+      </el-table-column>
       <el-table-column label="操作" width="220">
         <template #default="{ row }">
           <el-button link type="primary" @click="openEdit(row)">编辑</el-button>
@@ -242,6 +320,54 @@ async function customUpload(option) {
         <el-button type="primary" :loading="saving" @click="save">保存</el-button>
       </template>
     </el-dialog>
+
+    <el-dialog
+      v-model="specDialogVisible"
+      :title="`规格管理 - ${specProduct?.name || ''}`"
+      width="560px"
+    >
+      <el-table :data="specProduct?.specs || []" size="small">
+        <el-table-column label="名称">
+          <template #default="{ row }"><el-input v-model="row.name" size="small" /></template>
+        </el-table-column>
+        <el-table-column label="价格" width="150">
+          <template #default="{ row }">
+            <el-input-number v-model="row.price" :min="0" :precision="2" size="small" />
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="110">
+          <template #default="{ row }">
+            <el-select v-model="row.status" size="small">
+              <el-option :value="1" label="上架" />
+              <el-option :value="0" label="下架" />
+              <el-option :value="2" label="售罄" />
+            </el-select>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="130">
+          <template #default="{ row }">
+            <el-button link type="primary" @click="saveSpec(row)">保存</el-button>
+            <el-button link type="danger" @click="removeSpec(row)">删除</el-button>
+          </template>
+        </el-table-column>
+        <template #empty>暂无规格（不设置则按菜品价格售卖）</template>
+      </el-table>
+
+      <div class="spec-add">
+        <el-input v-model="newSpec.name" placeholder="规格名，如 600ml" style="width: 160px" />
+        <el-input-number v-model="newSpec.price" :min="0" :precision="2" :step="1" />
+        <el-select v-model="newSpec.status" style="width: 100px">
+          <el-option :value="1" label="上架" />
+          <el-option :value="0" label="下架" />
+          <el-option :value="2" label="售罄" />
+        </el-select>
+        <el-button type="primary" :loading="specSaving" @click="addSpec">添加</el-button>
+      </div>
+
+      <template #footer>
+        <el-button @click="specDialogVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
   </el-card>
 </template>
 
@@ -257,5 +383,11 @@ async function customUpload(option) {
 .upload-row {
   display: flex;
   align-items: center;
+}
+.spec-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
 }
 </style>
