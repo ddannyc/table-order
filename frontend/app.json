@@ -19,7 +19,12 @@
   "usingComponents": {
     "custom-tab-bar": "miniprogram_npm/custom-tab-bar-comp",
     "mp-cells": "miniprogram_npm/weui-miniprogram/cells/cells",
-    "mp-cell": "miniprogram_npm/weui-miniprogram/cell/cell"
+    "mp-cell": "miniprogram_npm/weui-miniprogram/cell/cell",
+    "mp-tabbar": "miniprogram_npm/weui-miniprogram/tabbar/tabbar",
+    "mp-searchbar": "miniprogram_npm/weui-miniprogram/searchbar/searchbar",
+    "mp-half-screen-dialog": "miniprogram_npm/weui-miniprogram/half-screen-dialog/half-screen-dialog",
+    "mp-dialog": "miniprogram_npm/weui-miniprogram/dialog/dialog",
+    "mp-grids": "miniprogram_npm/weui-miniprogram/grids/grids"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
