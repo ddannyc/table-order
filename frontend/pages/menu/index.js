@@ -1,6 +1,6 @@
-// pages/home/index.js
+// pages/menu/index.js — 点餐菜单页（左分类栏 + 右列表）
 const { getShop, getTableBinding, setTableBinding, bindInviteCode } = require('../../api/index.js')
-const { getShopProducts, getCartCount, getCartTotal, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
+const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
 
 Page({
   data: {
@@ -10,6 +10,9 @@ Page({
     products: [],
     categories: [],
     productsByCategory: {},
+    activeCategory: '',
+    scrollIntoId: '',
+    orderType: 'dine_in', // dine_in | delivery（事实来源在首页/菜单，订单确认页只读）
     cartCount: 0,
     cartTotal: '0.00',
     cartMap: {},
@@ -27,11 +30,12 @@ Page({
   },
 
   onLoad(options) {
-    // Bind invite code from share card
     if (options && options.invite_code) {
       bindInviteCode(options.invite_code).catch(err => console.error('bind invite failed:', err))
     }
-    // Handle direct URL Scheme params (when mini-program already running)
+    if (options && options.order_type) {
+      this.setData({ orderType: options.order_type })
+    }
     if (options && options.shop_id && options.table_no) {
       const shopId = Number(options.shop_id)
       const tableNo = options.table_no
@@ -44,7 +48,6 @@ Page({
   },
 
   onShow() {
-    // Detect binding changes from URL Scheme warm start (App.onShow → handleScene stores new params)
     const { shopId, tableNo } = getTableBinding()
     if (shopId && tableNo && (shopId !== this.data.boundShopId || tableNo !== this.data.boundTableNo)) {
       this.setData({ boundShopId: shopId, boundTableNo: tableNo })
@@ -56,18 +59,13 @@ Page({
     }
   },
 
-  tabChange(e) {
-    const index = e.detail.index
-    this.setData({ 'tabbar.current': index })
-    const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
-    wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
-  },
-
   checkTableBinding() {
     const { shopId, tableNo } = getTableBinding()
     if (shopId && tableNo) {
       this.setData({ boundShopId: shopId, boundTableNo: tableNo })
       this.loadData()
+    } else {
+      this.setData({ loading: false })
     }
   },
 
@@ -87,7 +85,11 @@ Page({
           priceText: p.price.toFixed(2)
         }))
       })
-      this.setData({ shop, products, categories, productsByCategory, loading: false })
+      this.setData({
+        shop, products, categories, productsByCategory,
+        activeCategory: categories[0] || '',
+        loading: false
+      })
       this.updateCartInfo()
     }).catch(err => {
       console.error(err)
@@ -110,8 +112,24 @@ Page({
     this.setData({ cartMap, cartQtyMap: cartMap, cartCount, cartTotal: cartTotal.toFixed(2) })
   },
 
-  getCartQty(productId) {
-    return this.data.cartMap[productId] || 0
+  // 左侧分类点击 → 高亮 + 右侧滚动到锚点
+  selectCategory(e) {
+    const { cat, index } = e.currentTarget.dataset
+    this.setData({ activeCategory: cat, scrollIntoId: 'cat-' + index })
+  },
+
+  // 顶部堂食/外卖切换；外卖暂未上线，先占位不切换（Phase 4 接入）
+  switchOrderType(e) {
+    const type = e.currentTarget.dataset.type
+    if (type === 'delivery') {
+      wx.showModal({
+        title: '外卖即将上线',
+        content: '外卖配送功能正在开发中，敬请期待',
+        showCancel: false
+      })
+      return
+    }
+    this.setData({ orderType: 'dine_in' })
   },
 
   onAdd(e) {
@@ -166,22 +184,29 @@ Page({
     })
   },
 
+  goHome() {
+    wx.reLaunch({ url: '/pages/home/index' })
+  },
+
   onRetry() {
     this.loadData()
   },
 
   onImgError(e) {
-    const id = e.currentTarget.dataset.id
-    const key = `productsByCategory`
-    // mark image as failed so fallback shows
-    const fallback = '/assets/img-fallback.png'
-    e.target.src = fallback
+    e.target.src = '/assets/img-fallback.png'
   },
 
   goCart() {
-    const { boundShopId, boundTableNo } = this.data
+    const { boundShopId, boundTableNo, orderType } = this.data
     wx.navigateTo({
-      url: `/pages/order-confirm/index?shop_id=${boundShopId}&table_no=${boundTableNo}`
+      url: `/pages/order-confirm/index?shop_id=${boundShopId}&table_no=${boundTableNo}&order_type=${orderType}`
     })
+  },
+
+  tabChange(e) {
+    const index = e.detail.index
+    this.setData({ 'tabbar.current': index })
+    const routes = ['/pages/home/index', '/pages/invite/index', '/pages/profile/index']
+    wx.reLaunch({ url: routes[index] + '?fromTabbar=1' })
   }
 })
