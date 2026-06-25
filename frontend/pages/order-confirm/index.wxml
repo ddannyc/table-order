@@ -49,12 +49,12 @@
 
   <!-- 福利金开关（需要登录） -->
   <view wx:if="{{!needLogin && rewardBalance > 0}}" class="reward-card card">
-    <view class="reward-toggle" bind:tap="toggleUseReward">
+    <view class="reward-toggle">
       <view class="toggle-left">
         <view class="toggle-title">使用福利金抵扣</view>
         <view class="toggle-desc">可用 ¥{{rewardBalance}} (最高抵扣 {{rewardCeiling}}%)</view>
       </view>
-      <view class="toggle-switch {{useReward ? 'on' : ''}}"></view>
+      <switch checked="{{useReward}}" bindchange="toggleUseReward" />
     </view>
   </view>
 

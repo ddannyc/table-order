@@ -13,7 +13,7 @@ const path = require('path')
 const read = (rel) => fs.readFileSync(path.join(__dirname, '..', rel), 'utf8')
 const CUSTOM_COLOR = /var\(--(brand-|color-|weui-primary)/
 
-const migrated = ['login', 'home', 'menu']
+const migrated = ['login', 'home', 'menu', 'order-confirm']
 
 describe('migrated pages use no custom color tokens', () => {
   it.each(migrated)('%s/index.wxss has no --brand/--color/--weui-primary', (p) => {

@@ -12,8 +12,8 @@
 }
 
 .order-type-tag {
-  background: var(--brand-accent);
-  color: var(--color-text-on-brand);
+  background: var(--weui-BRAND);
+  color: #fff;
   font-size: var(--font-caption);
   padding: 2rpx 16rpx;
   border-radius: var(--radius-lg);
@@ -26,19 +26,19 @@
 
 .addr-line {
   font-size: var(--font-body);
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
 }
 
 .addr-detail {
   margin-top: 4rpx;
   font-size: var(--font-caption);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .section-title {
   font-size: var(--font-body);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   padding: var(--space-sm) 0;
 }
 
@@ -50,20 +50,20 @@
 
 .item-name {
   font-size: var(--font-body);
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
 }
 
 .item-qty {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
-  background: var(--color-bg-page);
+  color: var(--weui-FG-2);
+  background: var(--weui-BG-1);
   padding: 4rpx var(--space-sm);
   border-radius: 20rpx;
 }
 
 .item-price {
   font-size: var(--font-body);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .amount-card {
@@ -72,15 +72,15 @@
 
 .value-text {
   font-size: var(--font-body);
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   font-weight: 500;
 }
 
-.text-discount { color: var(--weui-primary); }
+.text-discount { color: var(--weui-BRAND); }
 
 .total-label {
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   font-size: var(--font-body);
 }
 
@@ -97,47 +97,18 @@
 }
 
 .toggle-left { flex: 1; }
-.toggle-title { font-size: var(--font-body); font-weight: 500; color: var(--color-text-primary); }
-.toggle-desc { font-size: var(--font-caption); color: var(--color-text-hint); margin-top: var(--space-xs); }
-
-.toggle-switch {
-  width: 104rpx;
-  height: 56rpx;
-  background: var(--color-text-disabled);
-  border-radius: 28rpx;
-  position: relative;
-  transition: background 0.3s;
-}
-
-.toggle-switch.on {
-  background: var(--weui-primary);
-}
-
-.toggle-switch::after {
-  content: '';
-  position: absolute;
-  width: 48rpx;
-  height: 48rpx;
-  background: var(--color-bg-surface);
-  border-radius: 50%;
-  top: 4rpx;
-  left: 4rpx;
-  transition: left 0.3s;
-}
-
-.toggle-switch.on::after {
-  left: 52rpx;
-}
+.toggle-title { font-size: var(--font-body); font-weight: 500; color: var(--weui-FG-0); }
+.toggle-desc { font-size: var(--font-caption); color: var(--weui-FG-2); margin-top: var(--space-xs); }
 
 .reward-amount-card { margin-bottom: var(--space-md); }
-.value-gold { font-size: var(--font-body); color: var(--color-gold); font-weight: 500; }
+.value-gold { font-size: var(--font-body); color: var(--weui-FG-0); font-weight: 500; }
 
 .submit-bar {
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--color-bg-surface);
+  background: #fff;
   padding: var(--space-md) var(--space-lg);
   padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
   display: flex;
@@ -155,11 +126,11 @@
 
 .submit-label {
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .submit-amount {
   font-size: var(--font-price-large);
   font-weight: bold;
-  color: var(--weui-primary);
+  color: var(--weui-BRAND);
 }
