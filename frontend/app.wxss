@@ -2,33 +2,34 @@
 @import 'miniprogram_npm/weui-miniprogram/weui-wxss/dist/style/weui.wxss';
 
 page {
-  /* Brand — teal primary + orange accent (DESIGN.md, from ui-color.png) */
-  --brand-primary: #189CA8;
-  --brand-primary-dark: #0C7A85;
-  --brand-primary-light: rgba(24,156,168,0.12);
-  --brand-accent: #FC8400;
-  --brand-accent-dark: #E07600;
-  --brand-accent-light: rgba(252,132,0,0.12);
+  /* Brand — warm orange (DESIGN.md, from ui-add-food.png) */
+  --brand-primary: #F88818;
+  --brand-primary-dark: #E0760A;
+  --brand-primary-light: rgba(248,136,24,0.12);
+  --brand-accent: #F88818;
+  --brand-accent-dark: #E0760A;
+  --brand-accent-light: rgba(248,136,24,0.12);
+  --brand-gradient: linear-gradient(135deg, #F6C84A 0%, #F89A70 100%);
 
-  /* weui overrides — migrated off WeChat green to brand teal */
-  --weui-primary: #189CA8;
-  --weui-primary-light: rgba(24,156,168,0.12);
-  --weui-color-success: #189CA8;
+  /* weui overrides — warm orange brand */
+  --weui-primary: #F88818;
+  --weui-primary-light: rgba(248,136,24,0.12);
+  --weui-color-success: #2BA471;
 
   /* Design Tokens */
-  --color-text-primary: #00303C;
-  --color-text-secondary: rgba(0,48,60,0.60);
-  --color-text-hint: rgba(0,48,60,0.35);
-  --color-text-disabled: rgba(0,48,60,0.20);
+  --color-text-primary: #083038;
+  --color-text-secondary: rgba(8,48,56,0.60);
+  --color-text-hint: rgba(8,48,56,0.35);
+  --color-text-disabled: rgba(8,48,56,0.20);
   --color-text-on-brand: #FFFFFF;
-  --color-bg-page: #F5F7F7;
+  --color-bg-page: #F5F5F5;
   --color-bg-surface: #FFFFFF;
-  --color-bg-rail: #F2F4F5;
-  --color-bg-hover: #f1f4f4;
-  --color-border: rgba(0,48,60,0.08);
-  --color-border-light: rgba(0,48,60,0.04);
-  --color-price: #FC8400;
-  --color-success: #189CA8;
+  --color-bg-rail: #F5F5F5;
+  --color-bg-hover: #FAF2E8;
+  --color-border: rgba(8,48,56,0.08);
+  --color-border-light: rgba(8,48,56,0.04);
+  --color-price: #083038;
+  --color-success: #2BA471;
   --color-danger: #E5484D;
   --color-warning-bg: #fff3cd;
   --color-warning-text: #856404;

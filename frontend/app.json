@@ -9,7 +9,7 @@
     "pages/share-code/index"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#189CA8",
+    "navigationBarBackgroundColor": "#F88818",
     "navigationBarTextStyle": "white",
     "navigationBarTitleText": "餐饮点餐",
     "backgroundColor": "#f5f5f5"
