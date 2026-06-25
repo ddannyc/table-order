@@ -3,12 +3,12 @@
 详见 `tasks/plan.md`。基准色 = weui 默认绿 `#07c160`（仅浅色）；菜单重构为纯 weui（顶部分类页签 + 媒体列表）；TabBar 换 weui tabbar。token 删除放最后。
 
 ## Phase 0 — weui 组件注册（加法）
-- [ ] **T1** app.json 注册所需 weui 组件（tabbar/searchbar/half-screen-dialog/dialog/grids…）— S
-- [ ] **Checkpoint A**：编译干净、页面不变、jest 全绿
+- [x] **T1** app.json 注册所需 weui 组件（tabbar/searchbar/half-screen-dialog/dialog/grids…）— S ✅
+- [x] **Checkpoint A**：✅ 编译/测试通过、页面不变
 
 ## Phase 1 — 底部导航换 weui tabbar
-- [ ] **T2** weui tabbar 替换 custom-tab-bar（home/invite/menu/profile）— M
-- [ ] **Checkpoint B**：四页 weui tabbar、路由不回归
+- [x] **T2** weui tabbar 替换 custom-tab-bar（home/invite/menu/profile）— M ✅
+- [x] **Checkpoint B**：✅ 四页 weui tabbar、82 测试全绿；⚠️ 待人工 DevTools 确认图标/高度 —— **在此暂停等方向确认**
 
 ## Phase 2 — 逐页迁移到 weui + 默认色（每页一纵切）
 - [ ] **T3** login → weui — S
