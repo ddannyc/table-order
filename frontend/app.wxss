@@ -1,42 +1,7 @@
-/* app.wxss - WeUI 基础样式 + 设计系统 Token */
+/* app.wxss — WeUI 基础样式 + 间距/字号比例（无定制配色） */
 @import 'miniprogram_npm/weui-miniprogram/weui-wxss/dist/style/weui.wxss';
 
 page {
-  /* Brand — warm orange (DESIGN.md, from ui-add-food.png) */
-  --brand-primary: #F88818;
-  --brand-primary-dark: #E0760A;
-  --brand-primary-light: rgba(248,136,24,0.12);
-  --brand-accent: #F88818;
-  --brand-accent-dark: #E0760A;
-  --brand-accent-light: rgba(248,136,24,0.12);
-  --brand-gradient: linear-gradient(135deg, #F6C84A 0%, #F89A70 100%);
-
-  /* weui overrides — warm orange brand */
-  --weui-primary: #F88818;
-  --weui-primary-light: rgba(248,136,24,0.12);
-  --weui-color-success: #2BA471;
-
-  /* Design Tokens */
-  --color-text-primary: #083038;
-  --color-text-secondary: rgba(8,48,56,0.60);
-  --color-text-hint: rgba(8,48,56,0.35);
-  --color-text-disabled: rgba(8,48,56,0.20);
-  --color-text-on-brand: #FFFFFF;
-  --color-bg-page: #F5F5F5;
-  --color-bg-surface: #FFFFFF;
-  --color-bg-rail: #F5F5F5;
-  --color-bg-hover: #FAF2E8;
-  --color-border: rgba(8,48,56,0.08);
-  --color-border-light: rgba(8,48,56,0.04);
-  --color-price: #083038;
-  --color-success: #2BA471;
-  --color-danger: #E5484D;
-  --color-warning-bg: #fff3cd;
-  --color-warning-text: #856404;
-  --color-danger-bg: #f8d7da;
-  --color-danger-text: #721c24;
-  --color-gold: #FFD700;
-
   /* Spacing */
   --space-xs: 8rpx;
   --space-sm: 16rpx;
@@ -68,16 +33,15 @@ page, view, text, navigator {
 
 .page {
   min-height: 100vh;
-  background: var(--color-bg-page);
+  background: var(--weui-BG-1);
   padding-bottom: 160rpx;
 }
 
-.text-primary { color: var(--weui-primary) !important; }
-.bg-primary { background: var(--weui-primary) !important; }
-.text-gold { color: var(--color-gold) !important; }
+.text-primary { color: var(--weui-BRAND) !important; }
+.bg-primary { background: var(--weui-BRAND) !important; }
 
 .card {
-  background: var(--color-bg-surface);
+  background: #fff;
   border-radius: var(--radius-md);
   padding: var(--space-lg);
   margin-bottom: var(--space-md);
@@ -89,7 +53,7 @@ page, view, text, navigator {
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--color-bg-surface);
+  background: #fff;
   padding: var(--space-md) var(--space-lg);
   padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom));
   display: flex;
@@ -102,7 +66,7 @@ page, view, text, navigator {
 .empty-tip {
   text-align: center;
   padding: 80rpx;
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   font-size: var(--font-body);
 }
 
@@ -111,8 +75,8 @@ page, view, text, navigator {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-lg);
-  background: var(--color-bg-surface);
-  border-bottom: 1rpx solid var(--color-border-light);
+  background: #fff;
+  border-bottom: 1rpx solid var(--weui-FG-3);
 }
 
 .list-item:last-child {
