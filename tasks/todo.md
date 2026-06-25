@@ -4,10 +4,10 @@
 品牌橙 `#F88818`；金黄→桃橙渐变；深墨文字 `#083038`。
 
 ## Phase 1 — 暖橙配色改版
-- [ ] **T1** 重写 DESIGN.md 配色为暖橙（含 `--brand-gradient`，来源改 ui-add-food.png）— S
-- [ ] **T2** 应用 `app.wxss` token 值 + 5 处导航栏 hex + TabBar 兜底 + design-tokens 测试（含无残留 `#189CA8` 扫描）— M
-- [ ] **T3** 启动页 hero / 菜单门店栏用暖色 banner 渐变贴合图片顶部 — S
-- [ ] **Checkpoint**：jest 全绿、无残留 `#189CA8`、⚠️ 人工 DevTools 确认观感「好看」且可读
+- [x] **T1** 重写 DESIGN.md 配色为暖橙（含 `--brand-gradient`，来源改 ui-add-food.png）— S ✅
+- [x] **T2** 应用 `app.wxss` token 值 + 5 处导航栏 hex + TabBar 兜底 + design-tokens 测试（含无残留 `#189CA8` 扫描）— M ✅
+- [x] **T3** 启动页 hero 暖渐变 + 菜单选中分类暖底（门店栏保持白色，忠于图片）— S ✅
+- [x] **Checkpoint**：✅ jest 72 全绿、业务代码无残留 `#189CA8`；⚠️ 人工 DevTools 确认观感「好看」且可读
 
 ## 待人工确认（见 plan.md Open Questions）
 - [ ] Q1 价格用深墨（忠于图片）还是改回橙色？
