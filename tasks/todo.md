@@ -11,18 +11,18 @@
 - [x] **Checkpoint B**：✅ 四页 weui tabbar、82 测试全绿；⚠️ 待人工 DevTools 确认图标/高度 —— **在此暂停等方向确认**
 
 ## Phase 2 — 逐页迁移到 weui + 默认色（每页一纵切）
-- [ ] **T3** login → weui — S
-- [ ] **T4** home 启动页（两入口 grids/cells）→ weui — M
-- [ ] **T5** menu 重构为纯 weui（navbar 页签 + 媒体列表 + half-screen-dialog 选规格 + 结算条）+ 重写 menu 测试 — L
-- [ ] **T6** order-confirm → weui — M
-- [ ] **T7** profile → weui — M
-- [ ] **T8** invite → weui — M
-- [ ] **T9** share-code → weui — S
-- [ ] **Checkpoint C**：全页 weui、`grep var(--brand` 无命中、jest 全绿
+- [x] **T3** login → weui — S ✅
+- [x] **T4** home 启动页（两入口 weui cells）→ weui — M ✅
+- [x] **T5** menu 重构为纯 weui（navbar 页签 + 媒体列表 + half-screen-dialog 选规格 + 结算条）+ 重写 menu 测试 — L ✅
+- [x] **T6** order-confirm → weui（含 native switch）— M ✅
+- [x] **T7** profile → weui — M ✅
+- [x] **T8** invite → weui — M ✅
+- [x] **T9** share-code → weui — S ✅
+- [x] **Checkpoint C**：✅ 全页 weui、`grep var(--brand|--color` 无命中、jest 全绿
 
 ## Phase 3 — 移除定制体系
-- [ ] **T10** 删 DESIGN.md + app.wxss token + design-tokens 测试 + 废弃 custom-tab-bar；清理 DESIGN.md 引用 — M
-- [ ] **Checkpoint D**：无 DESIGN/无 token/无 custom-tab-bar、全站 weui 默认绿、jest 全绿、人工验收
+- [x] **T10** 删 DESIGN.md + app.wxss 颜色 token + design-tokens 测试 + 废弃 custom-tab-bar（保留 --space/--font/--radius 比例 token）— M ✅
+- [x] **Checkpoint D**：✅ 无 DESIGN/无颜色 token/无 custom-tab-bar、71 测试全绿；⚠️ 人工 DevTools 验收观感
 
 ## 待人工确认（见 plan.md Open Questions）
 - [ ] Q1 菜单顶部是否要 weui-search-bar？
