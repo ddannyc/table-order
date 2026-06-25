@@ -40,7 +40,7 @@ describe('handleScene — URL Scheme direct query params', () => {
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'A01')
     expect(wx.removeStorageSync).toHaveBeenCalledWith('pending_invite_code')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=1&table_no=A01',
+      url: '/pages/menu/index?shop_id=1&table_no=A01',
     })
   })
 
@@ -64,7 +64,7 @@ describe('handleScene — QR code scene string (WeChat link rule)', () => {
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'A01')
     expect(wx.removeStorageSync).toHaveBeenCalledWith('pending_invite_code')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=1&table_no=A01',
+      url: '/pages/menu/index?shop_id=1&table_no=A01',
     })
   })
 
@@ -80,7 +80,7 @@ describe('handleScene — QR code scene string (WeChat link rule)', () => {
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 42)
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'B07')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=42&table_no=B07',
+      url: '/pages/menu/index?shop_id=42&table_no=B07',
     })
   })
 
@@ -103,7 +103,7 @@ describe('handleScene — "扫普通链接二维码打开小程序" q param (URL
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'A01')
     expect(wx.removeStorageSync).toHaveBeenCalledWith('pending_invite_code')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=1&table_no=A01',
+      url: '/pages/menu/index?shop_id=1&table_no=A01',
     })
   })
 
@@ -114,7 +114,7 @@ describe('handleScene — "扫普通链接二维码打开小程序" q param (URL
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 42)
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'B07')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=42&table_no=B07',
+      url: '/pages/menu/index?shop_id=42&table_no=B07',
     })
   })
 
@@ -160,7 +160,7 @@ describe('handleScene — edge cases', () => {
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 99)
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'Z99')
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=99&table_no=Z99',
+      url: '/pages/menu/index?shop_id=99&table_no=Z99',
     })
   })
 
@@ -172,7 +172,7 @@ describe('handleScene — edge cases', () => {
     // Contains both "ic=" and "shop_id=" — table QR rule is checked first and wins
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 1)
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/home/index?shop_id=1&table_no=A01',
+      url: '/pages/menu/index?shop_id=1&table_no=A01',
     })
   })
 })
