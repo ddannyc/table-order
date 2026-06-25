@@ -1,121 +1,161 @@
-# Implementation Plan: 配色改版 — 暖橙方案（取自 ui-add-food.png）
+# Implementation Plan: 去定制化 — 全面改用 weui 原生组件 + 默认配色
 
 ## Overview
-当前 teal 主色（取自 ui-color.png）观感不佳。改为 `ui-add-food.png` 的**暖橙**配色：单一品牌橙 `#F88818`（选中分类/选规格徽标/底部选中 Tab 都用它）、顶部金黄→桃橙渐变、深青墨文字 `#083038`、白/浅灰中性底。由于全站 UI 已是 token 驱动（颜色集中在 `frontend/app.wxss` 的 `page{}`，组件只引用变量），本次改版主要是**改 token 值 + 少量硬编码 hex（导航栏 JSON、TabBar 兜底）+ 同步测试**，风险低。
+移除项目的定制设计体系（`DESIGN.md` + `app.wxss` 里的 `--brand-*` / `--color-*` token），所有页面改用 **weui 原生组件 / 类**（`weui-miniprogram` 已是依赖），配色回到 **weui 默认（微信绿 `#07c160`，仅浅色）**，不再覆盖任何 `--weui-*` 变量。底部导航换成 **weui tabbar 组件**，菜单页**重构为纯 weui 形态**（顶部 `weui-navbar` 分类页签 + weui 媒体列表，不再左右两栏）。
 
-颜色取样自 `ui-add-food.png`：强调橙 `#F88818`(248,136,24)、金黄 `#F0D060`、桃橙 `#F8A080`、深墨 `#083038`(8,48,56)。
+参考：weui-wxss 文档（context7 `/tencent/weui-wxss`）。可用 weui 组件：`tabbar / navigation-bar / searchbar / cells / cell / dialog / half-screen-dialog / grids / actionsheet / toptips / msg / loading / icon / form / form-page`。
 
 ## Architecture Decisions
-- **单一品牌橙**：图中只有一种强调橙，故 `--brand-primary` 与 `--brand-accent` 同为 `#F88818`（保留两个 token 以兼容现有组件引用），按下态 `#E0760A`。
-- **价格沿用深墨**（`--color-price: #083038`）以**忠于图片**（图中价格为深色，非橙色）。可一键改回橙色（见 Open Q1）。
-- **新增 `--brand-gradient`**（金黄→桃橙）用于顶部 banner（启动页 hero、菜单门店栏），贴合图片顶部观感；其余渐变（原 primary→primary-dark）随 token 自动变暖橙。
-- **导航栏色**只能写在各页 JSON（不支持 CSS 变量），故 5 个 JSON 的 `#189CA8` 需逐个改为 `#F88818`；`navigationBarTextStyle: white` 在橙底上可读，保持不变。
-- **不改布局/结构/交互**，纯换色；DESIGN.md 仍是唯一真源。
-
-## 目标调色板（写入 DESIGN.md / app.wxss）
-```
-品牌
---brand-primary        #F88818
---brand-primary-dark   #E0760A
---brand-primary-light  rgba(248,136,24,0.12)
---brand-accent         #F88818
---brand-accent-dark    #E0760A
---brand-accent-light   rgba(248,136,24,0.12)
---brand-gradient       linear-gradient(135deg, #F6C84A 0%, #F89A70 100%)
-文本
---color-text-primary   #083038
---color-text-secondary rgba(8,48,56,0.60)
---color-text-hint      rgba(8,48,56,0.35)
---color-text-disabled  rgba(8,48,56,0.20)
---color-text-on-brand  #FFFFFF
-中性/功能
---color-bg-page        #F5F5F5
---color-bg-surface     #FFFFFF
---color-bg-rail        #F5F5F5
---color-bg-hover       #FAF2E8
---color-border         rgba(8,48,56,0.08)
---color-border-light   rgba(8,48,56,0.04)
---color-price          #083038   (忠于图片；橙色为备选)
---color-success        #2BA471
---color-danger         #E5484D
-weui 覆盖
---weui-primary         #F88818
---weui-primary-light   rgba(248,136,24,0.12)
---weui-color-success   #2BA471
-```
+- **配色基准 = weui 默认绿 `#07c160`，仅浅色**：不再定义/覆盖品牌色变量；组件用 weui 自带类样式（`weui-btn_primary` 等）。
+- **菜单重构为纯 weui 形态**：顶部 `weui-navbar` 分类页签 + 每分类一个 `weui-panel`/媒体列表（`weui-media-box`）；搜索用 `weui-search-bar`；选规格用 `weui-half-screen-dialog`；购物车结算用 `weui-bottom-fixed-opr` 区。**放弃左分类栏 + 右列表**（已确认）。
+- **TabBar 换 weui tabbar 组件**：用 `miniprogram_npm/weui-miniprogram/tabbar` 替换自定义 `custom-tab-bar-comp`（home/invite/menu/profile 四页）。
+- **token 移除放最后**：先把每页迁到 weui（不再引用 `var(--brand-*)`），全部迁完再删 token + `DESIGN.md` + 配色测试，避免中途样式塌掉。
+- **保留业务逻辑与数据流**：order_type / SKU / 外卖 / 返利等 JS 逻辑不变，仅换 UI 层；JS 行为测试尽量保留。
+- **不改后端**。
 
 ## Dependency Graph
 ```
-ui-add-food.png 取样
-   └── DESIGN.md（配色真源）
-          └── app.wxss token 值（组件已引用变量，无需改组件）
-                 ├── 硬编码 hex：app.json + 4 页 JSON 导航栏色；tab-bar 兜底 hex
-                 └── __tests__/design-tokens.test.js 断言（新 hex + 无残留 #189CA8）
-          └── --brand-gradient → 启动页 hero / 菜单门店栏（贴合图片顶部）
+weui 组件全局注册 (app.json)                [Phase 0, 加法, 不破坏]
+   │
+   ├── weui tabbar 替换 custom-tab-bar       [Phase 1, 共享 chrome]
+   │
+   └── 逐页迁移到 weui + 默认色 (不再引用 token)  [Phase 2, 纵切, 每页可独立验证]
+          login → home → menu(重构) → order-confirm → profile → invite → share-code
+                 │
+                 └── 移除 DESIGN.md + app.wxss token + 配色测试 + 废弃 custom-tab-bar  [Phase 3, 收尾]
 ```
+顺序：先注册（加法）→ 换共享 TabBar → 逐页去 token 化 → 最后删 token/DESIGN/测试（此时无人引用）。
 
 ---
 
 ## Task List
 
-### Phase 1: 暖橙配色改版
+### Phase 0: weui 组件注册（加法，不破坏）
 
-#### Task 1: 重写 DESIGN.md 配色为暖橙
-**Description:** 按上表把 DESIGN.md 第 1 节（配色）改为暖橙方案，更新「迁移说明」「价格」「分类栏」「TabBar」等描述与图片一致（来源由 ui-color.png 改为 ui-add-food.png），新增 `--brand-gradient`。仅改文档。
+#### Task 1: 全局注册所需 weui 组件
+**Description:** 在 `app.json` `usingComponents` 注册后续要用的 weui 组件（tabbar、navigation-bar、searchbar、dialog、half-screen-dialog、grids 等），保留现有 token 不动（页面仍正常）。
 **Acceptance criteria:**
-- [ ] DESIGN.md 配色表为上表暖橙值，无 `#189CA8` 残留。
-- [ ] 标注价格用深墨（忠于图片）+ 橙色备选；说明单一品牌橙。
+- [ ] `app.json` 注册 weui tabbar / searchbar / half-screen-dialog / dialog / grids（按需）。
+- [ ] 编译无报错，现有页面显示不变。
 **Verification:**
-- [ ] 人工通读 DESIGN.md 与本计划调色板一致。
+- [ ] 微信开发者工具编译通过；`frontend` jest 全绿。
 **Dependencies:** None
-**Files likely touched:** `DESIGN.md`
+**Files likely touched:** `frontend/app.json`
 **Estimated scope:** S
 
-#### Task 2: 应用 token 值 + 导航栏/TabBar hex + 测试
-**Description:** 把 `app.wxss` 的 token 值改为暖橙（含新增 `--brand-gradient`）；将 `app.json` 与 4 个页面 JSON 的 `navigationBarBackgroundColor` 改为 `#F88818`；TabBar 兜底 hex `var(--brand-primary, #189CA8)` → `#F88818`；更新 `design-tokens.test.js` 断言为新 hex，并新增「无残留 `#189CA8`」扫描。
+#### Checkpoint A — 注册
+- [ ] 编译干净、页面无变化、jest 全绿。
+
+---
+
+### Phase 1: 底部导航换 weui tabbar
+
+#### Task 2: 用 weui tabbar 替换 custom-tab-bar（4 页）
+**Description:** 用 `weui-miniprogram/tabbar` 组件替换 home/invite/menu/profile 的 `custom-tab-bar`，默认配色；tab 切换路由逻辑保持（点餐/邀请/我的）。
 **Acceptance criteria:**
-- [ ] `app.wxss` token 值与目标调色板一致；新增 `--brand-gradient`。
-- [ ] 5 处导航栏色 = `#F88818`；TabBar 兜底 = `#F88818`。
-- [ ] 全仓业务代码（排除 weui 库、废弃 tab-bar）无 `#189CA8`。
+- [ ] 四页底部为 weui tabbar，默认绿选中态。
+- [ ] 三个 Tab 切换正常，深链/扫码后落点不变。
+- [ ] 不再有页面引用 `custom-tab-bar`（组件文件暂留，Phase 3 删）。
 **Verification:**
-- [ ] `cd frontend && node node_modules/jest/bin/jest.js` 全绿。
-- [ ] `grep 189CA8 frontend`（排除 weui 库）无业务命中。
+- [ ] 人工：四页切 Tab 正常；jest 全绿。
 **Dependencies:** Task 1
-**Files likely touched:** `frontend/app.wxss`, `frontend/app.json`, `frontend/pages/{home,menu,profile,invite,order-confirm}/index.json`, `frontend/miniprogram_npm/custom-tab-bar-comp/index.wxss`, `frontend/__tests__/design-tokens.test.js`
+**Files likely touched:** `frontend/pages/{home,invite,menu,profile}/index.{wxml,json,js}`
 **Estimated scope:** M
 
-#### Task 3: 暖色 banner 渐变贴合图片顶部
-**Description:** 启动页 hero 与菜单门店栏使用 `--brand-gradient`（金黄→桃橙），更贴近图片顶部；其余组件随 token 自动变暖橙。可选：左侧选中分类底改用 `--brand-primary-light` 暖底（更贴近图片填充观感）。
-**Acceptance criteria:**
-- [ ] 启动页 hero 用 `--brand-gradient`。
-- [ ] 菜单门店栏顶部呈暖色（gradient 或暖底），与图片观感一致。
-**Verification:**
-- [ ] jest 全绿；人工 DevTools 预览首页/菜单顶部为暖色。
-**Dependencies:** Task 2
-**Files likely touched:** `frontend/pages/home/index.wxss`, `frontend/pages/menu/index.wxss`
-**Estimated scope:** S
+#### Checkpoint B — TabBar
+- [ ] 四页 weui tabbar 正常，路由不回归。
 
-#### Checkpoint: 配色改版完成
-- [ ] jest 全绿；无残留 `#189CA8`（业务代码）。
-- [ ] ⚠️ 人工在微信开发者工具确认首页/菜单/订单确认/我的等观感为暖橙且可读（白字在橙底、深墨文字）。
-- [ ] 与人工确认「好看」后定稿；如需微调橙色明度/价格颜色按 Open Q 处理。
+---
+
+### Phase 2: 逐页迁移到 weui + 默认配色（每页一个纵切）
+
+> 每个任务：该页**只用 weui 组件/类 + 默认色**，移除该页 `var(--brand-*)/var(--color-*)` 自定义色引用与定制视觉；JS 行为不变。
+
+#### Task 3: login 页 → weui
+**Acceptance criteria:** [ ] 登录页用 weui（btn/cells），默认色；登录流程不变。
+**Verification:** [ ] jest 全绿；人工登录走通。
+**Dependencies:** Task 2 **Files:** `frontend/pages/login/index.*` **Scope:** S
+
+#### Task 4: home 启动页 → weui
+**Description:** 堂食/外卖两入口改用 weui（`weui-grids` 或 weui cells/`weui-btn`），默认色；外卖 chooseAddress 逻辑不变。
+**Acceptance criteria:** [ ] 两入口为 weui 组件、默认色；堂食扫码、外卖选址逻辑不变。
+**Verification:** [ ] jest（home-launcher）全绿；人工两入口可点。
+**Dependencies:** Task 2 **Files:** `frontend/pages/home/index.*` **Scope:** M
+
+#### Task 5: menu 菜单页 → 纯 weui 重构（最大）
+**Description:** 重构为：顶部 `weui-search-bar` + `weui-navbar` 分类页签 + 各分类 `weui-media-box` 列表；选规格用 `weui-half-screen-dialog`；加购/数量用 weui 按钮；结算条用 `weui-bottom-fixed-opr`。移除左右两栏与自定义色。`selectCategory` 改为 navbar 页签切换；SKU/购物车/order_type/delivery 逻辑不变。
+**Acceptance criteria:**
+- [ ] 顶部分类页签（weui-navbar）切换对应分类列表；无左右两栏。
+- [ ] 有规格→half-screen-dialog 选规格；无规格→weui 加购/数量。
+- [ ] 购物车结算条为 weui；堂食/外卖、SKU 计价、去结算逻辑不变。
+**Verification:**
+- [ ] 重写后的 `menu-page.test.js`（页签切换 + switchOrderType）全绿；cart-sku 测试全绿；人工分类切换/选规格/加购/结算走通。
+**Dependencies:** Task 2 **Files:** `frontend/pages/menu/index.*`, `frontend/__tests__/menu-page.test.js` **Scope:** L
+
+#### Task 6: order-confirm → weui
+**Description:** 用 weui cells/媒体列表与 `weui-bottom-fixed-opr` 重排；移除 `order-type-tag`/`delivery-addr` 等自定义色样式，改 weui；逻辑（金额/福利金/order_type/地址）不变。
+**Acceptance criteria:** [ ] 全 weui、默认色；下单/支付/外卖地址展示逻辑不变。
+**Verification:** [ ] order-confirm 相关测试全绿；人工下单流程走通。
+**Dependencies:** Task 2 **Files:** `frontend/pages/order-confirm/index.*` **Scope:** M
+
+#### Task 7: profile 我的 → weui
+**Description:** 去掉渐变头部/钱包卡定制色，改 weui cells/panel + 默认色；收支明细/订单列表用 weui 列表。
+**Acceptance criteria:** [ ] 全 weui、默认色；钱包/订单/明细展示不变。
+**Verification:** [ ] jest 全绿；人工查看我的页。
+**Dependencies:** Task 2 **Files:** `frontend/pages/profile/index.*` **Scope:** M
+
+#### Task 8: invite 邀请 → weui
+**Acceptance criteria:** [ ] 去渐变头部，改 weui + 默认色；邀请码/分享逻辑不变。
+**Verification:** [ ] jest（share-button 等）全绿；人工邀请页走通。
+**Dependencies:** Task 2 **Files:** `frontend/pages/invite/index.*` **Scope:** M
+
+#### Task 9: share-code 分享码 → weui
+**Acceptance criteria:** [ ] 去渐变头部，改 weui + 默认色。
+**Verification:** [ ] jest 全绿；人工查看分享码页。
+**Dependencies:** Task 2 **Files:** `frontend/pages/share-code/index.*` **Scope:** S
+
+#### Checkpoint C — 全页迁移
+- [ ] 全部页面 weui + 默认色；`grep -r 'var(--brand' frontend/pages` 无命中；jest 全绿；人工各页观感为 weui 原生。
+
+---
+
+### Phase 3: 移除定制体系（收尾）
+
+#### Task 10: 删 DESIGN.md + app.wxss token + 配色测试 + 废弃组件
+**Description:** `app.wxss` 移除 `--brand-*`/`--color-*`/`--weui-*` 覆盖与定制工具类，仅保留 weui 导入与必要全局（布局类如 `.page`）；删除 `DESIGN.md`；删除 `frontend/__tests__/design-tokens.test.js`（其断言的定制 token 已不存在）；删除已无引用的 `custom-tab-bar-comp`（及废弃 `custom-tab-bar/tab-bar/`）；清理 CLAUDE/SPEC 中对 DESIGN.md 的引用（如有）。
+**Acceptance criteria:**
+- [ ] `app.wxss` 无 `--brand-*`/品牌色覆盖；`DESIGN.md` 已删。
+- [ ] 全仓 `grep -rn 'DESIGN.md'` 无残留引用（除归档计划）。
+- [ ] `grep -rE 'var\(--(brand|color)' frontend`（排除 weui 库）无命中。
+- [ ] 删除配色测试；其余 jest 全绿。
+**Verification:**
+- [ ] `frontend` jest 全绿；编译通过；人工全站为 weui 默认绿。
+**Dependencies:** Checkpoint C
+**Files likely touched:** `frontend/app.wxss`, `DESIGN.md`(删), `frontend/__tests__/design-tokens.test.js`(删), `frontend/miniprogram_npm/custom-tab-bar-comp/*`(删), `frontend/app.json`
+**Estimated scope:** M
+
+#### Checkpoint D — 完成
+- [ ] 无 DESIGN.md、无定制 token、无 custom-tab-bar；全站 weui 原生 + 默认绿；jest 全绿；人工验收。
 
 ---
 
 ## Risks and Mitigations
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| 导航栏白字在橙底对比度不足 | Low | `#F88818` 上白字对比度足够；Checkpoint 人工核验 |
-| 漏改某处 `#189CA8` 造成冷暖混搭 | Med | Task 2 新增「无残留 #189CA8」测试扫描 + grep 验证 |
-| 价格深墨 vs 橙色取向分歧 | Low | 默认忠于图片（深墨），Open Q1 一键切换 |
-| 渐变仅在 banner，过度使用显廉价 | Low | `--brand-gradient` 仅用于顶部 banner，弱使用 |
+| 提前删 token 导致样式塌 | High | Token 删除（T10）放最后；Checkpoint C 用 grep 确认无引用再删 |
+| 菜单重构改变交互/破坏 selectCategory 测试 | Med | T5 同步重写 `menu-page.test.js`（navbar 页签）；保留 SKU/cart 逻辑测试 |
+| weui tabbar 组件 API 与自定义不同（可能需 list 配置/选中态联动） | Med | T2 先查 weui tabbar 组件用法（context7 / 组件源码）再接；逐页验证路由 |
+| 大量自定义 WXSS 删除遗漏，残留冷暖混搭 | Med | 每页迁移后 grep 该页无 `var(--brand`；Checkpoint C 全量 grep |
+| 渐变头部（profile/invite/share-code）无 weui 等价 | Low | 用 weui 默认页头/cells 平铺；接受视觉简化（已确认去定制） |
+| 默认绿与此前橙色品牌差异大 | Low | 已确认回到 weui 默认 |
 
 ## Open Questions
-1. **价格颜色**：忠于图片用深墨 `#083038`，还是改回橙色 `#F88818` 更醒目？（计划默认深墨）
-2. **品牌橙明度**：`#F88818` 直接取样；是否需要更柔和/更深一版？
-3. **成功色**：由 teal 改为绿色 `#2BA471`（语义更准）是否可接受？
+1. **菜单顶部搜索**：是否需要 `weui-search-bar`（图中有搜索框），还是本期仅分类页签 + 列表？（计划含 searchbar，可删）
+2. **profile/invite 渐变头部**：接受改为 weui 纯色/cells 的视觉简化？（计划默认接受）
+3. **深色模式**：本期仅浅色（已确认）；是否预留 `data-weui-theme` 钩子？（计划不预留）
 
 ## Not Doing（及原因）
-- **不改布局/交互/组件结构** —— 本次纯换色。
-- **不动废弃 `custom-tab-bar/tab-bar/`** —— 未被引用（沿用既有决定）。
-- **不改管理后台(Vue)视觉** —— 需求针对小程序。
+- **深色模式** —— 已确认仅浅色。
+- **改后端 / 业务逻辑** —— 仅 UI 层去定制化。
+- **管理后台(Vue)** —— 需求针对小程序。
+- **保留任何品牌定制色** —— 与目标相反。

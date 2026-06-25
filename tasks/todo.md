@@ -1,15 +1,30 @@
-# Todo: 配色改版 — 暖橙方案（取自 ui-add-food.png）
+# Todo: 去定制化 — 全面改用 weui 原生组件 + 默认配色
 
-详见 `tasks/plan.md`。纯换色，不动布局/交互。DESIGN.md 仍是唯一真源。
-品牌橙 `#F88818`；金黄→桃橙渐变；深墨文字 `#083038`。
+详见 `tasks/plan.md`。基准色 = weui 默认绿 `#07c160`（仅浅色）；菜单重构为纯 weui（顶部分类页签 + 媒体列表）；TabBar 换 weui tabbar。token 删除放最后。
 
-## Phase 1 — 暖橙配色改版
-- [x] **T1** 重写 DESIGN.md 配色为暖橙（含 `--brand-gradient`，来源改 ui-add-food.png）— S ✅
-- [x] **T2** 应用 `app.wxss` token 值 + 5 处导航栏 hex + TabBar 兜底 + design-tokens 测试（含无残留 `#189CA8` 扫描）— M ✅
-- [x] **T3** 启动页 hero 暖渐变 + 菜单选中分类暖底（门店栏保持白色，忠于图片）— S ✅
-- [x] **Checkpoint**：✅ jest 72 全绿、业务代码无残留 `#189CA8`；⚠️ 人工 DevTools 确认观感「好看」且可读
+## Phase 0 — weui 组件注册（加法）
+- [ ] **T1** app.json 注册所需 weui 组件（tabbar/searchbar/half-screen-dialog/dialog/grids…）— S
+- [ ] **Checkpoint A**：编译干净、页面不变、jest 全绿
+
+## Phase 1 — 底部导航换 weui tabbar
+- [ ] **T2** weui tabbar 替换 custom-tab-bar（home/invite/menu/profile）— M
+- [ ] **Checkpoint B**：四页 weui tabbar、路由不回归
+
+## Phase 2 — 逐页迁移到 weui + 默认色（每页一纵切）
+- [ ] **T3** login → weui — S
+- [ ] **T4** home 启动页（两入口 grids/cells）→ weui — M
+- [ ] **T5** menu 重构为纯 weui（navbar 页签 + 媒体列表 + half-screen-dialog 选规格 + 结算条）+ 重写 menu 测试 — L
+- [ ] **T6** order-confirm → weui — M
+- [ ] **T7** profile → weui — M
+- [ ] **T8** invite → weui — M
+- [ ] **T9** share-code → weui — S
+- [ ] **Checkpoint C**：全页 weui、`grep var(--brand` 无命中、jest 全绿
+
+## Phase 3 — 移除定制体系
+- [ ] **T10** 删 DESIGN.md + app.wxss token + design-tokens 测试 + 废弃 custom-tab-bar；清理 DESIGN.md 引用 — M
+- [ ] **Checkpoint D**：无 DESIGN/无 token/无 custom-tab-bar、全站 weui 默认绿、jest 全绿、人工验收
 
 ## 待人工确认（见 plan.md Open Questions）
-- [ ] Q1 价格用深墨（忠于图片）还是改回橙色？
-- [ ] Q2 品牌橙 `#F88818` 是否需更柔和/更深？
-- [ ] Q3 成功色改绿 `#2BA471` 是否可接受？
+- [ ] Q1 菜单顶部是否要 weui-search-bar？
+- [ ] Q2 profile/invite 渐变头部接受改 weui 纯色简化？
+- [ ] Q3 仅浅色、不预留深色钩子？
