@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  background: var(--color-bg-surface);
+  background: #fff;
   padding: var(--space-lg);
   margin-bottom: var(--space-md);
 }
@@ -18,11 +18,11 @@
   width: 104rpx;
   height: 104rpx;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  background: var(--weui-BRAND);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-bg-surface);
+  color: #fff;
   font-size: 44rpx;
   font-weight: bold;
 }
@@ -34,17 +34,17 @@
 .nickname {
   font-size: var(--font-title);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
 }
 
 .user-desc {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-top: var(--space-xs);
 }
 
 .balance-card {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  background: var(--weui-BRAND);
   border-radius: var(--space-md);
   padding: 40rpx;
   display: flex;
@@ -65,16 +65,16 @@
 .balance-amount {
   font-size: var(--font-price-large);
   font-weight: bold;
-  color: var(--color-bg-surface);
+  color: #fff;
 }
 
 .balance-amount.gold {
-  color: var(--color-gold);
+  color: #fff;
 }
 
 .stats-row {
   display: flex;
-  background: var(--color-bg-surface);
+  background: #fff;
   border-radius: var(--radius-md);
   padding: var(--space-lg);
   margin-bottom: var(--space-md);
@@ -88,22 +88,22 @@
 .stat-value {
   font-size: var(--font-title);
   font-weight: bold;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-xs);
 }
 
 .stat-label {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .stat-divider {
   width: 2rpx;
-  background: var(--color-border-light);
+  background: var(--weui-FG-3);
 }
 
 .weui-tabs {
-  background: var(--color-bg-surface);
+  background: #fff;
   border-radius: var(--radius-md);
   margin-bottom: var(--space-md);
 }
@@ -118,13 +118,13 @@
   text-align: center;
   padding: var(--space-sm);
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   border-radius: var(--radius-sm);
 }
 
 .weui-tabs__item_on {
-  background: var(--weui-primary);
-  color: var(--color-bg-surface);
+  background: var(--weui-BRAND);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -134,7 +134,7 @@
 
 .log-remark {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .log-amount {
@@ -143,11 +143,11 @@
 }
 
 .log-amount.plus {
-  color: var(--weui-primary);
+  color: var(--weui-BRAND);
 }
 
 .log-amount.minus {
-  color: #ff6b6b;
+  color: var(--weui-RED);
 }
 
 .order-item {
@@ -159,17 +159,17 @@
   display: flex;
   justify-content: space-between;
   padding: 20rpx var(--space-lg);
-  background: var(--color-bg-hover);
+  background: var(--weui-BG-1);
 }
 
 .order-no {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .order-status {
   font-size: var(--font-caption);
-  color: var(--weui-primary);
+  color: var(--weui-BRAND);
 }
 
 .order-body {
@@ -191,7 +191,7 @@
 
 .order-time {
   font-size: var(--font-caption);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-top: var(--space-xs);
 }
 
@@ -202,8 +202,8 @@
 
 .order-detail {
   padding: var(--space-sm) var(--space-lg) var(--space-md);
-  border-top: 2rpx solid var(--color-border-light);
-  background: var(--color-bg-hover);
+  border-top: 2rpx solid var(--weui-FG-3);
+  background: var(--weui-BG-1);
 }
 
 .detail-row {
@@ -215,17 +215,17 @@
 
 .detail-name {
   font-size: var(--font-caption);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .detail-price {
   font-size: var(--font-caption);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
 }
 
 .reward-paused-bar {
-  background: var(--color-warning-bg);
-  color: var(--color-warning-text);
+  background: var(--weui-BG-1);
+  color: var(--weui-FG-1);
   padding: 20rpx var(--space-lg);
   font-size: var(--font-caption);
   margin-bottom: var(--space-sm);
@@ -233,8 +233,8 @@
 }
 
 .expiring-soon-bar {
-  background: var(--color-danger-bg);
-  color: var(--color-danger-text);
+  background: var(--weui-BG-1);
+  color: var(--weui-RED);
   padding: 20rpx var(--space-lg);
   font-size: var(--font-caption);
   margin-bottom: var(--space-sm);
@@ -249,27 +249,27 @@
 .rule-title {
   font-size: var(--font-body);
   font-weight: 600;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-sm);
 }
 
 .rule-item {
   font-size: var(--font-caption);
-  color: var(--color-text-secondary);
+  color: var(--weui-FG-1);
   padding: var(--space-xs) 0;
   padding-left: var(--space-sm);
-  border-left: 4rpx solid var(--weui-primary);
+  border-left: 4rpx solid var(--weui-BRAND);
   margin-bottom: var(--space-xs);
 }
 
 /* 未登录：用户名点击登录 */
 .login-link {
-  color: var(--weui-primary);
+  color: var(--weui-BRAND);
 }
 
 /* 未登录：福利金灰色 */
 .balance-amount.muted {
-  color: var(--color-text-disabled);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 /* 未登录：tab 内容区登录提示 */
@@ -281,15 +281,15 @@
 .login-tip-text {
   display: block;
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
   margin-bottom: var(--space-lg);
 }
 
 .login-tip-btn {
   display: inline-block;
   padding: 16rpx 48rpx;
-  background: var(--weui-primary);
-  color: var(--color-bg-surface);
+  background: var(--weui-BRAND);
+  color: #fff;
   font-size: var(--font-body);
   border-radius: var(--radius-sm);
 }
