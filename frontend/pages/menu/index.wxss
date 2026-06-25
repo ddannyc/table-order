@@ -79,7 +79,7 @@
 }
 
 .cat-active {
-  background: var(--color-bg-surface);
+  background: var(--brand-primary-light);
   color: var(--brand-primary);
   font-weight: 600;
 }

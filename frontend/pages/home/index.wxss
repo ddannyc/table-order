@@ -6,9 +6,9 @@
 }
 
 .hero {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-primary-dark) 100%);
+  background: var(--brand-gradient);
   padding: 120rpx var(--space-lg) 80rpx;
-  color: var(--color-text-on-brand);
+  color: var(--color-text-primary);
   border-radius: 0 0 40rpx 40rpx;
 }
 
