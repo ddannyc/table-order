@@ -5,7 +5,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f0faf4 0%, #fff 40%);
+  background: var(--weui-BG-0);
   padding: 80rpx 0;
 }
 
@@ -19,7 +19,7 @@
 .login-logo {
   width: 160rpx;
   height: 160rpx;
-  background: var(--weui-primary-light);
+  background: var(--weui-BG-2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -35,45 +35,18 @@
 .app-name {
   font-size: var(--font-h1);
   font-weight: bold;
-  color: var(--color-text-primary);
+  color: var(--weui-FG-0);
   margin-bottom: var(--space-sm);
 }
 
 .app-desc {
   font-size: var(--font-body);
-  color: var(--color-text-hint);
+  color: var(--weui-FG-2);
 }
 
 .login-features {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
+  width: 600rpx;
   margin-bottom: 80rpx;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.feature-icon {
-  width: 40rpx;
-  height: 40rpx;
-  background: var(--weui-primary);
-  color: var(--color-bg-surface);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22rpx;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.feature-text {
-  font-size: var(--font-body);
-  color: var(--color-text-secondary);
 }
 
 .login-btn-wrap {

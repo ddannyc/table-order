@@ -9,20 +9,22 @@
       <view class="app-desc">扫码点餐 · 福利会员 · 邀请返利</view>
     </view>
   </view>
-  <view class="login-features">
-    <view class="feature-item">
-      <view class="feature-icon">✓</view>
-      <view class="feature-text">扫码即点，无需排队</view>
+
+  <view class="weui-cells weui-cells_after-title login-features">
+    <view class="weui-cell">
+      <view class="weui-cell__hd"><i class="weui-icon-success-circle"></i></view>
+      <view class="weui-cell__bd">扫码即点，无需排队</view>
     </view>
-    <view class="feature-item">
-      <view class="feature-icon">✓</view>
-      <view class="feature-text">邀请好友，赚取福利金</view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd"><i class="weui-icon-success-circle"></i></view>
+      <view class="weui-cell__bd">邀请好友，赚取福利金</view>
     </view>
-    <view class="feature-item">
-      <view class="feature-icon">✓</view>
-      <view class="feature-text">消费返利，最高13%</view>
+    <view class="weui-cell">
+      <view class="weui-cell__hd"><i class="weui-icon-success-circle"></i></view>
+      <view class="weui-cell__bd">消费返利，最高 13%</view>
     </view>
   </view>
+
   <view class="login-btn-wrap">
     <button class="weui-btn" type="primary" bindtap="handleLogin" loading="{{loading}}">
       微信授权登录
