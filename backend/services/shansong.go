@@ -79,18 +79,11 @@ type QuoteResult struct {
 	QuoteToken  string
 }
 
-// CreateDeliveryRequest creates the actual dispatch against a prior quote.
+// CreateDeliveryRequest dispatches against a prior quote. orderPlace needs only
+// the shansong issOrderNo (QuoteToken); OrderNo is kept for logging/cross-ref.
 type CreateDeliveryRequest struct {
-	QuoteToken       string
-	OrderNo          string // our order_no, for cross-reference
-	SenderAddress    string
-	SenderLat        float64
-	SenderLng        float64
-	RecipientName    string
-	RecipientPhone   string
-	RecipientAddress string
-	RecipientLat     float64
-	RecipientLng     float64
+	QuoteToken string // shansong issOrderNo from the quote
+	OrderNo    string // our order_no (for logging / cross-reference)
 }
 
 // shansongResp is the common Shansong response envelope: status==200 means OK.

@@ -9,8 +9,8 @@ import (
 )
 
 // shansongDispatchedStatus is the initial status after a successful dispatch
-// (待接单). Subsequent statuses arrive via the Shansong callback.
-const shansongDispatchedStatus = 60
+// (派单中, per the merchants/v5 status enum). Later statuses arrive via callback.
+const shansongDispatchedStatus = 20
 
 // DispatchShansong places the Shansong courier order for a paid delivery order.
 // Async, best-effort: any failure is logged and never blocks the payment flow.
@@ -34,23 +34,11 @@ func DispatchShansong(orderID uint) {
 		log.Printf("[shansong] order not found orderID=%d: %v", orderID, err)
 		return
 	}
-	var shop models.Shop
-	if err := config.DB.First(&shop, order.ShopID).Error; err != nil {
-		log.Printf("[shansong] shop not found shopID=%d: %v", order.ShopID, err)
-		return
-	}
 
+	// orderPlace confirms the prior quote — only the issOrderNo is needed.
 	no, err := Shansong.CreateOrder(context.Background(), CreateDeliveryRequest{
-		QuoteToken:       od.ShansongQuoteNo,
-		OrderNo:          order.OrderNo,
-		SenderAddress:    shop.Address,
-		SenderLat:        shop.Latitude,
-		SenderLng:        shop.Longitude,
-		RecipientName:    od.RecipientName,
-		RecipientPhone:   od.RecipientPhone,
-		RecipientAddress: od.Province + od.City + od.County + od.DetailAddress,
-		RecipientLat:     od.RecipientLat,
-		RecipientLng:     od.RecipientLng,
+		QuoteToken: od.ShansongQuoteNo,
+		OrderNo:    order.OrderNo,
 	})
 	if err != nil {
 		log.Printf("[shansong] dispatch failed orderID=%d: %v", orderID, err)

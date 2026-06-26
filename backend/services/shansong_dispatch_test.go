@@ -39,6 +39,9 @@ func TestDispatchShansong_PersistsOrderNoOnSuccess(t *testing.T) {
 	if got.ShansongOrderNo != "SS-ORD-77" {
 		t.Errorf("expected shansong_order_no persisted, got %q", got.ShansongOrderNo)
 	}
+	if got.ShansongStatus != 20 {
+		t.Errorf("expected initial status 20 (派单中), got %d", got.ShansongStatus)
+	}
 }
 
 func TestDispatchShansong_FailureLeavesOrderNoEmpty(t *testing.T) {

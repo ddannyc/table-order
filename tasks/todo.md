@@ -16,7 +16,7 @@
 - [x] **FT4** /quote 生成 order_no + 城市/收发件映射；token 内嵌 order_no+issOrderNo；CreateOrder 复用 order_no — M ✅
 
 ## 派单 + 回调
-- [ ] **FT5** DispatchShansong→orderPlace，初始状态改 20（原 60=已取消，必错）— S
+- [x] **FT5** DispatchShansong→orderPlace，初始状态改 20（原 60=已取消，必错）— S ✅
 - [ ] **FT6** 回调验签改真实规则 + 解析 issOrderNo/orderStatus — M
 
 ## Checkpoint 联调
