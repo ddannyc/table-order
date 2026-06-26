@@ -18,6 +18,21 @@ import (
 	"github.com/example/table-order/services"
 )
 
+// markOrderPaidOnce atomically transitions an order from pending (status 1) to
+// paid (status 2). It returns true only for the call that actually performs the
+// transition; a guarded WHERE (status = 1) means a duplicate/concurrent WeChat
+// notification gets RowsAffected == 0 and false, so reward distribution and
+// courier dispatch fire exactly once.
+func markOrderPaidOnce(orderID uint, paidAt time.Time) (bool, error) {
+	res := config.DB.Model(&models.Order{}).
+		Where("id = ? AND status = ?", orderID, 1).
+		Updates(map[string]interface{}{"status": 2, "paid_at": &paidAt})
+	if res.Error != nil {
+		return false, res.Error
+	}
+	return res.RowsAffected == 1, nil
+}
+
 func WechatPayNotify(c *gin.Context) {
 	cfg := config.AppConfig.WeChat
 
@@ -84,12 +99,17 @@ func WechatPayNotify(c *gin.Context) {
 	}
 
 	now := time.Now()
-	if err := config.DB.Model(&order).Updates(map[string]interface{}{
-		"status":  2,
-		"paid_at": &now,
-	}).Error; err != nil {
+	won, err := markOrderPaidOnce(order.ID, now)
+	if err != nil {
 		log.Printf("[wechatpay] update order %s failed: %v", order.OrderNo, err)
 		c.JSON(http.StatusOK, gin.H{"code": "FAIL"})
+		return
+	}
+	if !won {
+		// A concurrent duplicate notification already transitioned this order;
+		// the side effects below ran with that notification. Ack and stop.
+		log.Printf("[wechatpay] order %s already transitioned concurrently — skipping side effects", order.OrderNo)
+		c.JSON(http.StatusOK, gin.H{"code": "SUCCESS"})
 		return
 	}
 
