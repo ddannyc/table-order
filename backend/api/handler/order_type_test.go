@@ -47,10 +47,11 @@ func TestCreateOrder_DefaultsToDineIn(t *testing.T) {
 }
 
 // delivery orders may omit table_no and must persist order_type=delivery.
+// (Delivery now requires a delivery block + signed quote token — T4.)
 func TestCreateOrder_DeliveryAllowsEmptyTableNo(t *testing.T) {
 	setupTestDB(t)
 
-	shop := models.Shop{Name: "Delivery Shop", MerchantID: 1, Status: 1}
+	shop := models.Shop{Name: "Delivery Shop", MerchantID: 1, Status: 1, Latitude: 39.9, Longitude: 116.4}
 	config.DB.Create(&shop)
 	product := models.Product{ShopID: shop.ID, Name: "Dish", Price: 40, Status: 1}
 	config.DB.Create(&product)
@@ -60,10 +61,15 @@ func TestCreateOrder_DeliveryAllowsEmptyTableNo(t *testing.T) {
 	r := setupRouter()
 	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
 	body := map[string]interface{}{
-		"shop_id":    shop.ID,
-		"amount":     40,
-		"order_type": "delivery",
-		"items":      []map[string]interface{}{{"product_id": product.ID, "quantity": 1}},
+		"shop_id":     shop.ID,
+		"amount":      40,
+		"order_type":  "delivery",
+		"quote_token": validToken(shop.ID, 5.0, 39.91, 116.41),
+		"items":       []map[string]interface{}{{"product_id": product.ID, "quantity": 1}},
+		"delivery": map[string]interface{}{
+			"recipient_name": "张三", "recipient_phone": "13800000000",
+			"detail_address": "某路1号", "lat": 39.91, "lng": 116.41,
+		},
 	}
 	jsonBody, _ := json.Marshal(body)
 	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))

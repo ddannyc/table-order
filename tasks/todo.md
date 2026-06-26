@@ -11,7 +11,7 @@
 - [x] **T3** `POST /api/delivery/quote`：报价透传 + 后端签名报价凭证 + 坐标缺失兜底 — M ✅
 
 ## P2 下单与履约
-- [ ] **T4** CreateOrder delivery 分支：验凭证落 OrderDelivery，实付含运费，返利按菜品额 — M
+- [x] **T4** CreateOrder delivery 分支：验凭证落 OrderDelivery，实付含运费，返利按菜品额 — M ✅
 - [ ] **T5** 支付成功后 `DispatchShansong`（wechatpay_notify + 零元分支钩子，仅 delivery）— M
 - [ ] **T6** `POST /api/shansong/callback`：验签 + 更新状态 + 幂等 + 返回 `{"status":200}` — M
 

@@ -19,6 +19,7 @@ type OrderDelivery struct {
 	RecipientLat    float64   `gorm:"type:numeric(10,6);default:0" json:"recipient_lat"` // 收件方纬度（wx.getLocation）
 	RecipientLng    float64   `gorm:"type:numeric(10,6);default:0" json:"recipient_lng"` // 收件方经度
 	DeliveryFee     float64   `gorm:"type:numeric(12,2)" json:"delivery_fee"`
+	ShansongQuoteNo string    `gorm:"size:64" json:"shansong_quote_no"`       // 闪送报价凭证，派单时回传
 	ShansongOrderNo string    `gorm:"size:64;index" json:"shansong_order_no"` // 闪送返回的运单号
 	ShansongStatus  int       `gorm:"default:0" json:"shansong_status"`       // 闪送配送状态码
 	CreatedAt       time.Time `json:"created_at"`

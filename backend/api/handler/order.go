@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
 	"github.com/example/table-order/services"
 	"github.com/example/table-order/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -22,13 +22,26 @@ type OrderItemRequest struct {
 	Quantity  int  `json:"quantity" binding:"required,gt=0"`
 }
 
+type DeliveryInfo struct {
+	RecipientName  string  `json:"recipient_name"`
+	RecipientPhone string  `json:"recipient_phone"`
+	Province       string  `json:"province"`
+	City           string  `json:"city"`
+	County         string  `json:"county"`
+	DetailAddress  string  `json:"detail_address"`
+	Lat            float64 `json:"lat"`
+	Lng            float64 `json:"lng"`
+}
+
 type CreateOrderRequest struct {
-	ShopID    uint               `json:"shop_id" binding:"required"`
-	OrderType string             `json:"order_type"` // dine_in (default) | delivery
-	TableNo   string             `json:"table_no"`   // required for dine_in; empty allowed for delivery
-	Amount    float64            `json:"amount" binding:"required,gt=0"`
-	Items     []OrderItemRequest `json:"items"`
-	UseReward bool               `json:"use_reward"`
+	ShopID     uint               `json:"shop_id" binding:"required"`
+	OrderType  string             `json:"order_type"` // dine_in (default) | delivery
+	TableNo    string             `json:"table_no"`   // required for dine_in; empty allowed for delivery
+	Amount     float64            `json:"amount" binding:"required,gt=0"`
+	Items      []OrderItemRequest `json:"items"`
+	UseReward  bool               `json:"use_reward"`
+	Delivery   *DeliveryInfo      `json:"delivery"`    // required for delivery orders
+	QuoteToken string             `json:"quote_token"` // signed delivery fee token from /delivery/quote
 }
 
 func CreateOrder(c *gin.Context) {
@@ -61,6 +74,28 @@ func CreateOrder(c *gin.Context) {
 	if err := config.DB.First(&shop, req.ShopID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "shop not found"})
 		return
+	}
+
+	// Delivery orders carry a signed quote token; the delivery fee is trusted
+	// only from the token, never from the client (mirrors server-side pricing).
+	var deliveryFee float64
+	var deliveryClaims *quoteClaims
+	if orderType == "delivery" {
+		if req.Delivery == nil || req.QuoteToken == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "delivery info required"})
+			return
+		}
+		claims, err := verifyQuoteToken(req.QuoteToken)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired quote"})
+			return
+		}
+		if claims.ShopID != req.ShopID {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "quote shop mismatch"})
+			return
+		}
+		deliveryFee = claims.Fee
+		deliveryClaims = claims
 	}
 
 	// Resolve each line to a product (+ optional spec) and price it server-side.
@@ -189,6 +224,29 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
+	// Persist delivery detail (1:1) for delivery orders. Coords come from the
+	// signed token (authoritative), address text from the request.
+	if orderType == "delivery" {
+		od := models.OrderDelivery{
+			OrderID:         order.ID,
+			RecipientName:   req.Delivery.RecipientName,
+			RecipientPhone:  req.Delivery.RecipientPhone,
+			Province:        req.Delivery.Province,
+			City:            req.Delivery.City,
+			County:          req.Delivery.County,
+			DetailAddress:   req.Delivery.DetailAddress,
+			RecipientLat:    deliveryClaims.Lat,
+			RecipientLng:    deliveryClaims.Lng,
+			DeliveryFee:     deliveryFee,
+			ShansongQuoteNo: deliveryClaims.ShansongQuote,
+		}
+		if err := tx.Create(&od).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "create delivery failed"})
+			return
+		}
+	}
+
 	// Deduct reward balance if used for discount (happens at order creation).
 	// Guarded conditional update: the WHERE rejects the write if the balance was
 	// drained by a concurrent order between the read above and here, so the
@@ -222,8 +280,14 @@ func CreateOrder(c *gin.Context) {
 
 	tx.Commit()
 
-	// Zero-amount order (reward covered everything): mark paid directly, skip WeChat Pay
-	if req.Amount <= 0 {
+	// Payable = item net (after reward) + delivery fee. The delivery fee is
+	// excluded from order.Amount so it never enters the reward/返利 base.
+	payAmount := req.Amount + deliveryFee
+
+	// Zero-amount order (reward covered items AND no delivery fee owed): mark paid
+	// directly, skip WeChat Pay. A delivery fee keeps payAmount > 0 so the fee is
+	// still collected via WeChat Pay.
+	if payAmount <= 0 {
 		now := time.Now()
 		config.DB.Model(&order).Updates(map[string]interface{}{
 			"status":  2,
@@ -236,41 +300,47 @@ func CreateOrder(c *gin.Context) {
 			})
 		go services.DistributeReward(order.ID, userID, req.ShopID, req.Amount)
 		c.JSON(http.StatusOK, gin.H{
-			"id":       order.ID,
-			"order_no": order.OrderNo,
-			"amount":   order.Amount,
-			"status":   2,
+			"id":           order.ID,
+			"order_no":     order.OrderNo,
+			"amount":       order.Amount,
+			"delivery_fee": deliveryFee,
+			"pay_amount":   payAmount,
+			"status":       2,
 		})
 		return
 	}
 
 	// Call WeChat Pay JSAPI prepay
-	amountCents := int64(math.Round(req.Amount * 100))
+	amountCents := int64(math.Round(payAmount * 100))
 	description := fmt.Sprintf("%s-订单%s", shop.Name, orderNo)
 	prepay, err := services.CreateJSAPIPrepay(c.Request.Context(), user.OpenID, orderNo, description, amountCents)
 	if err != nil {
 		log.Printf("[order] wechat prepay failed for order %s: %v", orderNo, err)
 		c.JSON(http.StatusOK, gin.H{
-			"id":       order.ID,
-			"order_no": order.OrderNo,
-			"amount":   order.Amount,
-			"status":   order.Status,
-			"error":    "prepay failed",
+			"id":           order.ID,
+			"order_no":     order.OrderNo,
+			"amount":       order.Amount,
+			"delivery_fee": deliveryFee,
+			"pay_amount":   payAmount,
+			"status":       order.Status,
+			"error":        "prepay failed",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"id":         order.ID,
-		"order_no":   order.OrderNo,
-		"amount":     order.Amount,
-		"status":     order.Status,
-		"prepay_id":  prepay.PrepayID,
-		"time_stamp": prepay.TimeStamp,
-		"nonce_str":  prepay.NonceStr,
-		"package":    prepay.Package,
-		"sign_type":  prepay.SignType,
-		"pay_sign":   prepay.PaySign,
+		"id":           order.ID,
+		"order_no":     order.OrderNo,
+		"amount":       order.Amount,
+		"delivery_fee": deliveryFee,
+		"pay_amount":   payAmount,
+		"status":       order.Status,
+		"prepay_id":    prepay.PrepayID,
+		"time_stamp":   prepay.TimeStamp,
+		"nonce_str":    prepay.NonceStr,
+		"package":      prepay.Package,
+		"sign_type":    prepay.SignType,
+		"pay_sign":     prepay.PaySign,
 	})
 }
 
@@ -374,10 +444,10 @@ func processInviteReward(userID uint, shopID uint, amount float64) {
 	}
 
 	walletLog := models.WalletLog{
-		UserID:  inviterID,
-		Type:    "invite_reward",
-		Amount:  inviteReward,
-		Remark:  fmt.Sprintf("邀请奖励 %.2f 元", inviteReward),
+		UserID: inviterID,
+		Type:   "invite_reward",
+		Amount: inviteReward,
+		Remark: fmt.Sprintf("邀请奖励 %.2f 元", inviteReward),
 	}
 	if err := tx.Create(&walletLog).Error; err != nil {
 		tx.Rollback()
