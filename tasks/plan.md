@@ -1,49 +1,107 @@
-# Implementation Plan: 首页/导航 设计修复（weui 体系内）
+# 实施计划：/ship 评审整改（双模式下单上线前修复）
 
-## Overview
-基于截图评审，修复 de-customization 后遗留的结构/一致性问题，全部在 weui 体系内，不重新引入定制品牌色。重点是两个 bug（TabBar 浮空、橙绿不一致）+ 首页观感（入口放大、外卖未上线态、图标尺寸）。
+## 概述
+`feat/dual-mode-ordering` 分支 /ship 评审结论为 **NO-GO**。本计划把评审发现的问题切成可独立验证的纵向任务，按风险分级。执行后该分支可翻为 **GO**。
 
-## Architecture Decisions
-- **不加定制配色/渐变/插画**：用户已确定 weui 默认绿，保持克制。
-- **TabBar 用 fixed 包裹**：mp-tabbar 默认非 fixed，包一层全局 `.tabbar-fixed` 钉底；`.page` 已有 `padding-bottom` 兜底。
-- **导航栏统一 weui 绿 `#07c160`**：去掉橙色。
-- **图标加内边距重生成**：当前图标紧贴边框显大，加 ~18% 透明边距即视觉变小、与文字协调。
+所有修复遵循项目 TDD 约定（RED → GREEN → 回归 → 一任务一提交）。后端 `go test ./...`（需本地 Postgres），前端 `node node_modules/jest/bin/jest.js`，admin `node node_modules/vitest/vitest.mjs run`。
 
-## Task List
+**基线纪律：** 绝不 `git add` `frontend/config.js`、`.claude/`、`specs/shansong-delivery.md`；每个提交只暂存该任务相关文件。
 
-### Task 1: TabBar 钉底（bug，影响 4 页）
-**Acceptance:** [ ] home/menu/invite/profile 的 mp-tabbar 包在 `.tabbar-fixed`（position:fixed,bottom:0）内；app.wxss 定义该类。 [ ] 页面底部不再有大块空白、tabbar 在屏底。
-**Verification:** [ ] 测试：4 页 wxml 含 `tabbar-fixed` 包裹 mp-tabbar；app.wxss 含 `.tabbar-fixed{position:fixed`；jest 全绿。
-**Files:** `frontend/app.wxss`, `frontend/pages/{home,menu,invite,profile}/index.wxml`
-**Scope:** M
+## 分级
+- **P0 阻断项**：必须修，否则不可上线。
+- **P1 资金路径风险**：与钱直接相关，强烈建议随本次一起修（修完即干净 GO）。
+- **P2 正确性/信息泄露**：低风险但应修；可并入本次或下次。
 
-### Task 2: 导航栏橙→绿（一致性 bug，5 页）
-**Acceptance:** [ ] app.json + home/menu/invite/profile/order-confirm 的 `navigationBarBackgroundColor` = `#07c160`。
-**Verification:** [ ] 测试断言 6 处 nav 色为 `#07c160`；jest 全绿。
-**Files:** `frontend/app.json`, `frontend/pages/{home,menu,invite,profile,order-confirm}/index.json`
+## 依赖关系
+- T1–T4 都改 `backend/api/handler/order.go` / `shop.go`，互不冲突但同文件，按顺序提交避免 rebase 噪音。
+- T5（前端 wx:key）、T6（admin/后端规格）独立，可任意顺序。
+- 建议执行序：T1 → T2 → T3 → T4 → T5 → T6 → Checkpoint。
+
+---
+
+## 任务列表
+
+### Task 1 — 【P0 阻断】规格必选守卫，堵住 spec_id:0 低价下单
+**问题：** `order.go:86-102` 当 `item.SpecID == 0` 时价格回退到 `product.Price`，但未校验该商品是否本就有规格。客户端对「有规格」的商品传 `spec_id:0`，即可按商品基础价（可能远低于规格价）下单。
+**做法：** 当 `item.SpecID == 0` 时，查询该商品是否存在 `status=1` 的规格；若存在则返回 400「请选择规格」。`single-default-spec`（无规格）商品不受影响。
+**Acceptance:**
+- [ ] 对「有上架规格」的商品传 `spec_id:0` → 400，订单不创建。
+- [ ] 无规格商品传 `spec_id:0` → 仍按 `product.Price` 正常下单（行为不变）。
+- [ ] 传合法 `spec_id` → 按规格价下单（行为不变）。
+**Verification:** [ ] `backend/api/handler/order_spec_test.go` 新增「有规格商品缺规格→400」用例，先 RED 后 GREEN；`go test ./...` 全绿。
+**Files:** `backend/api/handler/order.go`、`backend/api/handler/order_spec_test.go`
 **Scope:** S
 
-### Task 3: 首页入口放大 + 外卖未上线态
-**Acceptance:** [ ] 两入口为等高大卡（堂食上/外卖下），图标更大、信息居中、重心下移。 [ ] 外卖卡整体置灰，"即将上线"为独立徽标；点按给 toast（不进入未完成流程）。 [ ] 堂食 scan、外卖 toast 逻辑不变。
-**Verification:** [ ] home wxml 含独立 `home-badge` 徽标 + 外卖卡 `is-soon`/disabled 标识；home-launcher 测试全绿。
-**Files:** `frontend/pages/home/index.wxml`, `frontend/pages/home/index.wxss`
-**Scope:** M
-
-### Task 4: tab 图标尺寸（加内边距重生成）
-**Acceptance:** [ ] 重新生成 menu/invite/profile(+active) 图标，含透明内边距（不再满框），视觉与文字协调。
-**Verification:** [ ] 测试：图标 PNG 的 getbbox 小于整幅（存在边距）；jest 全绿。
-**Files:** `frontend/static/{menu,invite,profile}(-active).png`
+### Task 2 — 【P1】福利金扣减原子化，消除 TOCTOU 双花
+**问题：** `order.go:121` 在事务外读 `user.RewardBalance` 计算 `deductAmount`，`:170-176` 用 `reward_balance - ?` 无条件扣减。两个并发订单可基于同一份余额各自扣减，把余额扣成负数。
+**做法：** 扣减语句加条件 `Where("id = ? AND reward_balance >= ?", userID, deductAmount)`，检查 `RowsAffected == 0` 则回滚并返回错误（余额不足/被并发改动）。保持 `clause.Locking` 不变。
+**Acceptance:**
+- [ ] 扣减为「条件更新 + RowsAffected 校验」，余额不足时整单回滚、不创建订单。
+- [ ] 正常使用福利金抵扣路径行为不变。
+**Verification:** [ ] `order.go` 对应分支断言 `RowsAffected`；新增/补充测试覆盖「余额恰好够」与「条件不满足回滚」；`go test ./...` 全绿。
+**Files:** `backend/api/handler/order.go`、相关 `_test.go`
 **Scope:** S
 
-### Checkpoint
-- [ ] jest 全绿；⚠️ 人工 DevTools 验收：tabbar 钉底、全站绿、首页入口平衡、图标协调。
+### Task 3 — 【P1】下单必须带明细 + order_type 白名单
+**问题一：** `order.go:70` 当 `items` 为空时跳过服务端计价，直接信任客户端 `amount`。客户端可空明细传任意金额。
+**问题二：** `orderType` 接受任意字符串，仅 `dine_in`/`delivery` 合法。
+**做法：** `items` 为空 → 400「订单明细不能为空」；`orderType` 非 `dine_in`/`delivery` → 400。
+**Acceptance:**
+- [ ] 空 `items` → 400，订单不创建。
+- [ ] `order_type` 非法值 → 400。
+- [ ] 合法 `dine_in`/`delivery` 带明细 → 行为不变。
+**Verification:** [ ] `order_type_test.go` 补「非法 order_type→400」「空 items→400」用例；`go test ./...` 全绿。
+**Files:** `backend/api/handler/order.go`、`backend/api/handler/order_type_test.go`
+**Scope:** S
 
-## Risks
-| Risk | Mitigation |
-|------|------------|
-| fixed tabbar 遮挡内容 | `.page` padding-bottom 已留；菜单 cartbar 在 tabbar 之上已处理 |
-| 原生 tabBar vs 组件 | 本期用 fixed 包裹组件（成本低）；如需更稳可后续转原生 tabBar |
+### Task 4 — 【P2】GetShop 公开 DTO，不泄露分佣费率
+**问题：** 公开的 `GetShop`（小程序 order-confirm 调用）直接返回整个 `models.Shop`，泄露 `reward_rate_self/level1/level2`、`reward_exclude_categories` 等分佣经济结构。
+**做法：** `GetShop` 返回精简 DTO：仅保留前端实际需要的展示字段（name/description/address/phone/hours/logo/status）+ 抵扣计算所需的 `reward_ceiling`，剔除分佣费率字段。商户端 `GetShops` 不变（鉴权后可见全量）。
+**Acceptance:**
+- [ ] `GET /shops/:id` 响应不含 `reward_rate_*`、`reward_exclude_categories`。
+- [ ] 仍含 `reward_ceiling`（前端 `refreshCartDisplay` 依赖）及展示字段。
+- [ ] 前端 order-confirm 抵扣计算不受影响。
+**Verification:** [ ] 新增/补充 handler 测试断言响应字段集合；`go test ./...` 全绿。
+**Files:** `backend/api/handler/shop.go`、相关 `_test.go`
+**Scope:** S
 
-## Not Doing
-- 不加定制色/渐变/动画（保持 weui 克制）。
-- 不改后端/业务逻辑。
+### Task 5 — 【P2】order-confirm 列表 wx:key 修正
+**问题：** `order-confirm/index.wxml:20` 用 `wx:key="id"`，但购物车项无 `id` 字段，只有 `key`（`${productId}_${specId}`）。导致 WeChat 列表 diff 失效告警。
+**做法：** 改为 `wx:key="key"`。
+**Acceptance:** [ ] order-confirm 明细 `wx:for` 使用 `wx:key="key"`。
+**Verification:** [ ] 前端测试断言 wxml 使用 `wx:key="key"`；`jest` 全绿。
+**Files:** `frontend/pages/order-confirm/index.wxml`、`frontend/__tests__/order-confirm-type.test.js`
+**Scope:** S
+
+### Task 6 — 【P2】允许创建「下架」规格
+**问题：** `product.go:220-223` 强制 `status 0→1`，商户无法创建初始即下架的规格。
+**做法：** `CreateProductSpecRequest.Status` 改 `*int` 指针；nil → 默认 1，显式 0 → 下架。与 `UpdateProductSpecRequest` 一致。
+**Acceptance:**
+- [ ] 显式传 `status:0` 创建出下架规格。
+- [ ] 不传 status → 仍默认上架（行为不变）。
+**Verification:** [ ] `merchant_spec_test.go` 补「创建下架规格」用例；`go test ./...` 全绿。admin 端如有对应入参，`vitest` 全绿。
+**Files:** `backend/api/handler/product.go`、`backend/api/handler/merchant_spec_test.go`
+**Scope:** S
+
+### Checkpoint（上线前）
+- [ ] 三套测试全绿：`go test ./...`、`jest`、`vitest`。
+- [ ] 人工核对：有规格商品缺规格下单被拒；福利金并发不出负；GetShop 响应无分佣字段。
+- [ ] 重新出 GO/NO-GO 结论。
+
+---
+
+## 不在本次范围（已知、单独决策）
+- **零元自动支付路径**（`order.go:193-213`，main 已有、未测）：test-engineer 评为 Critical，但属**既有行为**。建议补**特征化回归测试**（不改行为）——可作为 Checkpoint 后的独立小任务，或单列。本计划默认**不动其逻辑**。
+- **邀请奖励 TOCTOU**（`processInviteReward`，main 已有）：异步入账、非下单关键路径，本次不改。
+- **seed 弱口令**（`cmd/seed`）：仅本地开发种子，生产不使用，不在上线范围。
+
+## 风险
+| 风险 | 缓解 |
+|------|------|
+| T1 多一次规格存在性查询 | 仅 `spec_id:0` 分支触发，且按 product_id 走索引，开销可忽略 |
+| T4 改公开响应结构可能影响前端字段 | 前端仅用 reward_ceiling + 展示字段，DTO 保留这些；测试断言字段集合 |
+| 同文件多任务连改 | 按 T1→T4 顺序逐个提交，降低冲突 |
+
+## 回滚
+- 分支未 push / 未 merge / 未部署：首要回滚 = 不合并。
+- AutoMigrate 仅增列，幂等无害；无需 down 迁移。
