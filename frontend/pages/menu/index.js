@@ -1,5 +1,5 @@
 // pages/menu/index.js — 点餐菜单页（左分类栏 + 右列表）
-const { getShop, getTableBinding, setTableBinding, bindInviteCode } = require('../../api/index.js')
+const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
 const { TAB_LIST } = require('../../utils/tabbar.js')
 
@@ -32,8 +32,9 @@ Page({
     if (options && options.order_type) {
       this.setData({ orderType: options.order_type })
     }
-    // 外卖：带 shop_id、无桌号
+    // 外卖：带 shop_id、无桌号。清除历史堂食绑定，避免被误判回堂食。
     if (options && options.order_type === 'delivery' && options.shop_id) {
+      clearTableBinding()
       this.setData({ boundShopId: Number(options.shop_id), boundTableNo: '', orderType: 'delivery' })
       this.loadData()
       return
@@ -132,16 +133,6 @@ Page({
   // 分类页签切换 → 显示该分类列表
   selectCategory(e) {
     this.setData({ activeCategory: e.currentTarget.dataset.cat })
-  },
-
-  // 顶部堂食/外卖切换；外卖模式清空桌号（配送态不绑桌）
-  switchOrderType(e) {
-    const type = e.currentTarget.dataset.type
-    if (type === 'delivery') {
-      this.setData({ orderType: 'delivery', boundTableNo: '' })
-      return
-    }
-    this.setData({ orderType: 'dine_in' })
   },
 
   // 无规格商品：直接加购（specId 0）

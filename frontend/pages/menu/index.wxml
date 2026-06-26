@@ -45,13 +45,10 @@
   <!-- 菜单主体 -->
   <view wx:else class="menu-main">
 
-    <!-- 门店栏 + 堂食/外卖切换 -->
+    <!-- 门店栏 + 只读点餐方式（单型在首页唯一入口确定，菜单内不可切换） -->
     <view class="menu-shopbar">
-      <view class="menu-shopname">{{shop.name || '店铺'}} · {{orderType === 'delivery' ? '外卖配送' : '桌号 ' + boundTableNo}}</view>
-      <view class="menu-typetoggle">
-        <view class="weui-btn weui-btn_mini {{orderType === 'dine_in' ? 'weui-btn_primary' : 'weui-btn_default'}}" bindtap="switchOrderType" data-type="dine_in">堂食</view>
-        <view class="weui-btn weui-btn_mini {{orderType === 'delivery' ? 'weui-btn_primary' : 'weui-btn_default'}}" bindtap="switchOrderType" data-type="delivery">外卖</view>
-      </view>
+      <view class="menu-shopname">{{shop.name || '店铺'}}</view>
+      <view class="menu-mode">{{orderType === 'delivery' ? '外卖 · 送货上门' : '堂食 · 桌号 ' + boundTableNo}}</view>
     </view>
 
     <!-- 分类页签 -->

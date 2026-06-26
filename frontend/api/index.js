@@ -130,3 +130,9 @@ export const setTableBinding = (shopId, tableNo) => {
   wx.setStorageSync('current_shop_id', shopId)
   wx.setStorageSync('current_table_no', tableNo)
 }
+
+// 清除桌号绑定（外卖进入时调用，避免历史堂食绑定泄漏成误判堂食）
+export const clearTableBinding = () => {
+  wx.removeStorageSync('current_shop_id')
+  wx.removeStorageSync('current_table_no')
+}

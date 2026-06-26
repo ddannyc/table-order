@@ -3,7 +3,7 @@
   padding-bottom: 240rpx; /* 让最后的菜品不被购物车条 + tabbar 遮挡 */
 }
 
-/* 门店栏 + 堂食/外卖切换 */
+/* 门店栏 + 只读点餐方式标识 */
 .menu-shopbar {
   display: flex;
   align-items: center;
@@ -21,10 +21,12 @@
   white-space: nowrap;
 }
 
-.menu-typetoggle {
-  display: flex;
-  gap: var(--space-xs);
+/* 只读点餐方式：次要信息，不抢眼（亮点留给左侧类目轨） */
+.menu-mode {
   flex: none;
+  margin-left: var(--space-md);
+  font-size: var(--font-caption);
+  color: var(--weui-FG-2);
 }
 
 /* 分类页签：横向滚动 navbar，吸顶 */
