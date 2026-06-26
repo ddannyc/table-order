@@ -49,7 +49,7 @@
 .entry-card {
   position: relative;
   background: var(--weui-BG-1);
-  border: 1rpx solid var(--brand-accent); /* 金发丝线 */
+  border: 1rpx solid var(--accent); /* 陶土橙发丝线 */
   border-radius: var(--radius-lg);
   padding: 64rpx var(--space-lg);
   display: flex;

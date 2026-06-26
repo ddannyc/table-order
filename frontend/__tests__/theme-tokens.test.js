@@ -41,8 +41,8 @@ describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
     '--weui-FG-0': '#2A2723',
     '--weui-FG-2': '#6E665A',
     '--weui-FG-3': '#E3DCCE',
-    '--brand-accent': '#C98A2B',
-    '--price-ink': '#A66E1F',
+    '--accent': '#C8643C',
+    '--price-ink': '#B0491F',
   }
 
   it.each(Object.entries(expected))('defines %s = %s', (name, hex) => {
@@ -60,11 +60,11 @@ describe('theme tokens — WCAG contrast floors', () => {
   const BRAND = '#2C4A3B'
   const FG0 = '#2A2723'
   const FG2 = '#6E665A'
-  const PRICE = '#A66E1F'
+  const PRICE = '#B0491F'
 
-  it('price-ink is legible as large bold text on both backgrounds (>=3:1)', () => {
-    expect(contrast(PRICE, BG0)).toBeGreaterThanOrEqual(3.0)
-    expect(contrast(PRICE, BG1)).toBeGreaterThanOrEqual(3.0)
+  it('price-ink passes AA on both backgrounds (>=4.5:1)', () => {
+    expect(contrast(PRICE, BG0)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(PRICE, BG1)).toBeGreaterThanOrEqual(4.5)
   })
   it('secondary text passes AA for small text on cream (>=4.5:1)', () => {
     expect(contrast(FG2, BG0)).toBeGreaterThanOrEqual(4.5)
