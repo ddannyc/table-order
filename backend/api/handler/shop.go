@@ -69,16 +69,8 @@ type publicShopDTO struct {
 	Status        int     `json:"status"`
 }
 
-func GetShop(c *gin.Context) {
-	shopID := c.Param("id")
-
-	var shop models.Shop
-	if err := config.DB.First(&shop, shopID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "shop not found"})
-		return
-	}
-
-	c.JSON(http.StatusOK, publicShopDTO{
+func toPublicShopDTO(shop models.Shop) publicShopDTO {
+	return publicShopDTO{
 		ID:            shop.ID,
 		Name:          shop.Name,
 		Description:   shop.Description,
@@ -90,7 +82,19 @@ func GetShop(c *gin.Context) {
 		Longitude:     shop.Longitude,
 		RewardCeiling: shop.RewardCeiling,
 		Status:        shop.Status,
-	})
+	}
+}
+
+func GetShop(c *gin.Context) {
+	shopID := c.Param("id")
+
+	var shop models.Shop
+	if err := config.DB.First(&shop, shopID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "shop not found"})
+		return
+	}
+
+	c.JSON(http.StatusOK, toPublicShopDTO(shop))
 }
 
 type UpdateShopRequest struct {
@@ -204,7 +208,7 @@ func ResolveDeliveryShop(c *gin.Context) {
 			return
 		}
 	}
-	c.JSON(http.StatusOK, shop)
+	c.JSON(http.StatusOK, toPublicShopDTO(shop))
 }
 
 // merchantOwnsShop reports whether shopID belongs to merchantID.
