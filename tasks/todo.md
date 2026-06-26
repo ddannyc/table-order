@@ -1,24 +1,21 @@
-# Todo：质感升级 首页+菜单（松墨 Pine-Ink）
+# Todo：复刻 mp-ui（首页 / 菜品 / 下单 / Tab）
 
-详见 `tasks/plan.md`。来源 spec：`docs/ideas/texture-uplift-pine-ink.md`。
+详见 `tasks/plan.md`。来源 spec：`docs/ideas/replicate-mp-ui.md`。
 一任务一提交，TDD（RED→GREEN→回归 jest）。
 基线：绝不 git add `frontend/config.js` / `.claude/` / `specs/`；只 stage 该任务文件 + todo。
 
 ## 任务（纵切，按依赖顺序）
-- [x] **T1** 令牌地基：app.wxss 覆盖 weui 配色 + accent/price + WCAG 对比度测试 — S（地基）✅
-- [x] **T2** 首页品牌 band + 入口卡重皮 — M（依赖 T1）✅
-- [x] **T3** 首页 hero 线描插画（蒸笼一桌菜，data-URI SVG）— M（依赖 T2）✅
-- [x] **T4** 菜单重皮（shopbar/rail/cards/price/cartbar 令牌上色）— M（依赖 T1）✅
-- [x] **T5** 菜单分类金线 glyph（升级 M3 占位）— M（依赖 T1、T4）✅
-- [x] **T6** 未绑桌空状态线描插画 — S（依赖 T4）✅
+- [ ] **R1** 配色令牌改造：金→陶土橙（--accent、price-ink 深陶土）+ 对比度测试 — S（地基）
+- [ ] **R2** 首页融合 dashboard：墨绿头 + 余额/返利真数据 + 厨师彩色插画 banner + 入口卡 — L（依赖 R1）
+- [ ] **R3** 菜品照片优先卡（product.image + 彩色展位图）+ 类目数量徽章 + 购物车带图 — L（依赖 R1）
+- [ ] **R4** 下单复刻：商品明细带缩略图 + 支付方式（余额/微信）+ 支付成功态 — M（依赖 R3）
+- [ ] **R5** 底部 tab 墨绿复刻 + PNG 图标（生成不足则请你提供）— M（依赖 R1）
 
 ## Checkpoint
-- [~] **C1** /frontend-design 自审 ✅ + 全量 jest 绿（135）✅ + 真机核对（**待人工**：本环境无模拟器）
-      自审与对比度自动化已完成；真机渲染/观感核对仍需人工，见 plan.md C1。
+- [ ] **C1** /frontend-design 自审 + 全量 jest 绿 + 真机核对（待人工：本环境无模拟器）
 
 ## 不在本期
-- 真实食物摄影 / 后台图片上传
-- 其余 4 屏（下单/我的订单/地址/选店）重皮
-- 自定义衬线/显示字体
-- 类目 scroll-spy / 锚点联动
-- 余额 / 会员积分模块上首页
+- 优惠券 / 自提 / 预约时间（无后端）
+- 真实菜品摄影（OSS 后填）
+- 菜单内 自提/外卖 切换（M1 已删，单型在首页定）
+- 地址 / 选店 / 我的订单屏

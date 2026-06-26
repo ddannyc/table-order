@@ -1,110 +1,97 @@
-# Plan：质感升级 首页+菜单（松墨 Pine-Ink）
+# Plan：复刻 mp-ui（首页 / 菜品 / 下单 / Tab）
 
-来源 spec：`docs/ideas/texture-uplift-pine-ink.md`（idea-refine 产出，已锁定全部决策）。
-风格沿用上一轮 M1–M5：纵切、一任务一提交、TDD（RED→GREEN→回归 jest）。
-**基线**：绝不 git add `frontend/config.js` / `.claude/` / `specs/`；每次提交只 stage 该任务文件，禁止 `git add -A`。
+来源 spec：`docs/ideas/replicate-mp-ui.md`（取代上一轮 pine-ink 方向）。
+风格沿用：纵切、一任务一提交、TDD（RED→GREEN→回归 jest）。
+**基线**：绝不 git add `frontend/config.js` / `.claude/` / `specs/`；每次只 stage 该任务文件，禁止 `git add -A`。
 
 ---
 
-## 关于"测试"的诚实说明
-这是换肤/视觉任务。可自动化的验收 = ①**WCAG 对比度**（用已知 hex 在 jest 里算，硬门槛）②**结构断言**（读 wxml/wxss 字符串断言类名/令牌/SVG 存在，沿用 `menu-page.test.js` 既有写法）③**无行为回归**（既有 jest 全绿）。
-**不可自动化** = 实际"质感"观感、真机 SVG data-URI 渲染、亮金描边在真机的颜色 —— 这些放到 C1 checkpoint 人工核对（本环境无模拟器）。计划不假装能测观感。
+## 关于"测试"的诚实说明（同上轮）
+可自动化 = ①WCAG 对比度（jest 内算）②结构断言（读 wxml/wxss/js）③行为无回归（既有 jest 全绿）。
+**不可自动化** = 复刻保真度、彩色插画好不好看、PNG 图标质量、真机渲染 —— C1 人工核对。
 
-## 渲染技术决策（地基）
-线描插画一律用 **wxss `background-image: url("data:image/svg+xml,<urlencoded>")`** 实现：
-- 零二进制资源（承接 M3 决定）、wxss 支持稳、可被结构测试断言。
-- 不用 `<image src="data:...svg">`（真机 SVG 支持历史上不稳）。描边色写死金 `#C98A2B`（data-URI 内联无法引 CSS 变量，需在注释标注与令牌同源）。
+## 两个保真天花板（提前声明，避免又一次失望）
+- **彩色厨师插画**用矢量重绘，是**近似**参考图意象，非像素级一致。
+- **Tab PNG 图标**在本环境生成质量有限；若我生成的不够好，需你提供一套（已在 spec Open Q）。
 
-## 令牌系统（最终值，已过 WCAG）
+## 配色令牌（最终值）
 ```
---weui-BRAND  #2C4A3B   主色：品牌band/主按钮/菜单激活竖条/cartbar/徽章底
---weui-BG-0   #F3EEE4   页面·燕麦奶油
---weui-BG-1   #FBF8F2   卡面·近白暖
---weui-BG-2   #EFE9DD   门店栏/左类目轨底
---weui-FG-0   #2A2723   正文（12:1）
---weui-FG-2   #6E665A   次要文字（4.89:1，比参考 #8A8275 调暗以过 AA）
---weui-FG-3   #E3DCCE   暖发丝线
---brand-accent #C98A2B  金：插画描边/分隔/印章（仅填充描边，不做文字）
---price-ink   #A66E1F   价格大字（3.73:1，仅 ≥34rpx 粗体）
+--weui-BRAND #2C4A3B 墨绿   --weui-BG-0 #F3EEE4 米白   --weui-BG-1 #FBF8F2 卡面
+--weui-FG-0 #2A2723         --weui-FG-2 #6E665A         --weui-FG-3 #E3DCCE
+--accent     #C8643C  陶土橙：标签/徽章/加购点缀（填充；文字慎用，小字对比不足）
+--price-ink  #B0491F  深陶土：价格（4.76:1 ✓，正文级也过）
+删除 --brand-accent（金退场）。
 ```
-徽章/数量 chip = 深绿底 + 奶油字（8.44:1）。金绝不做文字。
+真数据来源：余额 `getBalance()`→`{balance,reward_balance}`；返利 `getRewardBalance()`。
 
 ---
 
 ## 依赖图
 ```
-T1 令牌地基 ──┬─→ T2 首页band+入口卡 ──→ T3 首页hero插画
-              └─→ T4 菜单重皮 ──┬─→ T5 菜单分类金线glyph
-                                 └─→ T6 未绑桌空状态插画
-                                            └─→ C1 自审+全量绿+真机核对
+R1 令牌(金→陶土橙) ──┬─→ R2 首页融合 dashboard
+                     ├─→ R3 菜品照片卡 + 类目徽章 ──→ R4 下单复刻（共享购物车带图）
+                     └─→ R5 底部 tab 墨绿 + PNG 图标
+                                        └─→ C1 自审 + 全量绿 + 真机核对
 ```
-执行顺序：T1 → T2 → T3 → T4 → T5 → T6 → C1。
+顺序：R1 → R2 → R3 → R4 → R5 → C1。
 
 ---
 
-## T1 — 令牌地基（app.wxss 覆盖 weui 配色 + 新增 accent/price）— S
-**改**：`frontend/app.wxss`（仅 `page{}` 令牌 + `.page` 背景；不动既有 spacing/font 令牌与组件类）。
-**验收**
-- `page{}` 定义上表全部令牌；`.page { background: var(--weui-BG-0) }`。
-- 新增 `theme-tokens.test.js`：读 app.wxss 断言关键令牌+hex 存在；并**在 JS 内实现 WCAG 对比度函数**，断言：
-  - `--price-ink` on `--weui-BG-0` ≥ 3.0；on `--weui-BG-1` ≥ 3.0
-  - `--weui-FG-2` on `--weui-BG-0` ≥ 4.5
-  - `--weui-FG-0` on `--weui-BG-0` ≥ 7.0
-  - 奶油字(`--weui-BG-0`) on `--weui-BRAND` ≥ 4.5
-**验证**：`cd frontend && node node_modules/jest/bin/jest.js` 全绿（无行为回归）。
+## R1 — 配色令牌改造（金→陶土橙）— S
+**改**：`frontend/app.wxss`（删 `--brand-accent`，加 `--accent:#C8643C`，`--price-ink`→`#B0491F`）；`__tests__/theme-tokens.test.js`（断言新值 + 对比度：price-ink on BG-0/BG-1 ≥4.5；accent 仅作填充不设文字门槛）。
+**验收**：令牌更新；对比度测试过；既有 jest 全绿。
+（注：home hero / menu glyph 仍内联金 SVG，将在 R2/R3 被彩色插画/照片卡替换——R1 后短暂并存可接受。）
+**验证**：`cd frontend && node node_modules/jest/bin/jest.js` 全绿。
 
-## T2 — 首页品牌 band + 入口卡重皮 — M（依赖 T1）
-**改**：`frontend/pages/home/index.wxml` `.wxss`（结构微调 + 令牌上色；不动 `index.js` 行为）。
-- 顶部加深绿品牌 band（字标，仅店名/品牌名，**不含余额/积分**——已决策）。
-- 入口卡：`--weui-BG-1` 卡面 + 金发丝线分隔 + 深绿标题；emoji 暂留（hero 在 T3）。
+## R2 — 首页融合 dashboard — L（依赖 R1）
+**改**：`pages/home/index.js/.wxml/.wxss`。
+- 墨绿品牌头：店名/品牌字标 + **余额**（`getBalance`）+ **返利**（`getRewardBalance`），未登录则显 `—` 并引导登录，**不假数据**。
+- **彩色厨师插画 banner**（矢量重绘，替换 T3 单线 hero）。
+- 堂食/外卖入口卡（参考图卡片样式：图标/标题/描述/箭头）。
 **验收**
-- wxml 有 `.home-brandband`；wxss band 背景 `var(--weui-BRAND)`、文字奶油色。
-- 入口卡用令牌（无散落硬编码 hex）。
-- 既有 `home-launcher.test.js` 三个行为用例**全绿**（堂食扫码、外卖解析、无门店兜底）。
-- 新增结构断言：wxml 含 `home-brandband`。
+- 余额/返利走真接口；未登录优雅降级（结构测试 + js 行为：fetch 调用、降级分支）。
+- `home-launcher.test.js`（堂食扫码/外卖解析/兜底）**全绿**；新增结构断言（品牌头/banner/入口卡）。
+- 无硬编码假余额。
 **验证**：jest 全绿。
 
-## T3 — 首页 hero 线描插画（蒸笼一桌菜）— M（依赖 T2）
-**改**：`frontend/pages/home/index.wxml` `.wxss`。
-- band 下方加 `.home-hero` 横幅，wxss 用 `background-image` data-URI 单线 SVG（蒸笼+筷+碗，金描边），置于入口卡之上。
-- 静态（无动画）；如加入场动画须 `@media (prefers-reduced-motion: reduce)` 关闭。
+## R3 — 菜品照片优先卡 + 类目数量徽章 — L（依赖 R1）
+**改**：`pages/menu/index.js/.wxml/.wxss`、`utils/menu-image.js`、`api/product.js`/`utils/storage.js`（购物车存 `image`，供 R4 下单缩略图）。
+- 照片优先卡：大 thumb 用 `product.image`，空则**设计过的彩色展位图**（非空块）；陶土橙价格；绿色圆形加购按钮。
+- 左类目轨加**数量徽章**（真数据 = 该类目菜品数）。
+- 加购时把 `image` 写进购物车项。
 **验收**
-- wxml 有 `.home-hero`；wxss `.home-hero` 含 `data:image/svg+xml`。
-- `home-launcher.test.js` 仍全绿；新增结构断言 hero data-URI 存在。
+- 卡片读 `product.image`、空走展位图（`menu-image.test.js` 扩展：resolveProductImage 返回展位图描述）。
+- 类目徽章数 = 菜品数（js 测试）。
+- 购物车项含 `image`（`cart-isolation.test.js` 或新测试断言）。
+- `menu-page.test.js` 全绿。
 **验证**：jest 全绿。
 
-## T4 — 菜单重皮（shopbar/rail/cards/price/cartbar）— M（依赖 T1）
-**改**：`frontend/pages/menu/index.wxss`（主要）；wxml 仅在必要处加类（不动结构与 `index.js`）。
-- 门店栏→`--weui-BG-2`；卡面→`--weui-BG-1` 抬升；发丝线→`--weui-FG-3`；价格大字→`--price-ink`；`起`后缀→`--weui-FG-2`；cartbar→`--weui-BRAND`+奶油字；数量 chip→深绿底奶油字。激活竖条已用 `--weui-BRAND`（自动变真品牌绿）。
+## R4 — 下单复刻 — M（依赖 R3）
+**改**：`pages/order-confirm/index.js/.wxml/.wxss`。
+- 商品明细加**照片缩略图**（读购物车项 `image`，空走展位图）。
+- 店头 + 支付方式（**余额支付** real：`balance` 充足才可选 + 微信支付）+ 合计/支付 + **支付成功态**（参考图勾选浮层）。
+- 复刻视觉，逻辑（福利金抵扣等既有）不破坏。
 **验收**
-- wxss 价格类用 `var(--price-ink)`；cartbar 背景 `var(--weui-BRAND)`；卡面 `var(--weui-BG-1)`。
-- `menu-page.test.js` + `cart-isolation.test.js` 全绿（行为/隔离无回归）。
-- 新增结构断言：price 令牌 + cartbar 令牌存在。
+- 明细渲染缩略图（结构断言）；支付方式含余额/微信（结构）。
+- 既有下单/福利金/配送费逻辑测试**全绿**（无行为回归）。
+- 支付成功态可触发（js/结构）。
 **验证**：jest 全绿。
 
-## T5 — 菜单分类金线 glyph（升级 M3 占位）— M（依赖 T1、T4）
-**改**：`frontend/pages/menu/index.wxss`（按 glyph 加 `.menu-thumb-ph_{cup|bubble|cheese|sparkle}` 的金线 data-URI SVG）；`menu-image.js` 保持（仍供 glyph+label）。
-- 占位块从"中性文字"升级为"金色单线 glyph + label 兜底文字"（label 保留供无障碍/识别）。
+## R5 — 底部 tab 墨绿复刻 + PNG 图标 — M（依赖 R1）
+**改**：`utils/tabbar.js`（图标路径）、新增 `/static/*.png` 墨绿图标、相关 tab wxss。
+- 生成一套扁平墨绿 tab 图标（normal/active）；mp-tabbar 复刻参考图配色。
+- **若生成质量不足 → 停下请你提供素材**（doubt-driven，资产类不硬撑）。
 **验收**
-- wxss 定义 4 个 `.menu-thumb-ph_*` 类，各含 `data:image/svg+xml` 金描边。
-- `menu-image.test.js` 全绿（解析逻辑不变）；占位仍含 label 文本。
-- 新增结构断言：4 个 glyph 类的 SVG 存在。
-**验证**：jest 全绿。
-
-## T6 — 未绑桌空状态线描插画 — S（依赖 T4）
-**改**：`frontend/pages/menu/index.wxml` `.wxss`（未绑桌 `weui-msg` 区加 `.menu-empty-illu` 金线 SVG）。
-- 文案保持主动语态（"扫描餐桌二维码开始点餐"）；插画为单线空碗/纸飞机。
-**验收**
-- wxml 未绑桌块含 `.menu-empty-illu`；wxss 该类含 data-URI SVG。
-- 既有菜单测试全绿；新增结构断言。
+- tabbar 引用新图标；三页 tab 行为不回归（既有 tab 测试/手测）。
+- 新增断言：tabbar.js 指向新图标路径。
 **验证**：jest 全绿。
 
 ---
 
 ## Checkpoint C1 — 设计自审 + 全量绿 + 真机核对
-- **/frontend-design 自审**：signature 单一（hero 是唯一亮点，其余克制）；金只做填充描边；激活态不只靠颜色；文案主动语态；prefers-reduced-motion 已尊重。
-- **全量 jest 绿**（记录数字）。
-- **人工待办（本环境无法做）**：真机核对 ① SVG data-URI 在真机渲染 ② 金/铜对比眼检 ③ 两屏整体观感是否达参考图质感级别。达标后再决定是否铺其余 4 屏。
+- /frontend-design 自审（保真优先；signature=厨师 banner；a11y：对比度实测、触控≥80rpx、激活非纯色；克制）。
+- 全量 jest 绿（记录数字）。
+- **人工待办**：真机核对 ① 展位图够不够体面 ② 彩色插画/PNG 图标观感 ③ 余额/返利真机取数 ④ 整体是否达参考图保真级别。达标后再决定铺其余屏。
 
 ## 不在本期
-- 真实食物摄影；其余 4 屏（下单/我的订单/地址/选店）重皮；自定义衬线/显示字体；类目 scroll-spy；余额/会员积分模块。
+- 优惠券 / 自提 / 预约时间（无后端）；真实菜品摄影（OSS 后填）；菜单内 自提/外卖 切换（M1 已删）；地址/选店/我的订单屏。
