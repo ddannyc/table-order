@@ -32,6 +32,15 @@ wechat:
   wechatpay_public_key_id: "PUB_KEY_ID_xxxxxxxx"
   wechatpay_public_key_path: "./tmp/pub_key.pem"
 
+# 闪送开放平台（外卖配送）
+# Env overrides: SHANSONG_CLIENT_ID / SHANSONG_APP_SECRET / SHANSONG_BASE_URL / SHANSONG_NOTIFY_URL
+# 凭据由商家在闪送应用中心申请，切勿提交真实密钥
+shansong:
+  clientid: "your-shansong-clientid"
+  appsecret: "your-shansong-appsecret"
+  base_url: "https://open.s.bingex.com"        # 测试环境；生产 https://open.ishansong.com
+  notify_url: "https://your-domain.com/api/shansong/callback"
+
 # Cloudflare R2 (object storage for merchant product images)
 # Env overrides: R2_ACCOUNT_ID / R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY / R2_BUCKET / R2_PUBLIC_BASE
 r2:

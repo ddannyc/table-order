@@ -30,6 +30,7 @@ func setupTestDB(t *testing.T) {
 	sqlDB.Exec("DROP TABLE IF EXISTS reward_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS wallet_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS order_items")
+	sqlDB.Exec("DROP TABLE IF EXISTS order_deliveries")
 	sqlDB.Exec("DROP TABLE IF EXISTS orders")
 	sqlDB.Exec("DROP TABLE IF EXISTS product_specs")
 	sqlDB.Exec("DROP TABLE IF EXISTS products")
@@ -41,7 +42,7 @@ func setupTestDB(t *testing.T) {
 	config.DB = db
 
 	// Recreate tables
-	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
+	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
 
 	// Wait for any lingering goroutines from previous tests to finish
 	time.Sleep(300 * time.Millisecond)

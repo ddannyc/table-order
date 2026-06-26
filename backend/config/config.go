@@ -13,6 +13,14 @@ type Config struct {
 	JWT      JWTConfig
 	WeChat   WeChatConfig
 	R2       R2Config
+	Shansong ShansongConfig
+}
+
+type ShansongConfig struct {
+	ClientID  string `mapstructure:"clientid"`
+	AppSecret string `mapstructure:"appsecret"`
+	BaseURL   string `mapstructure:"base_url"`   // open.s.bingex.com（测试）/ open.ishansong.com（生产）
+	NotifyURL string `mapstructure:"notify_url"` // 闪送状态回调地址
 }
 
 type R2Config struct {
@@ -80,6 +88,7 @@ func LoadConfig(path string) (*Config, error) {
 	viper.SetDefault("server.mode", "debug")
 	viper.SetDefault("server.baseurl", "")
 	viper.SetDefault("jwt.expire_hours", 720)
+	viper.SetDefault("shansong.base_url", "https://open.s.bingex.com")
 
 	// config.yaml is optional — Railway uses env vars only
 	viper.ReadInConfig()
@@ -116,6 +125,12 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.WeChat.WechatPayPublicKeyContent = getEnv("WECHATPAY_PUBLIC_KEY_CONTENT", cfg.WeChat.WechatPayPublicKeyContent)
 	cfg.WeChat.MchPrivateKeyContent = getEnv("WECHAT_MCH_PRIVATE_KEY_CONTENT", cfg.WeChat.MchPrivateKeyContent)
 	cfg.WeChat.EnvVersion = getEnv("WECHAT_ENV_VERSION", cfg.WeChat.EnvVersion)
+
+	// Shansong env vars (Railway) — credentials must never live in the repo
+	cfg.Shansong.ClientID = getEnv("SHANSONG_CLIENT_ID", cfg.Shansong.ClientID)
+	cfg.Shansong.AppSecret = getEnv("SHANSONG_APP_SECRET", cfg.Shansong.AppSecret)
+	cfg.Shansong.BaseURL = getEnv("SHANSONG_BASE_URL", cfg.Shansong.BaseURL)
+	cfg.Shansong.NotifyURL = getEnv("SHANSONG_NOTIFY_URL", cfg.Shansong.NotifyURL)
 
 	// Cloudflare R2 env vars (Railway)
 	cfg.R2.AccountID = getEnv("R2_ACCOUNT_ID", cfg.R2.AccountID)

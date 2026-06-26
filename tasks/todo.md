@@ -6,7 +6,7 @@
 已确认决策：目的地坐标用 `wx.getLocation`（无后端地理编码）；取消/退款本期不做；配送状态展示纳入本期；闪送凭据就绪、本期含联调。
 
 ## P1 后端基础 + 报价
-- [ ] **T1** OrderDelivery 模型（+收件坐标）+ 迁移注册 + ShansongConfig + yaml 占位 — S
+- [x] **T1** OrderDelivery 模型（+收件坐标）+ 迁移注册 + ShansongConfig + yaml 占位 — S ✅
 - [ ] **T2** 闪送 service：签名 + CalculatePrice + CreateOrder + 状态映射（mock 单测）— M
 - [ ] **T3** `POST /api/delivery/quote`：报价透传 + 后端签名报价凭证 + 坐标缺失兜底 — M
 

@@ -51,6 +51,7 @@ func MigrateDB() error {
 		&models.TableQRCode{},
 		&models.Order{},
 		&models.OrderItem{},
+		&models.OrderDelivery{},
 		&models.Product{},
 		&models.ProductSpec{},
 		&models.InviteRelation{},
