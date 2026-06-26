@@ -41,3 +41,21 @@ describe('home reskin — hero illustration (T3)', () => {
     }
   })
 })
+
+describe('home reskin — wallet header + colored chef banner (R2)', () => {
+  it('brand header binds real balance and reward', () => {
+    expect(wxml).toMatch(/balanceText/)
+    expect(wxml).toMatch(/rewardText/)
+  })
+
+  it('the hero is a colored chef illustration (brand/terracotta fills, not a single gold stroke)', () => {
+    const hero = wxss.match(/\.home-hero\s*\{[\s\S]*?\}/)[0]
+    expect(hero).toMatch(/%232C4A3B/i) // brand green fill present
+    expect(hero).toMatch(/%23C8643C/i) // terracotta fill present
+  })
+
+  it('keeps the 堂食/外卖 entry cards', () => {
+    expect(wxml).toMatch(/scanDineIn/)
+    expect(wxml).toMatch(/chooseDelivery/)
+  })
+})

@@ -11,11 +11,45 @@
   padding-top: calc(64rpx + env(safe-area-inset-top));
 }
 
+.home-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .home-title {
   font-size: var(--font-h1);
   font-weight: 600;
   letter-spacing: 2rpx; /* 字标处理：收紧字距，不靠异体字体（小程序限制） */
   color: var(--weui-BG-0);
+}
+
+/* 余额/返利：奶油字小标签，挂在品牌头右侧 */
+.home-wallet {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.wallet-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+.wallet-label {
+  font-size: var(--font-caption);
+  color: var(--weui-BG-2);
+  opacity: 0.85;
+}
+.wallet-value {
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  color: var(--weui-BG-0);
+}
+.wallet-divider {
+  width: 1rpx;
+  height: 40rpx;
+  background: var(--weui-BG-2);
+  opacity: 0.4;
 }
 
 .home-sub {
@@ -25,12 +59,12 @@
   opacity: 0.85;
 }
 
-/* signature：单线蒸笼 hero。金描边写死于 SVG（data-URI 无法引 CSS 变量），
-   与 --brand-accent #C98A2B 同源；改色须两处同步。真机渲染需 C1 核对。 */
+/* signature：彩色厨师插画 hero（墨绿/陶土橙/奶油填充，矢量近似参考图）。
+   颜色写死于 data-URI（无法引 CSS 变量），与 --weui-BRAND/--accent 同源。真机渲染需 C1 核对。 */
 .home-hero {
-  height: 220rpx;
+  height: 280rpx;
   margin: var(--space-lg) var(--space-lg) 0;
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20240%20120'%20fill%3D'none'%20stroke%3D'%23C98A2B'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M98%2028q-7-9%200-18M120%2024q-7-9%200-18M142%2028q7-9%200-18'%2F%3E%3Cellipse%20cx%3D'120'%20cy%3D'50'%20rx%3D'50'%20ry%3D'12'%2F%3E%3Cpath%20d%3D'M72%2050v28q0%208%2048%208t48-8V50'%2F%3E%3Cpath%20d%3D'M76%2068q44%2010%2088%200'%2F%3E%3Cpath%20d%3D'M150%2094q24%2020%2046%200'%2F%3E%3Cpath%20d%3D'M194%2070l18-14M199%2074l18-14'%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20240%20140'%3E%3Ccircle%20cx%3D'102'%20cy%3D'32'%20r%3D'12'%20fill%3D'%23FBF8F2'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Ccircle%20cx%3D'138'%20cy%3D'32'%20r%3D'12'%20fill%3D'%23FBF8F2'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Ccircle%20cx%3D'120'%20cy%3D'23'%20r%3D'15'%20fill%3D'%23FBF8F2'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Cpath%20d%3D'M98%2034h44v9a4%204%200%200%201-4%204H102a4%204%200%200%201-4-4z'%20fill%3D'%23FBF8F2'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Crect%20x%3D'100'%20y%3D'47'%20width%3D'40'%20height%3D'8'%20rx%3D'2'%20fill%3D'%232C4A3B'%2F%3E%3Ccircle%20cx%3D'120'%20cy%3D'72'%20r%3D'17'%20fill%3D'%23F3E0CE'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Ccircle%20cx%3D'114'%20cy%3D'70'%20r%3D'2'%20fill%3D'%232C4A3B'%2F%3E%3Ccircle%20cx%3D'126'%20cy%3D'70'%20r%3D'2'%20fill%3D'%232C4A3B'%2F%3E%3Cpath%20d%3D'M114%2078q6%205%2012%200'%20fill%3D'none'%20stroke%3D'%232C4A3B'%20stroke-width%3D'2.5'%20stroke-linecap%3D'round'%2F%3E%3Cpath%20d%3D'M104%2090h32l6%2033H98z'%20fill%3D'%232C4A3B'%2F%3E%3Cpath%20d%3D'M112%20100q-6-8%200-16M128%20100q6-8%200-16'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%2F%3E%3Cellipse%20cx%3D'120'%20cy%3D'128'%20rx%3D'46'%20ry%3D'8'%20fill%3D'%23E3DCCE'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3Cpath%20d%3D'M96%20128q24-30%2048%200z'%20fill%3D'%23C8643C'%20stroke%3D'%232C4A3B'%20stroke-width%3D'3'%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;

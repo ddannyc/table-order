@@ -1,9 +1,22 @@
 <!-- pages/home/index.wxml — 选餐入口启动页 -->
 <view class="page home-page">
 
-  <!-- 品牌 band：深松绿，字标 + 引导（首页无门店上下文，故以问候作字标） -->
+  <!-- 品牌 band：深松绿，字标 + 余额/返利（真数据，未登录显 —） -->
   <view class="home-brandband">
-    <view class="home-title">欢迎光临</view>
+    <view class="home-brand-row">
+      <view class="home-title">欢迎光临</view>
+      <view class="home-wallet">
+        <view class="wallet-item">
+          <text class="wallet-label">余额</text>
+          <text class="wallet-value">{{balanceText}}</text>
+        </view>
+        <view class="wallet-divider"></view>
+        <view class="wallet-item">
+          <text class="wallet-label">返利</text>
+          <text class="wallet-value">{{rewardText}}</text>
+        </view>
+      </view>
+    </view>
     <view class="home-sub">请选择您的点餐方式</view>
   </view>
 

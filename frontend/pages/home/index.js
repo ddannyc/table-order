@@ -1,11 +1,13 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
-const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
+const { setTableBinding, bindInviteCode, resolveDeliveryShop, getBalance, getRewardBalance } = require('../../api/index.js')
 const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
     tabbarList: TAB_LIST,
-    tabbarCurrent: 0
+    tabbarCurrent: 0,
+    balanceText: '—', // 余额（真数据；未登录显 —，不假数字）
+    rewardText: '—'   // 返利余额
   },
 
   onLoad(options) {
@@ -17,7 +19,30 @@ Page({
     if (options && options.shop_id && options.table_no) {
       setTableBinding(Number(options.shop_id), options.table_no)
       wx.reLaunch({ url: '/pages/menu/index' })
+      return
     }
+    this.loadWallet()
+  },
+
+  onShow() {
+    this.loadWallet()
+  },
+
+  // 品牌头的余额/返利：登录态走真接口；未登录显 —，绝不假数据
+  loadWallet() {
+    const token = wx.getStorageSync('token')
+    if (!token) {
+      this.setData({ balanceText: '—', rewardText: '—' })
+      return Promise.resolve()
+    }
+    return Promise.all([getBalance(), getRewardBalance()])
+      .then(([w, r]) => {
+        this.setData({
+          balanceText: Number((w && w.balance) || 0).toFixed(2),
+          rewardText: Number((r && r.reward_balance) || 0).toFixed(2)
+        })
+      })
+      .catch(() => this.setData({ balanceText: '—', rewardText: '—' }))
   },
 
   // 堂食：扫码绑桌 → 菜单
