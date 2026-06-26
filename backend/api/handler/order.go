@@ -14,7 +14,6 @@ import (
 	"github.com/example/table-order/services"
 	"github.com/example/table-order/utils"
 	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type OrderItemRequest struct {
@@ -176,12 +175,21 @@ func CreateOrder(c *gin.Context) {
 		}
 	}
 
-	// Deduct reward balance if used for discount (happens at order creation)
+	// Deduct reward balance if used for discount (happens at order creation).
+	// Guarded conditional update: the WHERE rejects the write if the balance was
+	// drained by a concurrent order between the read above and here, so the
+	// balance can never go negative (no double-spend).
 	if req.UseReward && deductAmount > 0 {
-		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Model(&models.User{}).Where("id = ?", userID).
-			UpdateColumn("reward_balance", gorm.Expr("reward_balance - ?", deductAmount)).Error; err != nil {
+		res := tx.Model(&models.User{}).Where("id = ? AND reward_balance >= ?", userID, deductAmount).
+			UpdateColumn("reward_balance", gorm.Expr("reward_balance - ?", deductAmount))
+		if res.Error != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "deduct reward failed"})
+			return
+		}
+		if res.RowsAffected == 0 {
+			tx.Rollback()
+			c.JSON(http.StatusBadRequest, gin.H{"error": "reward balance insufficient"})
 			return
 		}
 		deductLog := models.WalletLog{
