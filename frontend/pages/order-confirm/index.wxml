@@ -51,26 +51,25 @@
     </mp-cells>
   </view>
 
-  <!-- 福利金开关（需要登录） -->
+  <!-- 福利金抵扣开关（仅优惠抵扣，非支付方式；需要登录且有余额） -->
   <view wx:if="{{!needLogin && rewardBalance > 0}}" class="reward-card card">
     <view class="reward-toggle">
       <view class="toggle-left">
         <view class="toggle-title">使用福利金抵扣</view>
-        <view class="toggle-desc">可用 ¥{{rewardBalance}} (最高抵扣 {{rewardCeiling}}%)</view>
+        <view class="toggle-desc">可用 ¥{{rewardBalance}} · 最高抵扣 {{rewardCeiling}}%</view>
       </view>
-      <switch checked="{{useReward}}" bindchange="toggleUseReward" />
+      <switch checked="{{useReward}}" color="#234B3A" bindchange="toggleUseReward" />
     </view>
   </view>
 
-  <!-- 福利金余额（需要登录） -->
-  <view wx:if="{{!needLogin}}" class="card reward-amount-card">
-    <view class="section-title">福利金</view>
-    <mp-cells>
-      <mp-cell>
-        <view slot="title">可用福利金</view>
-        <view slot="footer" class="value-gold">¥{{rewardBalance}}</view>
-      </mp-cell>
-    </mp-cells>
+  <!-- 支付方式：仅微信支付（后端订单仅支持微信 + 福利金抵扣） -->
+  <view class="card pay-card">
+    <view class="section-title">支付方式</view>
+    <view class="pay-method">
+      <view class="wx-badge">微</view>
+      <text class="pay-name">微信支付</text>
+      <text class="pay-check">✓</text>
+    </view>
   </view>
 
   <!-- 底部提交栏 -->

@@ -130,8 +130,28 @@
 .toggle-title { font-size: var(--font-body); font-weight: 500; color: var(--weui-FG-0); }
 .toggle-desc { font-size: var(--font-caption); color: var(--weui-FG-2); margin-top: var(--space-xs); }
 
-.reward-amount-card { margin-bottom: var(--space-md); }
-.value-gold { font-size: var(--font-body); color: var(--weui-FG-0); font-weight: 500; }
+/* 支付方式：仅微信支付（绿徽 + 选中勾） */
+.pay-card { margin-bottom: var(--space-md); }
+.pay-method {
+  display: flex;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+.wx-badge {
+  flex: none;
+  width: 44rpx;
+  height: 44rpx;
+  border-radius: 10rpx;
+  background: #1AAD19; /* 微信品牌绿 */
+  color: #fff;
+  font-size: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: var(--space-sm);
+}
+.pay-name { flex: 1; font-size: var(--font-body); color: var(--weui-FG-0); }
+.pay-check { color: var(--weui-BRAND); font-weight: 700; font-size: 32rpx; }
 
 .submit-bar {
   position: fixed;
