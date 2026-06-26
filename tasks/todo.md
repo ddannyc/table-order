@@ -13,10 +13,10 @@
 ## P2 正确性 / 信息泄露
 - [x] **T4** GetShop 公开 DTO：剔除 reward_rate_* 分佣字段，保留 reward_ceiling — S ✅
 - [x] **T5** order-confirm 列表 `wx:key="id"` → `"key"` — S ✅
-- [ ] **T6** 允许创建「下架」规格（Status 改 *int 指针）— S
+- [x] **T6** 允许创建「下架」规格（Status 改 *int 指针）— S ✅
 
 ## Checkpoint
-- [ ] `go test ./...` / `jest` / `vitest` 三套全绿
+- [x] `go test ./...` / `jest` / `vitest` 三套全绿 ✅（backend ok / jest 14 套 83 / vitest 21）
 - [ ] 人工核对三项资金/泄露修复；重出 GO/NO-GO
 
 ## 不做（单独决策）

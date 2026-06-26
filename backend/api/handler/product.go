@@ -193,7 +193,7 @@ func specOwnedByMerchant(c *gin.Context, specID string, merchantID uint, spec *m
 type CreateProductSpecRequest struct {
 	Name   string  `json:"name" binding:"required"`
 	Price  float64 `json:"price" binding:"required,gt=0"`
-	Status int     `json:"status"`
+	Status *int    `json:"status"` // pointer so explicit 0 (下架) is distinguishable from "not provided"
 }
 
 func CreateProductSpec(c *gin.Context) {
@@ -217,20 +217,24 @@ func CreateProductSpec(c *gin.Context) {
 		return
 	}
 
-	status := req.Status
-	if status == 0 {
-		status = 1
-	}
-
 	spec := models.ProductSpec{
 		ProductID: product.ID,
 		Name:      req.Name,
 		Price:     req.Price,
-		Status:    status,
+		Status:    1, // default 上架
+	}
+	if req.Status != nil {
+		spec.Status = *req.Status
 	}
 	if err := config.DB.Create(&spec).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "create spec failed"})
 		return
+	}
+	// The model's default:1 tag overrides a zero Status on insert, so an
+	// intentional 下架 (0) needs an explicit follow-up write.
+	if req.Status != nil && *req.Status == 0 && spec.Status != 0 {
+		config.DB.Model(&spec).Update("status", 0)
+		spec.Status = 0
 	}
 
 	c.JSON(http.StatusOK, spec)
