@@ -1,8 +1,8 @@
 /**
- * Tab icon color guard (R5).
- * The active tab icons must be brand 墨绿 (#2C4A3B), matching the reference
- * palette — not the old bright weui green (#07C160). Decodes each PNG and
- * scans pixels, so a regression to the wrong green fails the suite.
+ * Tab icon color guard (D5).
+ * The active tab icons must be the BRAND pine green (#234B3A), matching the
+ * v6 design token — not the old bright weui green (#07C160). Decodes each PNG
+ * and scans pixels, so a regression to the wrong green fails the suite.
  */
 const fs = require('fs')
 const path = require('path')
@@ -61,12 +61,12 @@ function hasColor({ w, h, data }, [R, G, B], tol = 24) {
   return false
 }
 
-describe('tab icons — 墨绿 recolor (R5)', () => {
+describe('tab icons — BRAND pine-green recolor (D5)', () => {
   it.each(['menu', 'invite', 'profile'])(
-    '%s-active icon is brand 墨绿 (#2C4A3B), not bright weui green',
+    '%s-active icon is BRAND green (#234B3A), not bright weui green',
     (name) => {
       const img = decodePNG(path.join(__dirname, `../static/${name}-active.png`))
-      expect(hasColor(img, [44, 74, 59])).toBe(true) // brand pine green present
+      expect(hasColor(img, [35, 75, 58], 8)).toBe(true) // BRAND #234B3A present (tight: pixels are uniform)
       expect(hasColor(img, [7, 193, 96])).toBe(false) // no bright weui green left
     }
   )
