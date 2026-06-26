@@ -2,6 +2,18 @@
 @import 'miniprogram_npm/weui-miniprogram/weui-wxss/dist/style/weui.wxss';
 
 page {
+  /* 松墨 Pine-Ink 配色（覆盖 weui 变量，须在上方 @import 之后生效）。
+     全部值已过 WCAG，详见 docs/ideas/texture-uplift-pine-ink.md / theme-tokens.test.js。 */
+  --weui-BRAND: #2C4A3B;   /* 主色：品牌band/主按钮/激活竖条/cartbar/徽章底 */
+  --weui-BG-0: #F3EEE4;    /* 页面·燕麦奶油 */
+  --weui-BG-1: #FBF8F2;    /* 卡面·近白暖 */
+  --weui-BG-2: #EFE9DD;    /* 门店栏/左类目轨底 */
+  --weui-FG-0: #2A2723;    /* 正文（12:1） */
+  --weui-FG-2: #6E665A;    /* 次要文字（4.89:1，比参考 #8A8275 调暗以过 AA） */
+  --weui-FG-3: #E3DCCE;    /* 暖发丝线 */
+  --brand-accent: #C98A2B; /* 金：插画描边/分隔/印章（仅填充描边，不做文字） */
+  --price-ink: #A66E1F;    /* 价格大字（3.73:1，仅 ≥34rpx 粗体） */
+
   /* Spacing */
   --space-xs: 8rpx;
   --space-sm: 16rpx;
@@ -33,7 +45,7 @@ page, view, text, navigator {
 
 .page {
   min-height: 100vh;
-  background: var(--weui-BG-1);
+  background: var(--weui-BG-0);
   padding-bottom: 160rpx;
 }
 
