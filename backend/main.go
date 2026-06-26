@@ -5,6 +5,7 @@ import (
 
 	"github.com/example/table-order/api/router"
 	"github.com/example/table-order/config"
+	"github.com/example/table-order/services"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,6 +31,8 @@ func main() {
 	}
 
 	config.InitR2(cfg.R2)
+
+	services.InitShansongClient(cfg.Shansong.ClientID, cfg.Shansong.AppSecret, cfg.Shansong.BaseURL)
 
 	gin.SetMode(cfg.Server.Mode)
 	r := gin.Default()

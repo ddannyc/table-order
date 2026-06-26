@@ -35,6 +35,19 @@ type httpDoer interface {
 	Do(*http.Request) (*http.Response, error)
 }
 
+// Shansong is the process-wide client, initialised from config at startup.
+// Nil when credentials are not configured (delivery quoting then 503s).
+var Shansong *ShansongClient
+
+// InitShansongClient builds the process-wide client. No-op (leaves Shansong nil)
+// when credentials are absent, so a deployment without delivery just disables it.
+func InitShansongClient(clientID, appSecret, baseURL string) {
+	if clientID == "" || appSecret == "" {
+		return
+	}
+	Shansong = &ShansongClient{ClientID: clientID, AppSecret: appSecret, BaseURL: baseURL}
+}
+
 // Shansong OpenAPI paths (calibration point).
 const (
 	shansongPathQuote  = "/openapi/v3/order/precompute"

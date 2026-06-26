@@ -75,6 +75,8 @@ func Setup(r *gin.Engine) {
 
 	// Delivery (外卖) — resolve the shop for a delivery order (single-shop stub)
 	api.GET("/delivery/shop", handler.ResolveDeliveryShop)
+	// Realtime delivery quote (authenticated — returns a signed fee token)
+	api.POST("/delivery/quote", middleware.AuthMiddleware(), handler.DeliveryQuote)
 
 	// Orders (authenticated)
 	orders := api.Group("/orders")
