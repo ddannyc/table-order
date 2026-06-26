@@ -34,7 +34,8 @@ const contrast = (a, b) => {
 
 describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
   const expected = {
-    '--weui-BRAND': '#2C4A3B',
+    '--weui-BRAND': '#234B3A',
+    '--green-2': '#2F6B4F',
     '--weui-BG-0': '#F3EEE4',
     '--weui-BG-1': '#FBF8F2',
     '--weui-BG-2': '#EFE9DD',
@@ -57,7 +58,7 @@ describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
 describe('theme tokens — WCAG contrast floors', () => {
   const BG0 = '#F3EEE4'
   const BG1 = '#FBF8F2'
-  const BRAND = '#2C4A3B'
+  const BRAND = '#234B3A'
   const FG0 = '#2A2723'
   const FG2 = '#6E665A'
   const PRICE = '#B0491F'
