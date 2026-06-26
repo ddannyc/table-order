@@ -60,6 +60,7 @@ type publicShopDTO struct {
 	Name          string  `json:"name"`
 	Description   string  `json:"description"`
 	Address       string  `json:"address"`
+	City          string  `json:"city"`
 	Phone         string  `json:"phone"`
 	Hours         string  `json:"hours"`
 	Logo          string  `json:"logo"`
@@ -75,6 +76,7 @@ func toPublicShopDTO(shop models.Shop) publicShopDTO {
 		Name:          shop.Name,
 		Description:   shop.Description,
 		Address:       shop.Address,
+		City:          shop.City,
 		Phone:         shop.Phone,
 		Hours:         shop.Hours,
 		Logo:          shop.Logo,
@@ -101,6 +103,7 @@ type UpdateShopRequest struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Address     string `json:"address"`
+	City        string `json:"city"`
 	Phone       string `json:"phone"`
 	Hours       string `json:"hours"`
 	Logo        string `json:"logo"`
@@ -148,6 +151,9 @@ func UpdateShop(c *gin.Context) {
 	}
 	if req.Address != "" {
 		updates["address"] = req.Address
+	}
+	if req.City != "" {
+		updates["city"] = req.City
 	}
 	if req.Phone != "" {
 		updates["phone"] = req.Phone

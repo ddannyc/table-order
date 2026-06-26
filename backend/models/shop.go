@@ -10,6 +10,7 @@ type Shop struct {
 	Name        string    `gorm:"size:128" json:"name"`
 	Description string    `gorm:"size:512" json:"description"`
 	Address     string    `gorm:"size:256" json:"address"`
+	City        string    `gorm:"size:64" json:"city"` // 寄件城市（闪送 orderCalculate 必填）
 	Phone       string    `gorm:"size:32" json:"phone"`
 	Hours       string    `gorm:"size:128" json:"hours"`
 	Logo        string    `gorm:"size:512" json:"logo"`

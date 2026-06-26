@@ -12,7 +12,7 @@
 - [x] **FT2** orderCalculate 请求结构（cityName/sender/receiverList，字符串坐标，goodType=6）+ orderPlace 仅 issOrderNo + 状态码 20/30/40/50/60 — M ✅
 
 ## 数据 + 贯通
-- [ ] **FT3** Shop 增 City 字段（model + UpdateShop + DTO）— S
+- [x] **FT3** Shop 增 City 字段（model + UpdateShop + DTO）— S ✅
 - [ ] **FT4** /quote 生成 order_no + 城市/收发件映射；token 内嵌 order_no+issOrderNo；CreateOrder 复用 order_no — M
 
 ## 派单 + 回调
