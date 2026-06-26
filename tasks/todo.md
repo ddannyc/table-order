@@ -17,7 +17,7 @@
 
 ## P3 前端 + 状态展示
 - [x] **T7** order-confirm：chooseAddress + getLocation + 报价 + 应付含运费 + payload 扩展；app.json 加 getLocation — M ✅
-- [ ] **T8** GetOrders/GetOrder 回传 delivery + 我的订单展示配送状态 — M
+- [x] **T8** GetOrders/GetOrder 回传 delivery + 我的订单展示配送状态 — M ✅
 
 ## P4 联调 Checkpoint
 - [ ] 三套测试全绿（go / jest / vitest）

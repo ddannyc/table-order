@@ -70,11 +70,13 @@ Page({
           ...item,
           subtotalText: '¥' + (item.subtotal || 0).toFixed(2)
         }))
+        const isDelivery = order.order_type === 'delivery'
         return {
           ...order,
           items,
           amountText: '¥' + order.amount.toFixed(2),
           statusText: ['', '待支付', '已完成', '已完成'][order.status] || '已完成',
+          deliveryText: isDelivery && order.delivery ? '外卖 · ' + (order.delivery.status_label || '配送中') : '',
           dateText
         }
       })

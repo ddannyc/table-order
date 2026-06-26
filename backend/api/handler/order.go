@@ -375,13 +375,18 @@ func GetOrders(c *gin.Context) {
 	// Fetch order items for each order
 	type orderWithItems struct {
 		models.Order
-		Items []models.OrderItem `json:"items"`
+		Items    []models.OrderItem `json:"items"`
+		Delivery *deliveryView      `json:"delivery,omitempty"`
 	}
 	result := make([]orderWithItems, len(orders))
 	for i, o := range orders {
 		var items []models.OrderItem
 		config.DB.Where("order_id = ?", o.ID).Find(&items)
-		result[i] = orderWithItems{Order: o, Items: items}
+		ow := orderWithItems{Order: o, Items: items}
+		if o.OrderType == "delivery" {
+			ow.Delivery = loadDeliveryView(o.ID)
+		}
+		result[i] = ow
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -405,10 +410,42 @@ func GetOrder(c *gin.Context) {
 	var items []models.OrderItem
 	config.DB.Where("order_id = ?", orderID).Find(&items)
 
-	c.JSON(http.StatusOK, gin.H{
+	resp := gin.H{
 		"order": order,
 		"items": items,
-	})
+	}
+	if order.OrderType == "delivery" {
+		if dv := loadDeliveryView(order.ID); dv != nil {
+			resp["delivery"] = dv
+		}
+	}
+	c.JSON(http.StatusOK, resp)
+}
+
+// deliveryView is the customer-facing delivery summary attached to delivery
+// orders in the order list / detail responses.
+type deliveryView struct {
+	DeliveryFee    float64 `json:"delivery_fee"`
+	ShansongStatus int     `json:"shansong_status"`
+	StatusLabel    string  `json:"status_label"`
+	RecipientName  string  `json:"recipient_name"`
+	RecipientPhone string  `json:"recipient_phone"`
+	Address        string  `json:"address"`
+}
+
+func loadDeliveryView(orderID uint) *deliveryView {
+	var od models.OrderDelivery
+	if err := config.DB.Where("order_id = ?", orderID).First(&od).Error; err != nil {
+		return nil
+	}
+	return &deliveryView{
+		DeliveryFee:    od.DeliveryFee,
+		ShansongStatus: od.ShansongStatus,
+		StatusLabel:    services.ShansongStatusLabel(od.ShansongStatus),
+		RecipientName:  od.RecipientName,
+		RecipientPhone: od.RecipientPhone,
+		Address:        od.Province + od.City + od.County + od.DetailAddress,
+	}
 }
 
 func processInviteReward(userID uint, shopID uint, amount float64) {

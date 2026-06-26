@@ -125,6 +125,7 @@
         <view class="order-body">
           <view class="order-info">
             <text class="shop-name">店铺消费</text>
+            <text wx:if="{{item.deliveryText}}" class="order-delivery">{{item.deliveryText}}</text>
             <text class="order-time">{{item.dateText}}</text>
           </view>
           <view class="order-amount">
