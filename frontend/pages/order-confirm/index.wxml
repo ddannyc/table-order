@@ -15,20 +15,18 @@
     <view wx:else class="delivery-addr-empty" bindtap="chooseDeliveryAddress">+ 选择收货地址</view>
   </view>
 
-  <!-- 订单商品列表 -->
+  <!-- 订单商品列表（照片缩略图，照搬参考图） -->
   <view class="order-items card">
     <view class="section-title">订单明细</view>
-    <mp-cells>
-      <view wx:for="{{cartItems}}" wx:key="key">
-        <mp-cell>
-          <view slot="title" class="order-item-cell">
-            <text class="item-name">{{item.name}}{{item.specName ? ' · ' + item.specName : ''}}</text>
-            <text class="item-qty">x{{item.quantity}}</text>
-          </view>
-          <view slot="footer" class="item-price">¥{{item.subtotal}}</view>
-        </mp-cell>
+    <view class="oc-item" wx:for="{{cartItems}}" wx:key="key">
+      <image wx:if="{{item.image}}" class="oc-item-thumb" src="{{item.image}}" mode="aspectFill" lazy-load="{{true}}" />
+      <view wx:else class="oc-item-thumb oc-item-thumb_ph"></view>
+      <view class="oc-item-bd">
+        <view class="oc-item-name">{{item.name}}{{item.specName ? ' · ' + item.specName : ''}}</view>
+        <view class="oc-item-qty">x{{item.quantity}}</view>
       </view>
-    </mp-cells>
+      <view class="oc-item-price">¥{{item.subtotal}}</view>
+    </view>
   </view>
 
   <!-- 金额卡片 -->

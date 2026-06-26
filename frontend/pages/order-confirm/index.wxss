@@ -55,28 +55,45 @@
   padding: var(--space-sm) 0;
 }
 
-.order-item-cell {
+/* 明细行：缩略图 + 名称/规格 + 数量 + 陶土橙小计（照搬参考图） */
+.oc-item {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 1rpx solid var(--weui-FG-3);
 }
-
-.item-name {
+.oc-item:last-child {
+  border-bottom: none;
+}
+.oc-item-thumb {
+  flex: none;
+  width: 96rpx;
+  height: 96rpx;
+  border-radius: var(--radius-md);
+  background: #F4E6DD; /* 浅陶土暖底，空图也不显空 */
+}
+.oc-item-thumb_ph {
+  border: 1rpx solid var(--weui-FG-3);
+}
+.oc-item-bd {
+  flex: 1;
+  min-width: 0;
+}
+.oc-item-name {
   font-size: var(--font-body);
   color: var(--weui-FG-0);
 }
-
-.item-qty {
+.oc-item-qty {
+  margin-top: 4rpx;
   font-size: var(--font-caption);
   color: var(--weui-FG-2);
-  background: var(--weui-BG-1);
-  padding: 4rpx var(--space-sm);
-  border-radius: 20rpx;
 }
-
-.item-price {
-  font-size: var(--font-body);
-  color: var(--weui-FG-1);
+.oc-item-price {
+  flex: none;
+  font-size: var(--font-price);
+  font-weight: 600;
+  color: var(--price-ink);
 }
 
 .amount-card {
@@ -145,5 +162,5 @@
 .submit-amount {
   font-size: var(--font-price-large);
   font-weight: bold;
-  color: var(--weui-BRAND);
+  color: var(--price-ink); /* 陶土橙大额，照搬参考图底部总价 */
 }
