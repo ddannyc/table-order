@@ -47,3 +47,20 @@ describe('menu reskin — unbound empty-state illustration (T6)', () => {
     expect(wxml).toMatch(/扫.*点餐|点餐/)
   })
 })
+
+describe('menu reskin — photo-first cards + category counts (R3)', () => {
+  it('left rail shows a per-category count badge', () => {
+    expect(wxml).toMatch(/categoryCounts/)
+    expect(wxss).toMatch(/\.menu-rail-count/)
+  })
+
+  it('the no-spec add control is a round button, not a rectangular weui mini button', () => {
+    expect(wxss).toMatch(/\.menu-add-round/)
+    expect(wxml).toMatch(/menu-add-round/)
+  })
+
+  it('category placeholder glyphs are terracotta accent, not the old gold', () => {
+    expect(wxss).toMatch(/\.menu-thumb-ph_cup\s*\{[^}]*%23C8643C/i)
+    expect(wxss).not.toMatch(/%23C98A2B/i) // no gold left anywhere in menu wxss
+  })
+})

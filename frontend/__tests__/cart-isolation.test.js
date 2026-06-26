@@ -42,4 +42,12 @@ describe('cart isolation by order type', () => {
     expect(getCartCount(5, 'dine_in')).toBe(0)
     expect(getCartCount(5, 'delivery')).toBe(2)
   })
+
+  // R3: cart lines carry the product image so the order-confirm 商品明细 can
+  // render thumbnails without re-fetching products.
+  it('stores the product image on each cart line', () => {
+    const withImg = { id: 11, name: '芝士奶盖', price: 18, image: 'https://oss/x.jpg' }
+    addToCart(7, withImg, null, 1, 'dine_in')
+    expect(getCart(7, 'dine_in')[0].image).toBe('https://oss/x.jpg')
+  })
 })

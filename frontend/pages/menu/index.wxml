@@ -65,7 +65,10 @@
           class="menu-rail-item {{activeCategory === item ? 'menu-rail-item_on' : ''}}"
           bindtap="selectCategory"
           data-cat="{{item}}"
-        >{{item}}</view>
+        >
+          <text>{{item}}</text>
+          <text class="menu-rail-count">{{categoryCounts[item]}}</text>
+        </view>
       </scroll-view>
 
       <!-- 右：当前类目大图卡片 -->
@@ -87,7 +90,7 @@
                   <view class="weui-btn weui-btn_mini weui-btn_primary" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
                 </block>
                 <block wx:else>
-                  <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="weui-btn weui-btn_mini weui-btn_primary" bindtap="onAdd" data-id="{{p.id}}">加入</view>
+                  <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="menu-add-round" bindtap="onAdd" data-id="{{p.id}}">+</view>
                   <view wx:else class="menu-stepper">
                     <view class="weui-btn weui-btn_mini weui-btn_default" bindtap="onDec" data-id="{{p.id}}">−</view>
                     <text class="menu-qty">{{cartQtyByKey[p.noSpecKey]}}</text>

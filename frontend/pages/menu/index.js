@@ -12,6 +12,7 @@ Page({
     products: [],
     categories: [],
     productsByCategory: {},
+    categoryCounts: {},
     activeCategory: '',
     orderType: 'dine_in', // dine_in | delivery（事实来源在首页/菜单，订单确认页只读）
     cartCount: 0,
@@ -88,6 +89,7 @@ Page({
     ]).then(([shop, products]) => {
       const categories = [...new Set(products.map(p => p.category))]
       const productsByCategory = {}
+      const categoryCounts = {}
       categories.forEach(cat => {
         productsByCategory[cat] = products.filter(p => p.category === cat).map(p => {
           const specs = (p.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
@@ -104,9 +106,10 @@ Page({
             ph: img.placeholder
           }
         })
+        categoryCounts[cat] = productsByCategory[cat].length
       })
       this.setData({
-        shop, products, categories, productsByCategory,
+        shop, products, categories, productsByCategory, categoryCounts,
         activeCategory: categories[0] || '',
         loading: false
       })
