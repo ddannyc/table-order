@@ -6,6 +6,7 @@ import (
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func GetShopProducts(c *gin.Context) {
@@ -217,24 +218,34 @@ func CreateProductSpec(c *gin.Context) {
 		return
 	}
 
+	status := 1 // default 上架
+	if req.Status != nil {
+		status = *req.Status
+	}
 	spec := models.ProductSpec{
 		ProductID: product.ID,
 		Name:      req.Name,
 		Price:     req.Price,
-		Status:    1, // default 上架
-	}
-	if req.Status != nil {
-		spec.Status = *req.Status
-	}
-	if err := config.DB.Create(&spec).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "create spec failed"})
-		return
+		Status:    status,
 	}
 	// The model's default:1 tag overrides a zero Status on insert, so an
-	// intentional 下架 (0) needs an explicit follow-up write.
-	if req.Status != nil && *req.Status == 0 && spec.Status != 0 {
-		config.DB.Model(&spec).Update("status", 0)
-		spec.Status = 0
+	// intentional 下架 (0) needs a follow-up write. Do both in one transaction
+	// so a failure rolls back rather than leaving a spec live at the wrong status.
+	err := config.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(&spec).Error; err != nil {
+			return err
+		}
+		if status == 0 && spec.Status != 0 {
+			if err := tx.Model(&spec).Update("status", 0).Error; err != nil {
+				return err
+			}
+			spec.Status = 0
+		}
+		return nil
+	})
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "create spec failed"})
+		return
 	}
 
 	c.JSON(http.StatusOK, spec)
