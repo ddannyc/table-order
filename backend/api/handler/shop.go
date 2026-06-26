@@ -52,6 +52,23 @@ func GetShops(c *gin.Context) {
 	c.JSON(http.StatusOK, shops)
 }
 
+// publicShopDTO is the shop view exposed to customers. It deliberately omits
+// the merchant's commission rates (reward_rate_*) and excluded-category config;
+// only reward_ceiling is needed client-side to show the discount cap.
+type publicShopDTO struct {
+	ID            uint    `json:"id"`
+	Name          string  `json:"name"`
+	Description   string  `json:"description"`
+	Address       string  `json:"address"`
+	Phone         string  `json:"phone"`
+	Hours         string  `json:"hours"`
+	Logo          string  `json:"logo"`
+	Latitude      float64 `json:"latitude"`
+	Longitude     float64 `json:"longitude"`
+	RewardCeiling float64 `json:"reward_ceiling"`
+	Status        int     `json:"status"`
+}
+
 func GetShop(c *gin.Context) {
 	shopID := c.Param("id")
 
@@ -61,7 +78,19 @@ func GetShop(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, shop)
+	c.JSON(http.StatusOK, publicShopDTO{
+		ID:            shop.ID,
+		Name:          shop.Name,
+		Description:   shop.Description,
+		Address:       shop.Address,
+		Phone:         shop.Phone,
+		Hours:         shop.Hours,
+		Logo:          shop.Logo,
+		Latitude:      shop.Latitude,
+		Longitude:     shop.Longitude,
+		RewardCeiling: shop.RewardCeiling,
+		Status:        shop.Status,
+	})
 }
 
 type UpdateShopRequest struct {

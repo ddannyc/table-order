@@ -11,7 +11,7 @@
 - [x] **T3** 下单必须带明细 + order_type 白名单（空 items / 非法 type → 400）— S ✅
 
 ## P2 正确性 / 信息泄露
-- [ ] **T4** GetShop 公开 DTO：剔除 reward_rate_* 分佣字段，保留 reward_ceiling — S
+- [x] **T4** GetShop 公开 DTO：剔除 reward_rate_* 分佣字段，保留 reward_ceiling — S ✅
 - [ ] **T5** order-confirm 列表 `wx:key="id"` → `"key"` — S
 - [ ] **T6** 允许创建「下架」规格（Status 改 *int 指针）— S
 
