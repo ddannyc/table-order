@@ -3,6 +3,17 @@
   /* 左右布局自身按视口高度铺满；底部留白由右侧列表负责 */
 }
 
+/* 未绑桌空状态：单线空碗插画（金描边写死，与 --brand-accent 同源） */
+.menu-empty-illu {
+  width: 200rpx;
+  height: 168rpx;
+  margin: 0 auto;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20120%20100'%20fill%3D'none'%20stroke%3D'%23C98A2B'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cellipse%20cx%3D'60'%20cy%3D'54'%20rx%3D'32'%20ry%3D'8'%2F%3E%3Cpath%20d%3D'M30%2054q30%2036%2060%200'%2F%3E%3Cpath%20d%3D'M38%2040l46-12M40%2047l46-12'%2F%3E%3Cpath%20d%3D'M58%2022q-5-7%200-13M70%2020q4-5%200-10'%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+}
+
 /* 门店栏 + 只读点餐方式标识 */
 .menu-shopbar {
   display: flex;

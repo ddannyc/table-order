@@ -3,6 +3,9 @@
 
   <!-- 未绑桌 -->
   <view wx:if="{{!boundShopId && !loading}}" class="weui-msg">
+    <view class="weui-msg__icon-area">
+      <view class="menu-empty-illu" aria-hidden="true"></view>
+    </view>
     <view class="weui-msg__text-area">
       <view class="weui-msg__title">未绑定桌号</view>
       <view class="weui-msg__desc">请扫描餐桌二维码开始点餐</view>

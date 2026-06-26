@@ -36,3 +36,14 @@ describe('menu reskin — category line glyphs (T5)', () => {
     expect(wxml).toMatch(/\{\{p\.ph\.label\}\}/)
   })
 })
+
+describe('menu reskin — unbound empty-state illustration (T6)', () => {
+  it('shows a gold line illustration in the unbound-table state', () => {
+    expect(wxml).toMatch(/menu-empty-illu/)
+    expect(wxss).toMatch(/\.menu-empty-illu\s*\{[^}]*data:image\/svg\+xml/)
+  })
+
+  it('keeps the call-to-action active and specific', () => {
+    expect(wxml).toMatch(/扫.*点餐|点餐/)
+  })
+})

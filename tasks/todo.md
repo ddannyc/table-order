@@ -10,7 +10,7 @@
 - [x] **T3** 首页 hero 线描插画（蒸笼一桌菜，data-URI SVG）— M（依赖 T2）✅
 - [x] **T4** 菜单重皮（shopbar/rail/cards/price/cartbar 令牌上色）— M（依赖 T1）✅
 - [x] **T5** 菜单分类金线 glyph（升级 M3 占位）— M（依赖 T1、T4）✅
-- [ ] **T6** 未绑桌空状态线描插画 — S（依赖 T4）
+- [x] **T6** 未绑桌空状态线描插画 — S（依赖 T4）✅
 
 ## Checkpoint
 - [ ] **C1** /frontend-design 自审 + 全量 jest 绿 + 真机核对（待人工：本环境无模拟器）
