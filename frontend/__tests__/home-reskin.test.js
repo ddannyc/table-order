@@ -25,3 +25,19 @@ describe('home reskin — brand band + entry cards (T2)', () => {
     expect(wxss).toMatch(/\.entry-name\s*\{[^}]*color:\s*var\(--weui-BRAND\)/)
   })
 })
+
+describe('home reskin — hero illustration (T3)', () => {
+  it('renders a single-line SVG hero banner (zero binary assets)', () => {
+    expect(wxml).toMatch(/home-hero/)
+    expect(wxss).toMatch(/\.home-hero\s*\{[^}]*data:image\/svg\+xml/)
+  })
+
+  it('respects prefers-reduced-motion if the hero animates', () => {
+    // If a transition/animation is added to the hero, it must be disabled
+    // under reduced motion. (No animation is also acceptable.)
+    const animatesHero = /\.home-hero\s*\{[^}]*(animation|transition)/.test(wxss)
+    if (animatesHero) {
+      expect(wxss).toMatch(/prefers-reduced-motion/)
+    }
+  })
+})
