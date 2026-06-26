@@ -14,8 +14,8 @@ describe('tabbar pinned to bottom', () => {
     expect(wxss).toMatch(/\.tabbar-fixed\s*\{[^}]*bottom:\s*0/)
   })
 
-  it.each(['home', 'menu', 'invite', 'profile'])('%s wraps mp-tabbar in .tabbar-fixed', (p) => {
+  it.each(['home', 'menu', 'invite', 'profile'])('%s wraps the tab bar in .tabbar-fixed', (p) => {
     const wxml = read(`pages/${p}/index.wxml`)
-    expect(wxml).toMatch(/tabbar-fixed[^>]*>\s*<mp-tabbar/)
+    expect(wxml).toMatch(/tabbar-fixed[^>]*>\s*<tabbar/)
   })
 })

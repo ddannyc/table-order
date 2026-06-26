@@ -9,10 +9,10 @@
     "pages/share-code/index"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#07c160",
-    "navigationBarTextStyle": "white",
+    "navigationBarBackgroundColor": "#F3EEE4",
+    "navigationBarTextStyle": "black",
     "navigationBarTitleText": "餐饮点餐",
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#F3EEE4"
   },
   "lazyCodeLoading": "requiredComponents",
   "requiredPrivateInfos": ["chooseAddress", "getLocation"],
@@ -20,6 +20,7 @@
     "mp-cells": "miniprogram_npm/weui-miniprogram/cells/cells",
     "mp-cell": "miniprogram_npm/weui-miniprogram/cell/cell",
     "mp-tabbar": "miniprogram_npm/weui-miniprogram/tabbar/tabbar",
+    "tabbar": "components/tabbar/index",
     "mp-searchbar": "miniprogram_npm/weui-miniprogram/searchbar/searchbar",
     "mp-half-screen-dialog": "miniprogram_npm/weui-miniprogram/half-screen-dialog/half-screen-dialog",
     "mp-dialog": "miniprogram_npm/weui-miniprogram/dialog/dialog",

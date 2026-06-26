@@ -1,7 +1,6 @@
 // pages/menu/index.js — 点餐菜单页（左分类栏 + 右列表）
 const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
-const { TAB_LIST } = require('../../utils/tabbar.js')
 const { resolveProductImage } = require('../../utils/menu-image.js')
 
 Page({
@@ -23,7 +22,6 @@ Page({
     specPickerProduct: null,
     loading: true,
     error: false,
-    tabbarList: TAB_LIST,
     tabbarCurrent: 0
   },
 

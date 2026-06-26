@@ -16,7 +16,7 @@ describe('menu reskin — Pine-Ink surfaces (T4)', () => {
   })
 
   it('the checkout bar uses the deep-green brand background', () => {
-    expect(wxss).toMatch(/\.menu-cartbar\s*\{[^}]*background:\s*var\(--weui-BRAND\)/)
+    expect(wxss).toMatch(/\.menu-cartbar\s*\{[^}]*background:[^}]*var\(--weui-BRAND\)/)
   })
 
   it('the content list reads as a near-white panel against the cream page', () => {

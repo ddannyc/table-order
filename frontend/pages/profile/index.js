@@ -1,7 +1,6 @@
 // pages/profile/index.js
 const { getWalletLogs, getOrders, getInviteStats, getRewardBalance, getRewardLogs, getRewardExpiryInfo } = require('../../api/index.js')
 const { doLogin, handleAuthError } = require('../../utils/storage.js')
-const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
@@ -17,7 +16,6 @@ Page({
     rewardBalanceText: '0.00',
     todayRewardText: '0.00',
     totalInviteRewardText: '0.00',
-    tabbarList: TAB_LIST,
     tabbarCurrent: 2
   },
 

@@ -4,7 +4,11 @@
 page {
   /* 松墨 Pine-Ink 配色（覆盖 weui 变量，须在上方 @import 之后生效）。
      全部值已过 WCAG，详见 docs/ideas/texture-uplift-pine-ink.md / theme-tokens.test.js。 */
-  --weui-BRAND: #234B3A;   /* 主色：品牌band/主按钮/激活竖条/cartbar/徽章底（对齐 v6 设计稿） */
+  /* !important：weui 在更高特异性的 .wx-root 上把 --weui-BRAND 设为亮绿 #07c160，
+     仅靠 page 选择器会被盖过（主按钮/cartbar/徽章因此发亮绿）。自定义属性声明加
+     !important 即可无视特异性胜出，让整套松墨主色真正生效。其余 BG/FG 令牌 weui
+     只定义在 page 上，无此问题。 */
+  --weui-BRAND: #234B3A !important;   /* 主色：品牌band/主按钮/激活竖条/cartbar/徽章底（对齐 v6 设计稿） */
   --green-2: #2F6B4F;      /* 辅助绿：渐变/插画次色 */
   --weui-BG-0: #F3EEE4;    /* 页面·燕麦奶油 */
   --weui-BG-1: #FBF8F2;    /* 卡面·近白暖 */

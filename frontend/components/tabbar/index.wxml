@@ -1,0 +1,13 @@
+<!-- 自定义底部 tabbar：线描图标 + 文案，激活态绿色加粗 -->
+<view class="ctab">
+  <view
+    wx:for="{{items}}"
+    wx:key="cls"
+    class="ctab-t {{current === index ? 'ctab-t_on' : ''}}"
+    data-index="{{index}}"
+    bindtap="onTap"
+  >
+    <view class="ctab-ic ctab-ic_{{item.cls}}"></view>
+    <text>{{item.text}}</text>
+  </view>
+</view>

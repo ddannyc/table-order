@@ -1,7 +1,6 @@
 // pages/invite/index.js
 const { getInviteStats, bindInviteCode, getInviteQR, getRewardBalance } = require('../../api/index.js')
 const { doLogin, handleAuthError } = require('../../utils/storage.js')
-const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
@@ -11,7 +10,6 @@ Page({
     rewardPaused: false,
     inviteURL: '',
     qrCodeSrc: '',
-    tabbarList: TAB_LIST,
     tabbarCurrent: 1
   },
 

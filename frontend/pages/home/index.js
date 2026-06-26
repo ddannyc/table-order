@@ -1,10 +1,8 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖；v6 设计稿）
 const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
-const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
-    tabbarList: TAB_LIST,
     tabbarCurrent: 0,
     mode: 'dine_in' // 分段视觉态：dine_in | delivery（实际动作直接触发，不依赖此态）
   },

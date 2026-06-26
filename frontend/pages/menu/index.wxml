@@ -50,8 +50,9 @@
 
     <!-- 门店栏 + 只读点餐方式（单型在首页唯一入口确定，菜单内不可切换） -->
     <view class="menu-shopbar">
+      <view class="menu-shop-pin" aria-hidden="true"></view>
       <view class="menu-shopname">{{shop.name || '店铺'}}</view>
-      <view class="menu-mode">{{orderType === 'delivery' ? '外卖 · 送货上门' : '堂食 · 桌号 ' + boundTableNo}}</view>
+      <view class="menu-mode">{{orderType === 'delivery' ? '外卖 · 送货上门' : '堂食 · ' + boundTableNo}}</view>
     </view>
 
     <!-- 左右布局：左类目轨 + 右大图卡片 -->
@@ -67,7 +68,7 @@
           data-cat="{{item}}"
         >
           <text>{{item}}</text>
-          <text class="menu-rail-count">{{categoryCounts[item]}}</text>
+          <text wx:if="{{categoryCounts[item]}}" class="menu-rail-count">{{categoryCounts[item]}}</text>
         </view>
       </scroll-view>
 
@@ -105,10 +106,16 @@
 
     </view>
 
-    <!-- 购物车结算条 -->
+    <!-- 购物车结算条（v6：圆形车标 + 价格强调 + 陶土橙去结算药丸） -->
     <view wx:if="{{cartCount > 0}}" class="menu-cartbar">
-      <view class="menu-cart-summary" bindtap="goCart">🛒 {{cartCount}} 件 · ¥{{cartTotal}}</view>
-      <view class="weui-btn weui-btn_mini menu-cart-go" bindtap="goCart">去结算</view>
+      <view class="menu-cart-left" bindtap="goCart">
+        <view class="menu-cart-icon">🛒</view>
+        <view class="menu-cart-sum">
+          <view class="menu-cart-total">¥{{cartTotal}}</view>
+          <view class="menu-cart-count">已选 {{cartCount}} 件</view>
+        </view>
+      </view>
+      <view class="menu-cart-go" bindtap="goCart">去结算</view>
     </view>
   </view>
 
@@ -141,6 +148,6 @@
 
   <!-- 底部 tabbar -->
   <view class="tabbar-fixed">
-    <mp-tabbar list="{{tabbarList}}" current="{{tabbarCurrent}}" bindchange="tabChange" />
+    <tabbar current="{{tabbarCurrent}}" bindchange="tabChange" />
   </view>
 </view>

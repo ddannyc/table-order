@@ -58,6 +58,6 @@
 
   <!-- 底部 tabbar -->
   <view class="tabbar-fixed">
-    <mp-tabbar list="{{tabbarList}}" current="{{tabbarCurrent}}" bindchange="tabChange" />
+    <tabbar current="{{tabbarCurrent}}" bindchange="tabChange" />
   </view>
 </view>

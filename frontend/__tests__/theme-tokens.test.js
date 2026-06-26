@@ -53,6 +53,14 @@ describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
   it('.page paints the cream page background (--weui-BG-0)', () => {
     expect(css).toMatch(/\.page\s*\{[^}]*background:\s*var\(--weui-BG-0\)/)
   })
+
+  // weui declares --weui-BRAND:#07c160 on the higher-specificity .wx-root, so a
+  // plain `page` override loses at runtime and brand/cart-bar/badges leak back to
+  // bright green. !important on the custom-property declaration is the fix — guard
+  // it so a reformat/lint-autofix that drops it can't silently reintroduce the bug.
+  it('pins --weui-BRAND with !important to beat weui\'s .wx-root green', () => {
+    expect(css).toMatch(/--weui-BRAND:\s*#234B3A\s*!important/i)
+  })
 })
 
 describe('theme tokens — WCAG contrast floors', () => {

@@ -16,17 +16,29 @@
   background-size: contain;
 }
 
-/* 门店栏 + 只读点餐方式标识 */
+/* 门店栏：白底 + 绿定位针 + 店名 + 绿色点餐方式药丸（对齐 v6 设计稿） */
 .menu-shopbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--space-xs);
   padding: var(--space-md) var(--space-lg);
-  background: var(--weui-BG-2);
+  background: var(--weui-BG-1);
+}
+
+/* 绿色定位针图标（线描，data-uri 自包含） */
+.menu-shop-pin {
+  flex: none;
+  width: 30rpx;
+  height: 30rpx;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23234B3A'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20%2010c0%206-8%2012-8%2012s-8-6-8-12a8%208%200%200%201%2016%200z'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'10'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
 }
 
 .menu-shopname {
   font-size: var(--font-body);
+  font-weight: 600;
   color: var(--weui-FG-0);
   flex: 1;
   overflow: hidden;
@@ -34,12 +46,16 @@
   white-space: nowrap;
 }
 
-/* 只读点餐方式：次要信息，不抢眼（亮点留给左侧类目轨） */
+/* 点餐方式：深绿实心药丸（照搬 v6 设计稿右上角标签） */
 .menu-mode {
   flex: none;
-  margin-left: var(--space-md);
+  margin-left: var(--space-sm);
   font-size: var(--font-caption);
-  color: var(--weui-FG-2);
+  color: #fff;
+  background: var(--weui-BRAND);
+  padding: 4rpx 16rpx;
+  border-radius: var(--radius-lg);
+  font-weight: 600;
 }
 
 /* 左右布局：左类目轨 + 右大图卡片，各自独立滚动 */
@@ -69,13 +85,17 @@
   border-left: 6rpx solid transparent; /* 激活竖条占位，避免跳动 */
 }
 
-/* 类目菜品数徽章（真数据） */
+/* 类目菜品数徽章：陶土橙药丸 + 白字（照搬 v6 设计稿，真数据） */
 .menu-rail-count {
-  font-size: var(--font-caption);
-  color: var(--weui-FG-2);
-}
-.menu-rail-item_on .menu-rail-count {
-  color: var(--accent);
+  min-width: 26rpx;
+  margin-top: 6rpx;
+  padding: 0 10rpx;
+  font-size: 20rpx;
+  line-height: 30rpx;
+  text-align: center;
+  color: #fff;
+  background: var(--accent);
+  border-radius: 16rpx;
 }
 
 /* 激活态（页面唯一亮点）：绿竖条 + 白底凸出 + 加粗，不只靠颜色 */
@@ -189,17 +209,18 @@
   gap: var(--space-sm);
 }
 
-/* 圆形加购按钮（深绿实心 + 奶油 +），照搬参考图 */
+/* 圆形加购按钮（深绿实心 + 纯白 + + 柔投影），照搬 v6 设计稿 */
 .menu-add-round {
-  width: 56rpx;
-  height: 56rpx;
+  width: 60rpx;
+  height: 60rpx;
   border-radius: 50%;
   background: var(--weui-BRAND);
-  color: var(--weui-BG-0);
-  font-size: 40rpx;
-  line-height: 52rpx;
+  color: #fff;
+  font-size: 42rpx;
+  line-height: 56rpx;
   text-align: center;
   font-weight: 600;
+  box-shadow: 0 6rpx 16rpx rgba(35, 75, 58, 0.25);
 }
 
 .menu-stepper {
@@ -225,7 +246,7 @@
   color: var(--weui-FG-2);
 }
 
-/* 购物车结算条（tabbar 之上）：深松绿压场，奶油字 */
+/* 购物车结算条（tabbar 之上）：深松绿渐变压场（对齐 v6 设计稿） */
 .menu-cartbar {
   position: fixed;
   left: 0;
@@ -235,21 +256,52 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-lg);
-  background: var(--weui-BRAND);
+  background: linear-gradient(120deg, var(--weui-BRAND), #2C5A45);
   z-index: 20;
 }
 
-.menu-cart-summary {
-  font-size: var(--font-body);
-  color: var(--weui-BG-0); /* 奶油字，8.4:1 */
+/* 左侧：圆形车标 + 价格强调 + 已选件数副行 */
+.menu-cart-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+.menu-cart-icon {
+  flex: none;
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+}
+.menu-cart-sum {
+  display: flex;
+  flex-direction: column;
+}
+.menu-cart-total {
+  font-size: var(--font-price);
+  font-weight: 800;
+  color: var(--weui-BG-0); /* 奶油字 */
+  line-height: 1.1;
+}
+.menu-cart-count {
+  font-size: var(--font-caption);
+  color: var(--weui-BG-0);
+  opacity: 0.8;
 }
 
-/* 绿底上的去结算：奶油填充 + 深绿字（绿底上 weui_primary 会隐没，故自定） */
+/* 去结算：陶土橙药丸（照搬 v6 设计稿，绿底上的暖色行动点） */
 .menu-cart-go {
   flex: none;
-  background: var(--weui-BG-0);
-  color: var(--weui-BRAND);
-  font-weight: 600;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+  font-size: var(--font-body);
+  padding: 18rpx 44rpx;
+  border-radius: 44rpx;
 }
 
 /* 规格弹层价格/按钮 */
