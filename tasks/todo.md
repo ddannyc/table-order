@@ -7,7 +7,7 @@
 
 ## P1 后端基础 + 报价
 - [x] **T1** OrderDelivery 模型（+收件坐标）+ 迁移注册 + ShansongConfig + yaml 占位 — S ✅
-- [ ] **T2** 闪送 service：签名 + CalculatePrice + CreateOrder + 状态映射（mock 单测）— M
+- [x] **T2** 闪送 service：签名 + CalculatePrice + CreateOrder + 状态映射（mock 单测）— M ✅
 - [ ] **T3** `POST /api/delivery/quote`：报价透传 + 后端签名报价凭证 + 坐标缺失兜底 — M
 
 ## P2 下单与履约
