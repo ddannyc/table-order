@@ -2,6 +2,7 @@
 const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
 const { TAB_LIST } = require('../../utils/tabbar.js')
+const { resolveProductImage } = require('../../utils/menu-image.js')
 
 Page({
   data: {
@@ -91,13 +92,16 @@ Page({
         productsByCategory[cat] = products.filter(p => p.category === cat).map(p => {
           const specs = (p.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
           const hasSpecs = specs.length > 0
+          const img = resolveProductImage(p)
           return {
             ...p,
             specs,
             hasSpecs,
             noSpecKey: `${p.id}_0`,
             specMinText: hasSpecs ? Math.min(...specs.map(s => s.price)).toFixed(2) : null,
-            priceText: p.price.toFixed(2)
+            priceText: p.price.toFixed(2),
+            hasImage: img.hasImage,
+            ph: img.placeholder
           }
         })
       })
