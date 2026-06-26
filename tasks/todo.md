@@ -8,7 +8,7 @@
 
 ## P1 资金路径
 - [x] **T2** 福利金扣减原子化：条件更新 + RowsAffected 校验，消除 TOCTOU 双花 — S ✅
-- [ ] **T3** 下单必须带明细 + order_type 白名单（空 items / 非法 type → 400）— S
+- [x] **T3** 下单必须带明细 + order_type 白名单（空 items / 非法 type → 400）— S ✅
 
 ## P2 正确性 / 信息泄露
 - [ ] **T4** GetShop 公开 DTO：剔除 reward_rate_* 分佣字段，保留 reward_ceiling — S

@@ -44,8 +44,16 @@ func CreateOrder(c *gin.Context) {
 	if orderType == "" {
 		orderType = "dine_in"
 	}
+	if orderType != "dine_in" && orderType != "delivery" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order_type"})
+		return
+	}
 	if orderType != "delivery" && req.TableNo == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "table_no required for dine-in"})
+		return
+	}
+	if len(req.Items) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "items required"})
 		return
 	}
 

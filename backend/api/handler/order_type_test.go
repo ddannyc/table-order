@@ -84,6 +84,70 @@ func TestCreateOrder_DeliveryAllowsEmptyTableNo(t *testing.T) {
 	}
 }
 
+// An unknown order_type is rejected (only dine_in / delivery are allowed).
+func TestCreateOrder_RejectsUnknownOrderType(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "BadType Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	product := models.Product{ShopID: shop.ID, Name: "Dish", Price: 20, Status: 1}
+	config.DB.Create(&product)
+	user := models.User{OpenID: "ot_bad", Nickname: "OTBad", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":    shop.ID,
+		"table_no":   "A01",
+		"amount":     20,
+		"order_type": "takeaway", // not allowlisted
+		"items":      []map[string]interface{}{{"product_id": product.ID, "quantity": 1}},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for unknown order_type, got %d body: %s", w.Code, w.Body.String())
+	}
+}
+
+// An order with no line items is rejected — the server must price from items,
+// never trust a bare client-supplied amount.
+func TestCreateOrder_RejectsEmptyItems(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "NoItems Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	user := models.User{OpenID: "ot_noitems", Nickname: "OTNoItems", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   999, // arbitrary client amount must not be trusted
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 for empty items, got %d body: %s", w.Code, w.Body.String())
+	}
+	var count int64
+	config.DB.Model(&models.Order{}).Where("user_id = ?", user.ID).Count(&count)
+	if count != 0 {
+		t.Errorf("expected no order created, got %d", count)
+	}
+}
+
 // dine_in still requires a table_no.
 func TestCreateOrder_DineInRequiresTableNo(t *testing.T) {
 	setupTestDB(t)
