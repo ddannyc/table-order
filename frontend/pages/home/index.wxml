@@ -1,7 +1,8 @@
 <!-- pages/home/index.wxml — 选餐入口启动页 -->
 <view class="page home-page">
 
-  <view class="home-hd">
+  <!-- 品牌 band：深松绿，字标 + 引导（首页无门店上下文，故以问候作字标） -->
+  <view class="home-brandband">
     <view class="home-title">欢迎光临</view>
     <view class="home-sub">请选择您的点餐方式</view>
   </view>

@@ -4,20 +4,25 @@
   flex-direction: column;
 }
 
-.home-hd {
-  padding: 48rpx var(--space-lg) 32rpx;
+/* 品牌 band：深松绿压场，奶油字标 + 引导（8.4:1） */
+.home-brandband {
+  background: var(--weui-BRAND);
+  padding: 64rpx var(--space-lg) 40rpx;
+  padding-top: calc(64rpx + env(safe-area-inset-top));
 }
 
 .home-title {
   font-size: var(--font-h1);
   font-weight: 600;
-  color: var(--weui-FG-0);
+  letter-spacing: 2rpx; /* 字标处理：收紧字距，不靠异体字体（小程序限制） */
+  color: var(--weui-BG-0);
 }
 
 .home-sub {
   margin-top: var(--space-xs);
   font-size: var(--font-body);
-  color: var(--weui-FG-2);
+  color: var(--weui-BG-2); /* 浅奶油，弱于字标但仍清晰 */
+  opacity: 0.85;
 }
 
 /* 两个大入口卡，纵向居中填充剩余空间 */
@@ -32,14 +37,15 @@
 
 .entry-card {
   position: relative;
-  background: #fff;
+  background: var(--weui-BG-1);
+  border: 1rpx solid var(--brand-accent); /* 金发丝线 */
   border-radius: var(--radius-lg);
   padding: 64rpx var(--space-lg);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-sm);
-  box-shadow: 0 2rpx 12rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2rpx 12rpx rgba(44, 74, 59, 0.06); /* 暖绿向阴影 */
 }
 
 .entry-card_tap {
@@ -54,7 +60,7 @@
 .entry-name {
   font-size: var(--font-h2);
   font-weight: 600;
-  color: var(--weui-FG-0);
+  color: var(--weui-BRAND); /* 深绿标题 */
 }
 
 .entry-desc {
