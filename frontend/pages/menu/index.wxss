@@ -55,16 +55,17 @@
 
 /* 激活态（页面唯一亮点）：绿竖条 + 白底凸出 + 加粗，不只靠颜色 */
 .menu-rail-item_on {
-  background: #fff;
+  background: var(--weui-BG-1); /* 近白凸出，对比左轨 BG-2 */
   color: var(--weui-FG-0);
   font-weight: 600;
   border-left-color: var(--weui-BRAND);
 }
 
-/* 右：大图卡片列表 */
+/* 右：大图卡片列表（近白暖面板，与左侧 BG-2 轨形成层次） */
 .menu-list {
   flex: 1;
   height: 100%;
+  background: var(--weui-BG-1);
   padding: var(--space-sm) var(--space-md) 220rpx; /* 底部留白避开购物车条 + tabbar */
 }
 
@@ -145,7 +146,7 @@
 .menu-price {
   font-size: var(--font-price);
   font-weight: 600;
-  color: var(--weui-FG-0);
+  color: var(--price-ink); /* 暗金铜，仅大字粗体（3.7:1 过大字阈值） */
 }
 
 .menu-price-from {
@@ -184,7 +185,7 @@
   color: var(--weui-FG-2);
 }
 
-/* 购物车结算条（tabbar 之上） */
+/* 购物车结算条（tabbar 之上）：深松绿压场，奶油字 */
 .menu-cartbar {
   position: fixed;
   left: 0;
@@ -194,18 +195,21 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-lg);
-  background: var(--weui-BG-1);
-  border-top: 1rpx solid var(--weui-FG-3);
+  background: var(--weui-BRAND);
   z-index: 20;
 }
 
 .menu-cart-summary {
   font-size: var(--font-body);
-  color: var(--weui-FG-0);
+  color: var(--weui-BG-0); /* 奶油字，8.4:1 */
 }
 
+/* 绿底上的去结算：奶油填充 + 深绿字（绿底上 weui_primary 会隐没，故自定） */
 .menu-cart-go {
   flex: none;
+  background: var(--weui-BG-0);
+  color: var(--weui-BRAND);
+  font-weight: 600;
 }
 
 /* 规格弹层价格/按钮 */

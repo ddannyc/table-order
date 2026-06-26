@@ -102,7 +102,7 @@
     <!-- 购物车结算条 -->
     <view wx:if="{{cartCount > 0}}" class="menu-cartbar">
       <view class="menu-cart-summary" bindtap="goCart">🛒 {{cartCount}} 件 · ¥{{cartTotal}}</view>
-      <view class="weui-btn weui-btn_primary weui-btn_mini menu-cart-go" bindtap="goCart">去结算</view>
+      <view class="weui-btn weui-btn_mini menu-cart-go" bindtap="goCart">去结算</view>
     </view>
   </view>
 
