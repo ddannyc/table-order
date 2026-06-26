@@ -36,7 +36,7 @@ describe('home launcher — 外卖 entry (enabled)', () => {
     wx.request.mockImplementation(({ success }) =>
       success({ statusCode: 200, data: { id: 7, name: 'Shop' } })
     )
-    await pageConfig.chooseDelivery()
+    await pageConfig.chooseDelivery.call({ setData: jest.fn() })
     expect(wx.reLaunch).toHaveBeenCalledWith({
       url: '/pages/menu/index?order_type=delivery&shop_id=7',
     })
@@ -46,10 +46,18 @@ describe('home launcher — 外卖 entry (enabled)', () => {
     wx.request.mockImplementation(({ success }) =>
       success({ statusCode: 404, data: { error: 'no available shop' } })
     )
-    await pageConfig.chooseDelivery()
+    await pageConfig.chooseDelivery.call({ setData: jest.fn() })
     expect(wx.reLaunch).not.toHaveBeenCalled()
     const notified = wx.showModal.mock.calls.length + wx.showToast.mock.calls.length
     expect(notified).toBeGreaterThan(0)
+  })
+})
+
+describe('home launcher — segmented mode', () => {
+  it('selectDineIn sets the dine-in segment state', () => {
+    const ctx = { setData: jest.fn() }
+    pageConfig.selectDineIn.call(ctx)
+    expect(ctx.setData).toHaveBeenCalledWith({ mode: 'dine_in' })
   })
 })
 
@@ -62,36 +70,5 @@ describe('home launcher — 堂食 entry (scan to menu)', () => {
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_shop_id', 1)
     expect(wx.setStorageSync).toHaveBeenCalledWith('current_table_no', 'A01')
     expect(wx.reLaunch).toHaveBeenCalledWith({ url: '/pages/menu/index' })
-  })
-})
-
-describe('home — wallet header (R2)', () => {
-  it('loads real balance and reward when logged in', async () => {
-    wx.getStorageSync.mockImplementation((k) => (k === 'token' ? 'tok' : ''))
-    wx.request.mockImplementation(({ url, success }) => {
-      if (url.includes('/wallet/balance')) {
-        success({ statusCode: 200, data: { balance: 12.5, reward_balance: 3 } })
-      } else if (url.includes('/reward/balance')) {
-        success({ statusCode: 200, data: { reward_balance: 3, reward_paused: false } })
-      } else {
-        success({ statusCode: 200, data: {} })
-      }
-    })
-    const ctx = { setData: jest.fn(), data: {} }
-    await pageConfig.loadWallet.call(ctx)
-    const merged = Object.assign({}, ...ctx.setData.mock.calls.map((c) => c[0]))
-    expect(merged.balanceText).toBe('12.50')
-    expect(merged.rewardText).toBe('3.00')
-  })
-
-  it('degrades to a dash when not logged in (no fake numbers)', async () => {
-    wx.getStorageSync.mockImplementation(() => '')
-    const ctx = { setData: jest.fn(), data: {} }
-    await pageConfig.loadWallet.call(ctx)
-    const merged = Object.assign({}, ...ctx.setData.mock.calls.map((c) => c[0]))
-    expect(merged.balanceText).toBe('—')
-    expect(merged.rewardText).toBe('—')
-    // never hit the wallet endpoint without a token
-    expect(wx.request).not.toHaveBeenCalled()
   })
 })

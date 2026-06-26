@@ -1,39 +1,58 @@
-<!-- pages/home/index.wxml — 选餐入口启动页 -->
+<!-- pages/home/index.wxml — 选餐入口（v6 设计稿：品牌头 + 堂食/外卖分段 + 扫码卡 + 厨师 banner + 福利放送） -->
 <view class="page home-page">
 
-  <!-- 品牌 band：深松绿，字标 + 余额/返利（真数据，未登录显 —） -->
-  <view class="home-brandband">
-    <view class="home-brand-row">
-      <view class="home-title">欢迎光临</view>
-      <view class="home-wallet">
-        <view class="wallet-item">
-          <text class="wallet-label">余额</text>
-          <text class="wallet-value">{{balanceText}}</text>
-        </view>
-        <view class="wallet-divider"></view>
-        <view class="wallet-item">
-          <text class="wallet-label">返利</text>
-          <text class="wallet-value">{{rewardText}}</text>
-        </view>
+  <!-- 品牌头（深松绿渐变）：字标 + 分段。不含余额/福利金。 -->
+  <view class="home-hd">
+    <view class="brandrow">
+      <view class="logo">春</view>
+      <view class="brandtext">
+        <view class="brandname">四月春膳</view>
+        <view class="brandsub">一汤一蔬 · 阅沐春风</view>
       </view>
     </view>
-    <view class="home-sub">请选择您的点餐方式</view>
+    <view class="seg">
+      <view class="s {{mode === 'dine_in' ? 's_on' : ''}}" hover-class="seg_tap" bindtap="selectDineIn">
+        <view class="seg-ic seg-ic_dine"></view>堂食点餐
+      </view>
+      <view class="s {{mode === 'delivery' ? 's_on' : ''}}" hover-class="seg_tap" bindtap="chooseDelivery">
+        <view class="seg-ic seg-ic_deliver"></view>外卖到家
+      </view>
+    </view>
   </view>
 
-  <!-- signature：单线蒸笼一桌菜 hero（金描边，data-URI SVG，零二进制） -->
-  <view class="home-hero" aria-hidden="true"></view>
-
-  <view class="home-entries">
-    <view class="entry-card" hover-class="entry-card_tap" hover-stay-time="120" bindtap="scanDineIn">
-      <view class="entry-emoji">🍽️</view>
-      <view class="entry-name">堂食</view>
-      <view class="entry-desc">扫码点餐 · 桌边享用</view>
+  <!-- 扫码点餐卡（堂食） -->
+  <view class="scan" hover-class="scan_tap" hover-stay-time="120" bindtap="scanDineIn">
+    <view class="scan-qr scan-qr-ic"></view>
+    <view class="scan-tx">
+      <view class="scan-t">扫码点餐</view>
+      <view class="scan-d">扫描餐桌二维码，立即开点</view>
     </view>
+    <view class="scan-go">›</view>
+  </view>
 
-    <view class="entry-card" hover-class="entry-card_tap" hover-stay-time="120" bindtap="chooseDelivery">
-      <view class="entry-emoji">🛵</view>
-      <view class="entry-name">外卖</view>
-      <view class="entry-desc">送货上门 · 在家品尝</view>
+  <!-- 厨师 banner（v1 插画） -->
+  <view class="banner">
+    <view class="banner-txt">
+      <view class="banner-h">四月春膳</view>
+      <view class="banner-p">时令鲜蔬 · 现点现做</view>
+      <view class="banner-b" bindtap="scanDineIn">查看今日菜单</view>
+    </view>
+    <view class="home-hero"></view>
+  </view>
+
+  <!-- 福利放送（静态装饰位，暂不接数据；日后可接精选菜品） -->
+  <view class="sec-title">
+    <view class="sec-h">福利放送</view>
+    <view class="sec-more">更多 ›</view>
+  </view>
+  <view class="promos">
+    <view class="promo">
+      <view class="promo-img warm1 promo-bowl"></view>
+      <view class="promo-ct"><view class="promo-n">招牌套餐</view><view class="promo-pr">¥38<text class="promo-from">起</text></view></view>
+    </view>
+    <view class="promo">
+      <view class="promo-img warm2 promo-greens"></view>
+      <view class="promo-ct"><view class="promo-n">时令鲜蔬</view><view class="promo-pr">¥18<text class="promo-from">起</text></view></view>
     </view>
   </view>
 

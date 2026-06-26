@@ -1,13 +1,12 @@
-// pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
-const { setTableBinding, bindInviteCode, resolveDeliveryShop, getBalance, getRewardBalance } = require('../../api/index.js')
+// pages/home/index.js — 选餐入口启动页（堂食 / 外卖；v6 设计稿）
+const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
 const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
   data: {
     tabbarList: TAB_LIST,
     tabbarCurrent: 0,
-    balanceText: '—', // 余额（真数据；未登录显 —，不假数字）
-    rewardText: '—'   // 返利余额
+    mode: 'dine_in' // 分段视觉态：dine_in | delivery（实际动作直接触发，不依赖此态）
   },
 
   onLoad(options) {
@@ -19,30 +18,12 @@ Page({
     if (options && options.shop_id && options.table_no) {
       setTableBinding(Number(options.shop_id), options.table_no)
       wx.reLaunch({ url: '/pages/menu/index' })
-      return
     }
-    this.loadWallet()
   },
 
-  onShow() {
-    this.loadWallet()
-  },
-
-  // 品牌头的余额/返利：登录态走真接口；未登录显 —，绝不假数据
-  loadWallet() {
-    const token = wx.getStorageSync('token')
-    if (!token) {
-      this.setData({ balanceText: '—', rewardText: '—' })
-      return Promise.resolve()
-    }
-    return Promise.all([getBalance(), getRewardBalance()])
-      .then(([w, r]) => {
-        this.setData({
-          balanceText: Number((w && w.balance) || 0).toFixed(2),
-          rewardText: Number((r && r.reward_balance) || 0).toFixed(2)
-        })
-      })
-      .catch(() => this.setData({ balanceText: '—', rewardText: '—' }))
+  // 分段「堂食」：仅切视觉态，实际开点走扫码卡
+  selectDineIn() {
+    this.setData({ mode: 'dine_in' })
   },
 
   // 堂食：扫码绑桌 → 菜单
@@ -66,8 +47,9 @@ Page({
     })
   },
 
-  // 外卖：解析配送门店 → 进入菜单的外卖模式（无桌号）
+  // 外卖：分段「外卖」即解析配送门店 → 进入菜单的外卖模式（无桌号）
   chooseDelivery() {
+    this.setData({ mode: 'delivery' })
     return resolveDeliveryShop()
       .then(shop => {
         wx.reLaunch({ url: `/pages/menu/index?order_type=delivery&shop_id=${shop.id}` })

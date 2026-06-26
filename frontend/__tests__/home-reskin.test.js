@@ -1,61 +1,56 @@
 /**
- * Structural tests for the 松墨 Pine-Ink home reskin (T2/T3).
- * Reads the page's wxml/wxss as text and asserts the brand band, token-based
- * surfaces, and (T3) the hero illustration are present. Behavior is covered
- * separately by home-launcher.test.js — this file only guards the skin.
+ * Structural tests for the v6 home (D2).
+ * Home is: brand header (NO balance/reward) + 堂食/外卖 segmented (line icons)
+ * + 扫码点餐 card + chef banner + 福利放送 static promo cards.
+ * Behavior (scan / delivery) is covered by home-launcher.test.js.
  */
 const fs = require('fs')
 const path = require('path')
 
-const wxml = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxml'), 'utf8')
-const wxss = fs.readFileSync(path.join(__dirname, '../pages/home/index.wxss'), 'utf8')
+const read = (p) => fs.readFileSync(path.join(__dirname, p), 'utf8')
+const wxml = read('../pages/home/index.wxml')
+const wxss = read('../pages/home/index.wxss')
+const art = read('../pages/home/home-art.wxss')
 
-describe('home reskin — brand band + entry cards (T2)', () => {
-  it('wraps the header in a deep-green brand band', () => {
-    expect(wxml).toMatch(/home-brandband/)
-    expect(wxss).toMatch(/\.home-brandband\s*\{[^}]*background:\s*var\(--weui-BRAND\)/)
-  })
-
-  it('entry cards use the warm card surface token, not hardcoded white', () => {
-    expect(wxss).toMatch(/\.entry-card\s*\{[^}]*background:\s*var\(--weui-BG-1\)/)
-    expect(wxss).not.toMatch(/\.entry-card\s*\{[^}]*background:\s*#fff/)
-  })
-
-  it('entry titles use the brand green', () => {
-    expect(wxss).toMatch(/\.entry-name\s*\{[^}]*color:\s*var\(--weui-BRAND\)/)
+describe('home v6 — brand header (no wallet)', () => {
+  it('shows the brand header, not a wallet balance/reward', () => {
+    expect(wxml).toMatch(/home-hd/)
+    expect(wxml).toMatch(/四月春膳/)
+    expect(wxml).not.toMatch(/balanceText/)
+    expect(wxml).not.toMatch(/rewardText/)
   })
 })
 
-describe('home reskin — hero illustration (T3)', () => {
-  it('renders a single-line SVG hero banner (zero binary assets)', () => {
+describe('home v6 — segmented 堂食/外卖 with line icons', () => {
+  it('renders both segments with line-icon classes and the right actions', () => {
+    expect(wxml).toMatch(/seg-ic_dine/)
+    expect(wxml).toMatch(/seg-ic_deliver/)
+    expect(wxml).toMatch(/bindtap="selectDineIn"/)
+    expect(wxml).toMatch(/bindtap="chooseDelivery"/)
+  })
+
+  it('the segment icons recolor between states (white inactive, green active)', () => {
+    expect(art).toMatch(/\.seg-ic_dine\s*\{[^}]*data:image\/svg\+xml/)
+    expect(art).toMatch(/s_on .seg-ic_dine\s*\{[^}]*%23234B3A/i)
+  })
+})
+
+describe('home v6 — scan card + chef banner + promos', () => {
+  it('scan card triggers scanDineIn', () => {
+    expect(wxml).toMatch(/scan/)
+    expect(wxml).toMatch(/bindtap="scanDineIn"/)
+  })
+
+  it('chef banner is a colored data-uri illustration (brand + terracotta fills)', () => {
     expect(wxml).toMatch(/home-hero/)
-    expect(wxss).toMatch(/\.home-hero\s*\{[^}]*data:image\/svg\+xml/)
+    expect(art).toMatch(/\.home-hero\s*\{[^}]*data:image\/svg\+xml/)
+    expect(art).toMatch(/%23234B3A/i)
+    expect(art).toMatch(/%23C8643C/i)
   })
 
-  it('respects prefers-reduced-motion if the hero animates', () => {
-    // If a transition/animation is added to the hero, it must be disabled
-    // under reduced motion. (No animation is also acceptable.)
-    const animatesHero = /\.home-hero\s*\{[^}]*(animation|transition)/.test(wxss)
-    if (animatesHero) {
-      expect(wxss).toMatch(/prefers-reduced-motion/)
-    }
-  })
-})
-
-describe('home reskin — wallet header + colored chef banner (R2)', () => {
-  it('brand header binds real balance and reward', () => {
-    expect(wxml).toMatch(/balanceText/)
-    expect(wxml).toMatch(/rewardText/)
-  })
-
-  it('the hero is a colored chef illustration (brand/terracotta fills, not a single gold stroke)', () => {
-    const hero = wxss.match(/\.home-hero\s*\{[\s\S]*?\}/)[0]
-    expect(hero).toMatch(/%232C4A3B/i) // brand green fill present
-    expect(hero).toMatch(/%23C8643C/i) // terracotta fill present
-  })
-
-  it('keeps the 堂食/外卖 entry cards', () => {
-    expect(wxml).toMatch(/scanDineIn/)
-    expect(wxml).toMatch(/chooseDelivery/)
+  it('福利放送 has two static illustrated promo cards', () => {
+    expect(wxml).toMatch(/promo-bowl/)
+    expect(wxml).toMatch(/promo-greens/)
+    expect(art).toMatch(/\.promo-bowl\s*\{[^}]*data:image\/svg\+xml/)
   })
 })
