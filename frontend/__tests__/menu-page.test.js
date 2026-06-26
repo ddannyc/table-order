@@ -1,8 +1,8 @@
 /**
  * Tests for the menu page interaction logic (Task 5).
  *   - selectCategory: highlights a category and scrolls the list to its anchor.
- *   - switchOrderType: dine_in selectable now; delivery shows a coming-soon
- *     placeholder and does NOT switch (Phase 4 wires delivery).
+ *   - switchOrderType: both dine_in and delivery are selectable; delivery
+ *     switches to delivery mode and clears any table binding.
  */
 global.wx = {
   getAccountInfoSync: jest.fn(() => ({ miniProgram: { envVersion: 'develop' } })),
@@ -39,15 +39,15 @@ describe('menu — selectCategory (weui navbar)', () => {
 })
 
 describe('menu — switchOrderType', () => {
-  it('selecting 外卖 shows coming-soon and does not switch order type', () => {
-    const ctx = { setData: jest.fn(), data: { orderType: 'dine_in' } }
+  it('selecting 外卖 switches to delivery mode and clears the table binding', () => {
+    const ctx = { setData: jest.fn(), data: { orderType: 'dine_in', boundShopId: 1 } }
     pageConfig.switchOrderType.call(ctx, {
       currentTarget: { dataset: { type: 'delivery' } },
     })
-    expect(wx.showModal).toHaveBeenCalled()
-    expect(ctx.setData).not.toHaveBeenCalledWith(
-      expect.objectContaining({ orderType: 'delivery' })
+    expect(ctx.setData).toHaveBeenCalledWith(
+      expect.objectContaining({ orderType: 'delivery', boundTableNo: '' })
     )
+    expect(wx.showModal).not.toHaveBeenCalled()
   })
 
   it('selecting 堂食 sets order type to dine_in', () => {

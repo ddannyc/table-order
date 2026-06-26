@@ -1,5 +1,5 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖）
-const { setTableBinding, bindInviteCode } = require('../../api/index.js')
+const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
 const { TAB_LIST } = require('../../utils/tabbar.js')
 
 Page({
@@ -41,13 +41,15 @@ Page({
     })
   },
 
-  // 外卖：配送能力（闪送）未完备，暂作「即将上线」占位
+  // 外卖：解析配送门店 → 进入菜单的外卖模式（无桌号）
   chooseDelivery() {
-    wx.showModal({
-      title: '外卖即将上线',
-      content: '外卖配送功能正在开发中，敬请期待',
-      showCancel: false
-    })
+    return resolveDeliveryShop()
+      .then(shop => {
+        wx.reLaunch({ url: `/pages/menu/index?order_type=delivery&shop_id=${shop.id}` })
+      })
+      .catch(() => {
+        wx.showToast({ title: '暂无可配送门店', icon: 'none' })
+      })
   },
 
   tabChange(e) {

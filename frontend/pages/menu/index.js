@@ -134,15 +134,11 @@ Page({
     this.setData({ activeCategory: e.currentTarget.dataset.cat })
   },
 
-  // 顶部堂食/外卖切换；外卖暂未上线，先占位不切换（Phase 4 接入）
+  // 顶部堂食/外卖切换；外卖模式清空桌号（配送态不绑桌）
   switchOrderType(e) {
     const type = e.currentTarget.dataset.type
     if (type === 'delivery') {
-      wx.showModal({
-        title: '外卖即将上线',
-        content: '外卖配送功能正在开发中，敬请期待',
-        showCancel: false
-      })
+      this.setData({ orderType: 'delivery', boundTableNo: '' })
       return
     }
     this.setData({ orderType: 'dine_in' })

@@ -61,19 +61,3 @@
   font-size: var(--font-caption);
   color: var(--weui-FG-2);
 }
-
-/* 外卖：即将上线，整体置灰 */
-.entry-card_soon {
-  opacity: 0.5;
-}
-
-.entry-badge {
-  position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
-  font-size: var(--font-caption);
-  color: var(--weui-FG-1);
-  background: var(--weui-BG-2);
-  padding: 2rpx 16rpx;
-  border-radius: var(--radius-lg);
-}

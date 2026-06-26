@@ -13,8 +13,7 @@
       <view class="entry-desc">扫码点餐 · 桌边享用</view>
     </view>
 
-    <view class="entry-card entry-card_soon" bindtap="chooseDelivery">
-      <view class="entry-badge">即将上线</view>
+    <view class="entry-card" hover-class="entry-card_tap" hover-stay-time="120" bindtap="chooseDelivery">
       <view class="entry-emoji">🛵</view>
       <view class="entry-name">外卖</view>
       <view class="entry-desc">送货上门 · 在家品尝</view>

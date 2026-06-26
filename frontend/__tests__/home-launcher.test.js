@@ -2,7 +2,7 @@
  * Tests for the home launcher page (Task 4).
  * Home is now a 堂食/外卖 entry launcher, not the menu.
  *   - 堂食: scan a table QR, store the binding, route to the menu page.
- *   - 外卖: placeholder until Phase 4 — must not enter an unfinished flow.
+ *   - 外卖: resolve the delivery shop, route to the menu in delivery mode.
  */
 global.wx = {
   getAccountInfoSync: jest.fn(() => ({ miniProgram: { envVersion: 'develop' } })),
@@ -31,14 +31,25 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('home launcher — 外卖 entry (coming soon, gated)', () => {
-  it('shows a coming-soon hint and does not enter the delivery flow', () => {
-    pageConfig.chooseDelivery()
+describe('home launcher — 外卖 entry (enabled)', () => {
+  it('resolves the delivery shop and routes to the menu in delivery mode', async () => {
+    wx.request.mockImplementation(({ success }) =>
+      success({ statusCode: 200, data: { id: 7, name: 'Shop' } })
+    )
+    await pageConfig.chooseDelivery()
+    expect(wx.reLaunch).toHaveBeenCalledWith({
+      url: '/pages/menu/index?order_type=delivery&shop_id=7',
+    })
+  })
+
+  it('shows a hint and does not navigate when no delivery shop is available', async () => {
+    wx.request.mockImplementation(({ success }) =>
+      success({ statusCode: 404, data: { error: 'no available shop' } })
+    )
+    await pageConfig.chooseDelivery()
+    expect(wx.reLaunch).not.toHaveBeenCalled()
     const notified = wx.showModal.mock.calls.length + wx.showToast.mock.calls.length
     expect(notified).toBeGreaterThan(0)
-    expect(wx.reLaunch).not.toHaveBeenCalled()
-    expect(wx.navigateTo).not.toHaveBeenCalled()
-    expect(wx.chooseAddress).not.toHaveBeenCalled()
   })
 })
 
