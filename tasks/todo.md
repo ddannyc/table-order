@@ -20,11 +20,12 @@
 - [x] **FT6** 回调验签改真实规则 + 解析 issOrderNo/orderStatus — M ✅
 
 ## Checkpoint 联调
-- [ ] 三套测试全绿（go / jest / vitest）
-- [ ] 真实凭据跑 orderCalculate 确认运费字段名（回填 FT2 CALIBRATION）
-- [ ] 校准回调入站格式（FT6 CALIBRATION）
-- [ ] 真机全链路：选址→报价→支付→orderPlace→回调→我的订单
-- [ ] 仓库无真实密钥；重出 GO/NO-GO
+- [x] 三套测试全绿（go / jest 94 / vitest 21）✅
+- [x] 仓库无真实密钥（secrets 扫描通过；config.yaml.example 仅占位）✅
+- [ ] 真实凭据跑 orderCalculate 确认运费字段名（回填 FT2 CALIBRATION）— 需凭据
+- [ ] 校准回调入站格式（FT6 CALIBRATION）— 需闪送回调文档/真实回调
+- [ ] 真机全链路：选址→报价→支付→orderPlace→回调→我的订单 — 需人工
+- [ ] 重出 GO/NO-GO
 
 ## 不在本期
 - 取消/退款 UI（abortOrder 客户端已留方法）
