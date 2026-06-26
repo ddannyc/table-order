@@ -94,6 +94,79 @@ func TestCreateOrder_RejectsSpecFromOtherProduct(t *testing.T) {
 	}
 }
 
+// A product that HAS active specs must not be ordered with spec_id:0 — that
+// would let a client pay the base product price instead of the spec price.
+func TestCreateOrder_RejectsMissingSpecWhenProductHasSpecs(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "Spec Required Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	product := models.Product{ShopID: shop.ID, Name: "奶茶", Price: 10, Status: 1}
+	config.DB.Create(&product)
+	// Only spec is pricier than the base price — the underpay gap.
+	config.DB.Create(&models.ProductSpec{ProductID: product.ID, Name: "大杯", Price: 18, Status: 1})
+	user := models.User{OpenID: "spec_required_user", Nickname: "SpecRequired", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   1,
+		"items":    []map[string]interface{}{{"product_id": product.ID, "spec_id": 0, "quantity": 1}},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 when spec omitted for a spec'd product, got %d body: %s", w.Code, w.Body.String())
+	}
+	var count int64
+	config.DB.Model(&models.Order{}).Where("user_id = ?", user.ID).Count(&count)
+	if count != 0 {
+		t.Errorf("expected no order created, got %d", count)
+	}
+}
+
+// A product with NO specs is still orderable with spec_id:0 at its base price.
+func TestCreateOrder_AllowsMissingSpecWhenProductHasNoSpecs(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "No Spec Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	product := models.Product{ShopID: shop.ID, Name: "矿泉水", Price: 3, Status: 1}
+	config.DB.Create(&product)
+	user := models.User{OpenID: "no_spec_user", Nickname: "NoSpec", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   1,
+		"items":    []map[string]interface{}{{"product_id": product.ID, "spec_id": 0, "quantity": 2}},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for spec-less product, got %d body: %s", w.Code, w.Body.String())
+	}
+	var order models.Order
+	config.DB.Where("user_id = ?", user.ID).Order("id desc").First(&order)
+	if order.Amount != 6 {
+		t.Errorf("expected amount 6 (base price x2), got %v", order.Amount)
+	}
+}
+
 // GetShopProducts includes each product's specs.
 func TestGetShopProducts_IncludesSpecs(t *testing.T) {
 	setupTestDB(t)

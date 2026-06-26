@@ -4,7 +4,7 @@
 基线：绝不 git add `frontend/config.js` / `.claude/` / `specs/shansong-delivery.md`。
 
 ## P0 阻断项
-- [ ] **T1** 规格必选守卫：有规格商品传 `spec_id:0` → 400，堵低价下单 — S【blocker】
+- [x] **T1** 规格必选守卫：有规格商品传 `spec_id:0` → 400，堵低价下单 — S【blocker】 ✅
 
 ## P1 资金路径
 - [ ] **T2** 福利金扣减原子化：条件更新 + RowsAffected 校验，消除 TOCTOU 双花 — S

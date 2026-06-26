@@ -99,6 +99,16 @@ func CreateOrder(c *gin.Context) {
 				price = spec.Price
 				specID = spec.ID
 				specName = spec.Name
+			} else {
+				// No spec chosen — only allowed for products without specs.
+				// Otherwise a client could underpay by skipping the spec price.
+				var specCount int64
+				config.DB.Model(&models.ProductSpec{}).
+					Where("product_id = ? AND status = 1", item.ProductID).Count(&specCount)
+				if specCount > 0 {
+					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec required for %s", product.Name)})
+					return
+				}
 			}
 
 			calculatedAmount += price * float64(item.Quantity)
