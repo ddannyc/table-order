@@ -103,6 +103,11 @@ func WechatPayNotify(c *gin.Context) {
 
 	go services.DistributeReward(order.ID, order.UserID, order.ShopID, order.Amount)
 
+	// Delivery orders: dispatch the Shansong courier now that payment is confirmed.
+	if order.OrderType == "delivery" {
+		go services.DispatchShansong(order.ID)
+	}
+
 	log.Printf("[wechatpay] order %s paid, transaction_id=%s", order.OrderNo, *transaction.TransactionId)
 	c.JSON(http.StatusOK, gin.H{"code": "SUCCESS"})
 }

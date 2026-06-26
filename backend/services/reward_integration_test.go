@@ -39,6 +39,7 @@ func TestMain(m *testing.M) {
 		&models.Shop{},
 		&models.Order{},
 		&models.OrderItem{},
+		&models.OrderDelivery{},
 		&models.Product{},
 		&models.InviteRelation{},
 		&models.WalletLog{},
@@ -55,6 +56,7 @@ func TestMain(m *testing.M) {
 		&models.RewardLog{},
 		&models.WalletLog{},
 		&models.InviteRelation{},
+		&models.OrderDelivery{},
 		&models.OrderItem{},
 		&models.Order{},
 		&models.Product{},
@@ -124,6 +126,7 @@ func cleanTables(t *testing.T) {
 	testDB.Exec("DELETE FROM reward_logs")
 	testDB.Exec("DELETE FROM wallet_logs")
 	testDB.Exec("DELETE FROM invite_relations")
+	testDB.Exec("DELETE FROM order_deliveries")
 	testDB.Exec("DELETE FROM order_items")
 	testDB.Exec("DELETE FROM orders")
 	testDB.Exec("DELETE FROM products")

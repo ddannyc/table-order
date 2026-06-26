@@ -12,7 +12,7 @@
 
 ## P2 下单与履约
 - [x] **T4** CreateOrder delivery 分支：验凭证落 OrderDelivery，实付含运费，返利按菜品额 — M ✅
-- [ ] **T5** 支付成功后 `DispatchShansong`（wechatpay_notify + 零元分支钩子，仅 delivery）— M
+- [x] **T5** 支付成功后 `DispatchShansong`（wechatpay_notify + 零元分支钩子，仅 delivery）— M ✅
 - [ ] **T6** `POST /api/shansong/callback`：验签 + 更新状态 + 幂等 + 返回 `{"status":200}` — M
 
 ## P3 前端 + 状态展示

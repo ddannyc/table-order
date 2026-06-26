@@ -299,6 +299,10 @@ func CreateOrder(c *gin.Context) {
 				"reward_paused_at": nil,
 			})
 		go services.DistributeReward(order.ID, userID, req.ShopID, req.Amount)
+		// Fee-free delivery edge: still dispatch the courier on auto-paid orders.
+		if orderType == "delivery" {
+			go services.DispatchShansong(order.ID)
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"id":           order.ID,
 			"order_no":     order.OrderNo,
