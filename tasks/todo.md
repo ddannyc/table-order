@@ -24,11 +24,12 @@
 - [x] 仓库无真实密钥（secrets 扫描通过；config.yaml.example 仅占位）✅
 - [x] 真实凭据跑 orderCalculate：运费字段=totalFeeAfterSave/totalAmount（单位**分**）；已修 FT2 ✅
 - [x] 本地 ShansongClient 实测 test 环境 orderCalculate 成功（fee=38.64 元，issOrderNo 返回）✅
-- [x] orderPlace 合约验证：请求被平台受理（过签名/参数，到余额校验）；body `{issOrderNo}` 正确 ✅
-- [ ] orderPlace 实际下单：阻塞于「闪送账户余额不足」——需 test 账户充值后再验派单+状态+取消
-- [ ] 校准回调入站格式（FT6 CALIBRATION）— 需充值后真实派单触发回调
-- [ ] 真机全链路：选址→报价→支付→orderPlace→回调→我的订单 — 需人工
-- [ ] 重出 GO/NO-GO
+- [x] orderPlace 实际下单成功（status 200，订单创建）✅
+- [x] orderStatus 枚举实测确认：**20=派单中**（与 FT2 状态文案 + FT5 派单初始状态一致；旧 60 bug 确认已修）✅
+- [x] abortOrder 取消成功（status 200，已清理测试单）✅
+- [x] orderInfo 字段 `orderStatus` 与 FT6 回调解析一致（佐证）✅
+- [ ] 回调入站完整 wrapper（FT6）：字段 orderStatus 已佐证；form/data 完整格式待真实回调推送确认
+- [ ] 小程序真机全链路 + 重出 GO/NO-GO
 - 备注：orderInfo 需 thirdOrderNo（合作伙伴单号），非本期范围（用回调而非轮询）
 
 ## 不在本期
