@@ -24,6 +24,19 @@
   text-align: left;
 }
 
+.addr-change {
+  margin-top: 8rpx;
+  font-size: var(--font-caption);
+  color: var(--weui-BRAND);
+}
+
+.delivery-addr-empty {
+  padding: 32rpx var(--space-lg);
+  text-align: center;
+  color: var(--weui-BRAND);
+  font-size: var(--font-body);
+}
+
 .addr-line {
   font-size: var(--font-body);
   color: var(--weui-FG-0);

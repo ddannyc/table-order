@@ -16,7 +16,7 @@
 - [x] **T6** `POST /api/shansong/callback`：验签 + 更新状态 + 幂等 + 返回 `{"status":200}` — M ✅
 
 ## P3 前端 + 状态展示
-- [ ] **T7** order-confirm：chooseAddress + getLocation + 报价 + 应付含运费 + payload 扩展；app.json 加 getLocation — M
+- [x] **T7** order-confirm：chooseAddress + getLocation + 报价 + 应付含运费 + payload 扩展；app.json 加 getLocation — M ✅
 - [ ] **T8** GetOrders/GetOrder 回传 delivery + 我的订单展示配送状态 — M
 
 ## P4 联调 Checkpoint

@@ -1,7 +1,7 @@
 // pages/order-confirm/index.js
-const { getShop, getRewardBalance, createOrder, getTableBinding, setTableBinding } = require('../../api/index.js')
+const { getShop, getRewardBalance, createOrder, getDeliveryQuote, getTableBinding, setTableBinding } = require('../../api/index.js')
 const { getCart, clearCart, getCartTotal } = require('../../api/product.js')
-const { doLogin, handleAuthError, getLastDeliveryAddress } = require('../../utils/storage.js')
+const { doLogin, handleAuthError, getLastDeliveryAddress, setLastDeliveryAddress } = require('../../utils/storage.js')
 
 Page({
   data: {
@@ -20,7 +20,9 @@ Page({
     totalAmount: '0.00',
     actualPayAmount: '0.00',
     rewardDeduct: '0.00',
-    rewardCeiling: '80'
+    rewardCeiling: '80',
+    deliveryFee: '0.00',
+    quoteToken: ''
   },
 
   onLoad(options) {
@@ -92,14 +94,16 @@ Page({
       subtotal: (Number(item.price) * Number(item.quantity)).toFixed(2)
     }))
     const rewardBalance = Number(this.data.rewardBalance) || 0
-    const { useReward, shop } = this.data
+    const { useReward, shop, orderType } = this.data
     const rewardCeiling = Number(shop.reward_ceiling || 0.5) || 0.5
     let rewardDeduct = 0
-    let actualPay = total
     if (useReward && rewardBalance > 0) {
       rewardDeduct = Math.min(rewardBalance, total * rewardCeiling)
-      actualPay = total - rewardDeduct
     }
+    // Delivery fee (already quoted) is added on top of the item net; it never
+    // enters the reward deduction base.
+    const deliveryFee = orderType === 'delivery' ? (Number(this.data.deliveryFee) || 0) : 0
+    const actualPay = total - rewardDeduct + deliveryFee
     const rewardCeilingPercent = (rewardCeiling * 100).toFixed(0)
     this.setData({
       cart, cartItems,
@@ -121,9 +125,74 @@ Page({
         shop,
         rewardBalance: rb
       })
-      this.refreshCartDisplay()
+      // Delivery with a cached address: refresh the quote now that we're authed.
+      if (this.data.orderType === 'delivery' && this.data.deliveryAddress) {
+        this.fetchQuote(this.data.deliveryAddress)
+      } else {
+        this.refreshCartDisplay()
+      }
     }).catch(err => {
       if (!handleAuthError(err, this)) { console.error(err) }
+    })
+  },
+
+  // Delivery: pick the WeChat address (text), then the current location (coords),
+  // then fetch a quote. wx.getLocation supplies the destination coordinates that
+  // chooseAddress does not return.
+  chooseDeliveryAddress() {
+    wx.chooseAddress({
+      success: (addr) => {
+        wx.getLocation({
+          type: 'gcj02',
+          success: (loc) => this.applyDeliveryAddress(addr, loc.latitude, loc.longitude),
+          fail: () => {
+            wx.showModal({
+              title: '需要位置权限',
+              content: '请允许获取当前位置以计算配送费',
+              showCancel: false
+            })
+          }
+        })
+      },
+      fail: () => {}
+    })
+  },
+
+  applyDeliveryAddress(addr, lat, lng) {
+    const deliveryAddress = {
+      userName: addr.userName,
+      telNumber: addr.telNumber,
+      provinceName: addr.provinceName,
+      cityName: addr.cityName,
+      countyName: addr.countyName,
+      detailInfo: addr.detailInfo,
+      lat,
+      lng
+    }
+    setLastDeliveryAddress(deliveryAddress)
+    this.setData({ deliveryAddress })
+    this.fetchQuote(deliveryAddress)
+  },
+
+  fetchQuote(addr) {
+    getDeliveryQuote(this.data.shopId, {
+      recipient_name: addr.userName,
+      recipient_phone: addr.telNumber,
+      recipient_address: `${addr.provinceName || ''}${addr.cityName || ''}${addr.countyName || ''}${addr.detailInfo || ''}`,
+      lat: addr.lat,
+      lng: addr.lng
+    }).then((res) => {
+      this.setData({
+        deliveryFee: (Number(res.delivery_fee) || 0).toFixed(2),
+        quoteToken: res.quote_token || ''
+      })
+      this.refreshCartDisplay()
+    }).catch((err) => {
+      this.setData({ deliveryFee: '0.00', quoteToken: '' })
+      if (!handleAuthError(err, this)) {
+        wx.showToast({ title: (err && err.error) || '配送报价失败', icon: 'none' })
+      }
+      this.refreshCartDisplay()
     })
   },
 
@@ -140,9 +209,13 @@ Page({
       this.setData({ needLogin: true })
       return
     }
-    const { cart, totalAmount } = this.data
+    const { cart, totalAmount, orderType, deliveryAddress, quoteToken } = this.data
     if (cart.length === 0) {
       wx.showToast({ title: '购物车为空', icon: 'none' })
+      return
+    }
+    if (orderType === 'delivery' && (!deliveryAddress || !quoteToken)) {
+      wx.showToast({ title: '请先选择收货地址', icon: 'none' })
       return
     }
     this.setData({ loading: true })
@@ -151,7 +224,20 @@ Page({
       spec_id: item.specId || 0,
       quantity: item.quantity
     }))
-    createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward, this.data.orderType)
+    let delivery = null
+    if (orderType === 'delivery' && deliveryAddress) {
+      delivery = {
+        recipient_name: deliveryAddress.userName,
+        recipient_phone: deliveryAddress.telNumber,
+        province: deliveryAddress.provinceName,
+        city: deliveryAddress.cityName,
+        county: deliveryAddress.countyName,
+        detail_address: deliveryAddress.detailInfo,
+        lat: deliveryAddress.lat,
+        lng: deliveryAddress.lng
+      }
+    }
+    createOrder(this.data.shopId, this.data.tableNo, parseFloat(totalAmount), orderItems, this.data.useReward, orderType, delivery, quoteToken)
       .then((res) => {
         if (res.error) {
           wx.showToast({ title: res.error === 'prepay failed' ? '支付配置异常' : '下单失败', icon: 'none' })

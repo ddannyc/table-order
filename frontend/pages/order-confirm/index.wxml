@@ -7,10 +7,12 @@
       <view class="order-type-tag">{{orderTypeLabel}}</view>
     </view>
     <view wx:if="{{orderType !== 'delivery'}}" class="table-no">桌号: {{tableNo}}</view>
-    <view wx:elif="{{deliveryAddress}}" class="delivery-addr">
+    <view wx:elif="{{deliveryAddress}}" class="delivery-addr" bindtap="chooseDeliveryAddress">
       <view class="addr-line">{{deliveryAddress.userName}} {{deliveryAddress.telNumber}}</view>
       <view class="addr-detail">{{deliveryAddress.provinceName}}{{deliveryAddress.cityName}}{{deliveryAddress.countyName}}{{deliveryAddress.detailInfo}}</view>
+      <view class="addr-change">点击更换地址 ›</view>
     </view>
+    <view wx:else class="delivery-addr-empty" bindtap="chooseDeliveryAddress">+ 选择收货地址</view>
   </view>
 
   <!-- 订单商品列表 -->
@@ -35,6 +37,10 @@
       <mp-cell>
         <view slot="title">商品金额</view>
         <view slot="footer" class="value-text">¥{{totalAmount}}</view>
+      </mp-cell>
+      <mp-cell wx:if="{{orderType === 'delivery'}}">
+        <view slot="title">配送费</view>
+        <view slot="footer" class="value-text">¥{{deliveryFee}}</view>
       </mp-cell>
       <mp-cell wx:if="{{useReward}}">
         <view slot="title" class="text-primary">福利金抵扣</view>

@@ -41,6 +41,20 @@ export const getShop = (shopId) => request({ url: `/shops/${shopId}` })
 // 外卖：解析配送门店（当前单门店）
 export const resolveDeliveryShop = () => request({ url: '/delivery/shop' })
 
+// 外卖：实时运费报价（返回 delivery_fee + 后端签名报价凭证 quote_token）
+export const getDeliveryQuote = (shopId, recipient) => request({
+  url: '/delivery/quote',
+  method: 'POST',
+  data: {
+    shop_id: shopId,
+    recipient_name: recipient.recipient_name,
+    recipient_phone: recipient.recipient_phone,
+    recipient_address: recipient.recipient_address,
+    recipient_lat: recipient.lat,
+    recipient_lng: recipient.lng
+  }
+})
+
 // 用户
 export const getUserInfo = () => request({ url: '/auth/userinfo' })
 
@@ -63,7 +77,7 @@ export const getOrders = (page = 1, pageSize = 20) => request({
   url: `/orders?page=${page}&page_size=${pageSize}`
 })
 
-export const createOrder = (shopId, tableNo, totalAmount, items, useReward, orderType = 'dine_in') => request({
+export const createOrder = (shopId, tableNo, totalAmount, items, useReward, orderType = 'dine_in', delivery = null, quoteToken = '') => request({
   url: '/orders',
   method: 'POST',
   data: {
@@ -72,7 +86,9 @@ export const createOrder = (shopId, tableNo, totalAmount, items, useReward, orde
     table_no: tableNo,
     amount: totalAmount,
     items,
-    use_reward: useReward
+    use_reward: useReward,
+    // delivery fields only for delivery orders
+    ...(orderType === 'delivery' ? { delivery, quote_token: quoteToken } : {})
   }
 })
 
