@@ -107,11 +107,18 @@ func CreateOrder(c *gin.Context) {
 				specID = spec.ID
 				specName = spec.Name
 			} else {
-				// No spec chosen — only allowed for products without specs.
-				// Otherwise a client could underpay by skipping the spec price.
+				// No spec chosen — only allowed for plain products. A product is
+				// spec-priced if it has any non-下架 spec (上架=1 or 售罄=2), so a
+				// bare spec_id:0 would underpay at the base price; reject it.
+				// 下架=0 specs are excluded: the merchant removed those variants, so
+				// the product reverts to base-price ordering.
+				// Fail closed on a DB error rather than skipping the guard.
 				var specCount int64
-				config.DB.Model(&models.ProductSpec{}).
-					Where("product_id = ? AND status = 1", item.ProductID).Count(&specCount)
+				if err := config.DB.Model(&models.ProductSpec{}).
+					Where("product_id = ? AND status <> 0", item.ProductID).Count(&specCount).Error; err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "spec lookup failed"})
+					return
+				}
 				if specCount > 0 {
 					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec required for %s", product.Name)})
 					return

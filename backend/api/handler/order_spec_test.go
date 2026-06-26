@@ -132,6 +132,77 @@ func TestCreateOrder_RejectsMissingSpecWhenProductHasSpecs(t *testing.T) {
 	}
 }
 
+// A product whose only spec is 售罄 (status 2) is still spec-priced: ordering it
+// with spec_id:0 must be rejected (no base-price underpay while sold out).
+func TestCreateOrder_RejectsMissingSpecWhenSpecsSoldOut(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "SoldOut Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	product := models.Product{ShopID: shop.ID, Name: "奶茶", Price: 10, Status: 1}
+	config.DB.Create(&product)
+	config.DB.Create(&models.ProductSpec{ProductID: product.ID, Name: "大杯", Price: 18, Status: 2}) // 售罄
+	user := models.User{OpenID: "soldout_user", Nickname: "SoldOut", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   1,
+		"items":    []map[string]interface{}{{"product_id": product.ID, "spec_id": 0, "quantity": 1}},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 when only spec is 售罄, got %d body: %s", w.Code, w.Body.String())
+	}
+}
+
+// A product whose specs are all 下架 (status 0) is treated as a plain product:
+// the merchant removed the variants, so spec_id:0 falls back to the base price.
+func TestCreateOrder_AllowsMissingSpecWhenSpecsAllDelisted(t *testing.T) {
+	setupTestDB(t)
+
+	shop := models.Shop{Name: "Delisted Shop", MerchantID: 1, Status: 1}
+	config.DB.Create(&shop)
+	product := models.Product{ShopID: shop.ID, Name: "美式", Price: 12, Status: 1}
+	config.DB.Create(&product)
+	delisted := models.ProductSpec{ProductID: product.ID, Name: "大杯", Price: 18}
+	config.DB.Create(&delisted)
+	config.DB.Model(&delisted).Update("status", 0) // 下架 (default:1 tag overrides a zero on create)
+	user := models.User{OpenID: "delisted_user", Nickname: "Delisted", Role: 0}
+	config.DB.Create(&user)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/orders", CreateOrder, user.ID)
+	body := map[string]interface{}{
+		"shop_id":  shop.ID,
+		"table_no": "A01",
+		"amount":   1,
+		"items":    []map[string]interface{}{{"product_id": product.ID, "spec_id": 0, "quantity": 1}},
+	}
+	jsonBody, _ := json.Marshal(body)
+	req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 (all specs 下架 → base price), got %d body: %s", w.Code, w.Body.String())
+	}
+	var order models.Order
+	config.DB.Where("user_id = ?", user.ID).Order("id desc").First(&order)
+	if order.Amount != 12 {
+		t.Errorf("expected amount 12 (base price), got %v", order.Amount)
+	}
+}
+
 // A product with NO specs is still orderable with spec_id:0 at its base price.
 func TestCreateOrder_AllowsMissingSpecWhenProductHasNoSpecs(t *testing.T) {
 	setupTestDB(t)
