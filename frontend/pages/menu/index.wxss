@@ -1,6 +1,6 @@
 /* pages/menu/index.wxss — 点餐菜单页（weui 原生） */
 .menu-main {
-  padding-bottom: 240rpx; /* 让最后的菜品不被购物车条 + tabbar 遮挡 */
+  /* 左右布局自身按视口高度铺满；底部留白由右侧列表负责 */
 }
 
 /* 门店栏 + 只读点餐方式标识 */
@@ -29,30 +29,117 @@
   color: var(--weui-FG-2);
 }
 
-/* 分类页签：横向滚动 navbar，吸顶 */
-.menu-navbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  white-space: nowrap;
+/* 左右布局：左类目轨 + 右大图卡片，各自独立滚动 */
+.menu-body {
+  display: flex;
+  height: calc(100vh - 96rpx); /* 减去门店栏，左右轨独立滚动 */
+}
+
+/* 左：竖向类目轨 */
+.menu-rail {
+  flex: none;
+  width: 180rpx;
+  height: 100%;
   background: var(--weui-BG-2);
 }
-.menu-navbar .weui-navbar__item {
-  display: inline-block;
-  width: auto;
-  padding: 0 var(--space-lg);
+
+.menu-rail-item {
+  min-height: 88rpx; /* a11y：触控目标 ≥ 80rpx */
+  display: flex;
+  align-items: center;
+  padding: 0 var(--space-md);
+  font-size: var(--font-body);
+  color: var(--weui-FG-1);
+  border-left: 6rpx solid transparent; /* 激活竖条占位，避免跳动 */
 }
 
-.menu-panel {
-  margin: 0;
+/* 激活态（页面唯一亮点）：绿竖条 + 白底凸出 + 加粗，不只靠颜色 */
+.menu-rail-item_on {
+  background: #fff;
+  color: var(--weui-FG-0);
+  font-weight: 600;
+  border-left-color: var(--weui-BRAND);
 }
 
-/* 菜品行底部：价格 + 操作 */
-.menu-row-bottom {
+/* 右：大图卡片列表 */
+.menu-list {
+  flex: 1;
+  height: 100%;
+  padding: var(--space-sm) var(--space-md) 220rpx; /* 底部留白避开购物车条 + tabbar */
+}
+
+.menu-card {
+  display: flex;
+  padding: var(--space-md) 0;
+  border-bottom: 1rpx solid var(--weui-FG-3);
+}
+.menu-card:last-child {
+  border-bottom: none;
+}
+
+/* 缩略图：真实图或 CSS 占位块（同尺寸，避免布局跳动） */
+.menu-card-thumb {
+  flex: none;
+  width: 160rpx;
+  height: 160rpx;
+  margin-right: var(--space-md);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.menu-thumb-img {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* CSS 占位块：中性底 + 分类标签，配色保持中性（亮点留给左轨） */
+.menu-thumb-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--weui-BG-2);
+  border: 1rpx solid var(--weui-FG-3);
+  color: var(--weui-FG-2);
+  font-size: var(--font-body);
+}
+
+.menu-card-bd {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0; /* 允许文本省略 */
+}
+.menu-card-title {
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  color: var(--weui-FG-0);
+}
+.menu-card-desc {
+  margin-top: var(--space-xs);
+  font-size: var(--font-caption);
+  color: var(--weui-FG-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 卡片底部：价格 + 操作（撑到底部对齐） */
+.menu-card-bottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: var(--space-xs);
+  margin-top: auto;
+  padding-top: var(--space-sm);
+}
+
+/* 尊重系统“减弱动态效果” */
+@media (prefers-reduced-motion: reduce) {
+  .menu-rail-item,
+  .menu-card {
+    transition: none;
+  }
 }
 
 .menu-price {

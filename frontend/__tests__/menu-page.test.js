@@ -79,3 +79,31 @@ describe('menu — order type at entry (no in-menu switch)', () => {
     expect(wxml).not.toMatch(/menu-typetoggle/)
   })
 })
+
+describe('menu — left-right layout + big image cards (M4)', () => {
+  it('falls back to the category placeholder when a card image errors', () => {
+    const setData = jest.fn()
+    const ctx = {
+      setData,
+      data: {
+        activeCategory: '奶茶牛乳',
+        productsByCategory: { 奶茶牛乳: [{ id: 9, hasImage: true }] },
+      },
+    }
+    pageConfig.onImgError.call(ctx, { currentTarget: { dataset: { id: 9 } } })
+    expect(setData).toHaveBeenCalledWith({
+      productsByCategory: { 奶茶牛乳: [{ id: 9, hasImage: false }] },
+    })
+  })
+
+  it('uses a left category rail and big image cards (not the old horizontal navbar)', () => {
+    const wxml = fs.readFileSync(
+      path.join(__dirname, '../pages/menu/index.wxml'),
+      'utf8'
+    )
+    expect(wxml).toMatch(/menu-rail/)
+    expect(wxml).toMatch(/menu-card/)
+    expect(wxml).toMatch(/menu-thumb-ph/) // CSS placeholder block
+    expect(wxml).not.toMatch(/menu-navbar/) // old horizontal navbar removed
+  })
+})

@@ -220,8 +220,15 @@ Page({
     this.loadData()
   },
 
+  // 图片加载失败 → 回退到该分类的 CSS 占位块（不显示裂图）。
   onImgError(e) {
-    e.target.src = '/assets/img-fallback.png'
+    const id = e.currentTarget.dataset.id
+    const { productsByCategory, activeCategory } = this.data
+    const updated = { ...productsByCategory }
+    updated[activeCategory] = (updated[activeCategory] || []).map(p =>
+      String(p.id) === String(id) ? { ...p, hasImage: false } : p
+    )
+    this.setData({ productsByCategory: updated })
   },
 
   goCart() {
