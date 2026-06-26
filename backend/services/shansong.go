@@ -273,6 +273,8 @@ func (c *ShansongClient) CancelOrder(ctx context.Context, shansongOrderNo string
 // shansongStatusLabels maps Shansong orderStatus codes to Chinese display text
 // (per the merchants/v5 order status enum).
 var shansongStatusLabels = map[int]string{
+	-1: "派单失败", // 派单调用失败（已付款但未成功下单，需运营介入）
+	0:  "待派单", // 默认：已创建但尚未派单（不可显示为「配送中」掩盖真实状态）
 	20: "派单中",
 	30: "待取货",
 	40: "闪送中",

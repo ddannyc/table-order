@@ -21,7 +21,7 @@ type OrderDelivery struct {
 	DeliveryFee     float64   `gorm:"type:numeric(12,2)" json:"delivery_fee"`
 	ShansongQuoteNo string    `gorm:"size:64" json:"shansong_quote_no"`       // 闪送报价凭证，派单时回传
 	ShansongOrderNo string    `gorm:"size:64;index" json:"shansong_order_no"` // 闪送返回的运单号
-	ShansongStatus  int       `gorm:"default:0" json:"shansong_status"`       // 闪送配送状态码
+	ShansongStatus  int       `gorm:"default:0" json:"shansong_status"`       // 闪送配送状态码：-1 派单失败 / 0 待派单 / 20 派单中 / 30 待取货 / 40 闪送中 / 50 已完成 / 60 已取消
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 }

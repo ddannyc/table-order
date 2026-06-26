@@ -175,14 +175,14 @@ func TestCreateOrder_SendsOnlyIssOrderNo(t *testing.T) {
 }
 
 func TestShansongStatusLabel(t *testing.T) {
-	cases := map[int]string{20: "派单中", 30: "待取货", 40: "闪送中", 50: "已完成", 60: "已取消"}
+	cases := map[int]string{0: "待派单", -1: "派单失败", 20: "派单中", 30: "待取货", 40: "闪送中", 50: "已完成", 60: "已取消"}
 	for code, want := range cases {
 		if got := ShansongStatusLabel(code); got != want {
 			t.Errorf("status %d: want %q got %q", code, want, got)
 		}
 	}
-	if ShansongStatusLabel(999) == "" {
-		t.Errorf("unknown status should fall back to a non-empty label")
+	if ShansongStatusLabel(999) != "配送中" {
+		t.Errorf("unknown nonzero status should fall back to 配送中, got %q", ShansongStatusLabel(999))
 	}
 }
 

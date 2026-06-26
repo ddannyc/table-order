@@ -60,6 +60,11 @@ func TestDispatchShansong_FailureLeavesOrderNoEmpty(t *testing.T) {
 	if got.ShansongOrderNo != "" {
 		t.Errorf("expected empty shansong_order_no on failure, got %q", got.ShansongOrderNo)
 	}
+	// Failure must be surfaced (not silently masked as "配送中"): persist the
+	// failed sentinel so the stranded paid order is queryable.
+	if got.ShansongStatus != -1 {
+		t.Errorf("expected shansong_status -1 (派单失败) on dispatch failure, got %d", got.ShansongStatus)
+	}
 }
 
 // A non-delivery order (no OrderDelivery row) is a safe no-op.

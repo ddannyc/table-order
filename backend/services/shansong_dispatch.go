@@ -12,6 +12,11 @@ import (
 // (派单中, per the merchants/v5 status enum). Later statuses arrive via callback.
 const shansongDispatchedStatus = 20
 
+// shansongFailedStatus marks a paid delivery order whose orderPlace call failed,
+// so the stranded order is queryable (and shown as 派单失败) instead of being
+// silently masked as 配送中. Recovery (retry/re-dispatch) is operator-driven.
+const shansongFailedStatus = -1
+
 // DispatchShansong places the Shansong courier order for a paid delivery order.
 // Async, best-effort: any failure is logged and never blocks the payment flow.
 // No-op for non-delivery orders (no OrderDelivery row) and idempotent once a
@@ -42,6 +47,11 @@ func DispatchShansong(orderID uint) {
 	})
 	if err != nil {
 		log.Printf("[shansong] dispatch failed orderID=%d: %v", orderID, err)
+		// Surface the failure durably so the paid-but-undispatched order can be
+		// found and re-dispatched, rather than living only in the log.
+		if uerr := config.DB.Model(&od).Update("shansong_status", shansongFailedStatus).Error; uerr != nil {
+			log.Printf("[shansong] persist dispatch-failure status failed orderID=%d: %v", orderID, uerr)
+		}
 		return
 	}
 
