@@ -5,10 +5,26 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
 )
+
+// dataParam decodes the form-encoded request body and returns the parsed `data`
+// business JSON object.
+func dataParam(t *testing.T, body string) map[string]any {
+	t.Helper()
+	v, err := url.ParseQuery(body)
+	if err != nil {
+		t.Fatalf("parse form body: %v", err)
+	}
+	var m map[string]any
+	if err := json.Unmarshal([]byte(v.Get("data")), &m); err != nil {
+		t.Fatalf("parse data json: %v (raw=%s)", err, v.Get("data"))
+	}
+	return m
+}
 
 // stubDoer captures the outgoing request and returns a canned response.
 type stubDoer struct {
@@ -74,14 +90,17 @@ func TestShansongSign_RealRecipe(t *testing.T) {
 	}
 }
 
-func TestCalculatePrice_SignsRequestAndParsesFee(t *testing.T) {
-	d := &stubDoer{resp: `{"status":200,"msg":"success","data":{"totalFeeYuan":8.5,"orderNumber":"SS-Q-1"}}`}
+func TestCalculatePrice_BuildsOrderCalculateRequestAndParsesFee(t *testing.T) {
+	d := &stubDoer{resp: `{"status":200,"msg":"success","data":{"totalFeeAfterCommission":8.5,"orderNumber":"SS-Q-1"}}`}
 	c := fixedClient(d)
 
 	res, err := c.CalculatePrice(context.Background(), QuoteRequest{
-		SenderLat: 39.9, SenderLng: 116.4, SenderAddress: "门店",
+		CityName:      "北京市",
+		SenderAddress: "门店", SenderName: "测试餐饮店", SenderMobile: "19000000000",
+		SenderLat: 39.9, SenderLng: 116.4,
+		ThirdOrderNo:  "OUR-1",
 		RecipientName: "张三", RecipientPhone: "13800000000",
-		RecipientLat: 39.91, RecipientLng: 116.41, RecipientAddress: "收件",
+		RecipientAddress: "收件", RecipientLat: 39.91, RecipientLng: 116.41,
 	})
 	if err != nil {
 		t.Fatalf("CalculatePrice failed: %v", err)
@@ -92,14 +111,36 @@ func TestCalculatePrice_SignsRequestAndParsesFee(t *testing.T) {
 	if res.QuoteToken != "SS-Q-1" {
 		t.Errorf("expected quote token SS-Q-1, got %q", res.QuoteToken)
 	}
-	// The outgoing request must be form-urlencoded with the system params.
 	if ct := d.gotReq.Header.Get("Content-Type"); !strings.Contains(ct, "x-www-form-urlencoded") {
-		t.Errorf("expected form-urlencoded content type, got %q", ct)
+		t.Errorf("expected form-urlencoded, got %q", ct)
 	}
-	for _, want := range []string{"clientId=cid-1", "shopId=shop-9", "sign=", "data="} {
-		if !strings.Contains(d.gotBody, want) {
-			t.Errorf("request body missing %q: %s", want, d.gotBody)
-		}
+
+	// Real orderCalculate structure: cityName + nested sender + receiverList,
+	// string coords, goodType 6 (餐饮).
+	data := dataParam(t, d.gotBody)
+	if data["cityName"] != "北京市" {
+		t.Errorf("missing cityName, got %v", data["cityName"])
+	}
+	sender, _ := data["sender"].(map[string]any)
+	if sender == nil || sender["fromSenderName"] != "测试餐饮店" {
+		t.Fatalf("sender block wrong: %v", data["sender"])
+	}
+	if sender["fromLatitude"] != "39.900000" {
+		t.Errorf("expected string sender coord 39.900000, got %v", sender["fromLatitude"])
+	}
+	recv, _ := data["receiverList"].([]any)
+	if len(recv) != 1 {
+		t.Fatalf("expected one receiver, got %v", data["receiverList"])
+	}
+	r0 := recv[0].(map[string]any)
+	if r0["orderNo"] != "OUR-1" {
+		t.Errorf("receiver orderNo (thirdOrderNo) wrong: %v", r0["orderNo"])
+	}
+	if r0["toMobile"] != "13800000000" {
+		t.Errorf("receiver mobile wrong: %v", r0["toMobile"])
+	}
+	if gt, _ := r0["goodType"].(float64); gt != 6 {
+		t.Errorf("goodType should be 6 (餐饮), got %v", r0["goodType"])
 	}
 }
 
@@ -112,7 +153,7 @@ func TestCalculatePrice_ErrorOnNonSuccessStatus(t *testing.T) {
 	}
 }
 
-func TestCreateOrder_ParsesOrderNo(t *testing.T) {
+func TestCreateOrder_SendsOnlyIssOrderNo(t *testing.T) {
 	d := &stubDoer{resp: `{"status":200,"msg":"success","data":{"orderNumber":"SS-ORD-9"}}`}
 	c := fixedClient(d)
 	no, err := c.CreateOrder(context.Background(), CreateDeliveryRequest{QuoteToken: "SS-Q-1"})
@@ -122,14 +163,24 @@ func TestCreateOrder_ParsesOrderNo(t *testing.T) {
 	if no != "SS-ORD-9" {
 		t.Errorf("expected order no SS-ORD-9, got %q", no)
 	}
+	// orderPlace business body is ONLY {issOrderNo}.
+	data := dataParam(t, d.gotBody)
+	if data["issOrderNo"] != "SS-Q-1" {
+		t.Errorf("orderPlace must send issOrderNo, got %v", data["issOrderNo"])
+	}
+	if len(data) != 1 {
+		t.Errorf("orderPlace should send only issOrderNo, got %v", data)
+	}
 }
 
 func TestShansongStatusLabel(t *testing.T) {
-	// Known codes map to Chinese labels; unknown codes fall back, never panic.
-	if ShansongStatusLabel(0) == "" {
-		t.Errorf("status 0 should have a label")
+	cases := map[int]string{20: "派单中", 30: "待取货", 40: "闪送中", 50: "已完成", 60: "已取消"}
+	for code, want := range cases {
+		if got := ShansongStatusLabel(code); got != want {
+			t.Errorf("status %d: want %q got %q", code, want, got)
+		}
 	}
-	if ShansongStatusLabel(999999) == "" {
+	if ShansongStatusLabel(999) == "" {
 		t.Errorf("unknown status should fall back to a non-empty label")
 	}
 }

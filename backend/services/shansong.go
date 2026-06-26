@@ -58,15 +58,18 @@ const (
 
 // QuoteRequest is the business input for a delivery price quote.
 type QuoteRequest struct {
+	CityName         string // 寄件城市（orderCalculate 必填）
 	SenderAddress    string
+	SenderName       string // 寄件方名称（门店名）
+	SenderMobile     string // 寄件方电话（门店电话）
 	SenderLat        float64
 	SenderLng        float64
+	ThirdOrderNo     string // 第三方单号（= 我方 order_no），闪送 receiverList[].orderNo
 	RecipientName    string
 	RecipientPhone   string
 	RecipientAddress string
 	RecipientLat     float64
 	RecipientLng     float64
-	WeightGram       int
 }
 
 // QuoteResult is the parsed quote: the fee plus Shansong's quote token, which is
@@ -193,47 +196,62 @@ func (c *ShansongClient) post(ctx context.Context, path string, biz map[string]a
 	return &env, nil
 }
 
-// CalculatePrice returns the realtime delivery fee + quote token.
+// fmtCoord renders a coordinate as Shansong expects — a fixed-precision string.
+func fmtCoord(v float64) string {
+	return strconv.FormatFloat(v, 'f', 6, 64)
+}
+
+// CalculatePrice returns the realtime delivery fee + quote token (orderCalculate).
 func (c *ShansongClient) CalculatePrice(ctx context.Context, q QuoteRequest) (*QuoteResult, error) {
 	biz := map[string]any{
-		"senderAddress":    q.SenderAddress,
-		"senderLat":        q.SenderLat,
-		"senderLng":        q.SenderLng,
-		"recipientName":    q.RecipientName,
-		"recipientPhone":   q.RecipientPhone,
-		"recipientAddress": q.RecipientAddress,
-		"recipientLat":     q.RecipientLat,
-		"recipientLng":     q.RecipientLng,
-		"weight":           q.WeightGram,
+		"cityName":    q.CityName,
+		"appointType": 0, // 实时单
+		"sender": map[string]any{
+			"fromAddress":    q.SenderAddress,
+			"fromSenderName": q.SenderName,
+			"fromMobile":     q.SenderMobile,
+			"fromLatitude":   fmtCoord(q.SenderLat),
+			"fromLongitude":  fmtCoord(q.SenderLng),
+		},
+		"receiverList": []map[string]any{
+			{
+				"orderNo":        q.ThirdOrderNo,
+				"toAddress":      q.RecipientAddress,
+				"toReceiverName": q.RecipientName,
+				"toMobile":       q.RecipientPhone,
+				"toLatitude":     fmtCoord(q.RecipientLat),
+				"toLongitude":    fmtCoord(q.RecipientLng),
+				"goodType":       6, // 餐饮
+				"weight":         1, // kg
+			},
+		},
 	}
 	env, err := c.post(ctx, shansongPathQuote, biz)
 	if err != nil {
 		return nil, err
 	}
 	var data struct {
-		TotalFeeYuan float64 `json:"totalFeeYuan"` // CALIBRATION: confirm unit (元 vs 分) + field name
-		OrderNumber  string  `json:"orderNumber"`
+		// CALIBRATION: confirm the exact total-fee field name + unit (元 vs 分)
+		// against a real orderCalculate response during 联调.
+		TotalFeeAfterCommission float64 `json:"totalFeeAfterCommission"`
+		TotalFee                float64 `json:"totalFee"`
+		OrderNumber             string  `json:"orderNumber"`
 	}
 	if err := json.Unmarshal(env.Data, &data); err != nil {
 		return nil, fmt.Errorf("shansong: parse quote data: %w", err)
 	}
-	return &QuoteResult{DeliveryFee: data.TotalFeeYuan, QuoteToken: data.OrderNumber}, nil
+	fee := data.TotalFeeAfterCommission
+	if fee == 0 {
+		fee = data.TotalFee
+	}
+	return &QuoteResult{DeliveryFee: fee, QuoteToken: data.OrderNumber}, nil
 }
 
-// CreateOrder dispatches a courier against a prior quote, returning the Shansong order no.
+// CreateOrder places the courier order against a prior quote (orderPlace). The
+// business body is only {issOrderNo} — the quote's orderNumber. Returns the
+// Shansong order number (echoed, or the issOrderNo if not returned).
 func (c *ShansongClient) CreateOrder(ctx context.Context, r CreateDeliveryRequest) (string, error) {
-	biz := map[string]any{
-		"orderNumber":      r.QuoteToken, // the quote token from CalculatePrice
-		"merchantOrderNo":  r.OrderNo,
-		"senderAddress":    r.SenderAddress,
-		"senderLat":        r.SenderLat,
-		"senderLng":        r.SenderLng,
-		"recipientName":    r.RecipientName,
-		"recipientPhone":   r.RecipientPhone,
-		"recipientAddress": r.RecipientAddress,
-		"recipientLat":     r.RecipientLat,
-		"recipientLng":     r.RecipientLng,
-	}
+	biz := map[string]any{"issOrderNo": r.QuoteToken}
 	env, err := c.post(ctx, shansongPathCreate, biz)
 	if err != nil {
 		return "", err
@@ -244,7 +262,10 @@ func (c *ShansongClient) CreateOrder(ctx context.Context, r CreateDeliveryReques
 	if err := json.Unmarshal(env.Data, &data); err != nil {
 		return "", fmt.Errorf("shansong: parse create data: %w", err)
 	}
-	return data.OrderNumber, nil
+	if data.OrderNumber != "" {
+		return data.OrderNumber, nil
+	}
+	return r.QuoteToken, nil // orderPlace confirms the same number
 }
 
 // CancelOrder cancels a dispatched delivery. Wired but not exposed via a route
@@ -255,16 +276,14 @@ func (c *ShansongClient) CancelOrder(ctx context.Context, shansongOrderNo string
 	return err
 }
 
-// shansongStatusLabels maps Shansong delivery status codes to Chinese display
-// text. CALIBRATION: confirm the actual code values against the callback docs.
+// shansongStatusLabels maps Shansong orderStatus codes to Chinese display text
+// (per the merchants/v5 order status enum).
 var shansongStatusLabels = map[int]string{
-	0:   "待派单",
-	60:  "待接单",
-	70:  "已接单",
-	80:  "取货中",
-	90:  "配送中",
-	100: "已送达",
-	1:   "已取消",
+	20: "派单中",
+	30: "待取货",
+	40: "闪送中",
+	50: "已完成",
+	60: "已取消",
 }
 
 // ShansongStatusLabel returns a human label for a delivery status code, falling

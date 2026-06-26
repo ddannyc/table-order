@@ -9,7 +9,7 @@
 
 ## 协议层
 - [x] **FT1** 传输 form-urlencoded + 真实签名（含 shopId）+ 系统参数 + merchants/v5 端点；config 加 ShopID — M ✅
-- [ ] **FT2** orderCalculate 请求结构（cityName/sender/receiverList，字符串坐标，goodType=6）+ orderPlace 仅 issOrderNo + 状态码 20/30/40/50/60 — M
+- [x] **FT2** orderCalculate 请求结构（cityName/sender/receiverList，字符串坐标，goodType=6）+ orderPlace 仅 issOrderNo + 状态码 20/30/40/50/60 — M ✅
 
 ## 数据 + 贯通
 - [ ] **FT3** Shop 增 City 字段（model + UpdateShop + DTO）— S

@@ -30,7 +30,7 @@ func withStubShansong(t *testing.T, envelope string) func() {
 
 func TestDeliveryQuote_ReturnsFeeAndVerifiableToken(t *testing.T) {
 	setupTestDB(t)
-	cleanup := withStubShansong(t, `{"status":200,"msg":"ok","data":{"totalFeeYuan":8.5,"orderNumber":"SS-Q-1"}}`)
+	cleanup := withStubShansong(t, `{"status":200,"msg":"ok","data":{"totalFeeAfterCommission":8.5,"orderNumber":"SS-Q-1"}}`)
 	defer cleanup()
 
 	shop := models.Shop{Name: "Geo Shop", MerchantID: 1, Status: 1, Latitude: 39.9, Longitude: 116.4}
@@ -78,7 +78,7 @@ func TestDeliveryQuote_ReturnsFeeAndVerifiableToken(t *testing.T) {
 
 func TestDeliveryQuote_RejectsMissingShopCoords(t *testing.T) {
 	setupTestDB(t)
-	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeYuan":8.5,"orderNumber":"X"}}`)
+	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeAfterCommission":8.5,"orderNumber":"X"}}`)
 	defer cleanup()
 
 	shop := models.Shop{Name: "No Geo Shop", MerchantID: 1, Status: 1} // lat/lng 0
@@ -101,7 +101,7 @@ func TestDeliveryQuote_RejectsMissingShopCoords(t *testing.T) {
 
 func TestDeliveryQuote_RejectsMissingRecipientCoords(t *testing.T) {
 	setupTestDB(t)
-	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeYuan":8.5,"orderNumber":"X"}}`)
+	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeAfterCommission":8.5,"orderNumber":"X"}}`)
 	defer cleanup()
 
 	shop := models.Shop{Name: "Geo Shop2", MerchantID: 1, Status: 1, Latitude: 39.9, Longitude: 116.4}
