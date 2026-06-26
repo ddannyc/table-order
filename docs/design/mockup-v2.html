@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;}
+  :root{
+    --green:#234B3A;--green-2:#2F6B4F;--cream:#F3EEE4;--card:#FFFFFF;
+    --terra:#C8643C;--terra-ink:#B0491F;--ink:#2A2723;--muted:#8A8275;--line:#ECE5D7;
+  }
+  body{background:#cfc9bd;padding:46px 40px 40px;display:flex;gap:40px;align-items:flex-start;}
+  .label{position:absolute;top:-30px;left:2px;font-size:15px;color:#fff;font-weight:600;}
+  .phone{position:relative;width:375px;height:812px;background:var(--cream);border-radius:42px;
+    box-shadow:0 24px 70px rgba(0,0,0,.32);overflow:hidden;}
+  .screen{position:absolute;inset:0;display:flex;flex-direction:column;}
+  .statusbar{height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;
+    font-size:13px;font-weight:600;color:#fff;}
+  .statusbar.dark{color:var(--ink);}
+  .body{flex:1;overflow:hidden;position:relative;}
+  .scroll{position:absolute;inset:0;overflow:auto;}
+
+  /* dish illustration helper */
+  .tile{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;}
+  .tile svg{width:74%;height:74%;}
+  .warm1{background:radial-gradient(circle at 38% 32%,#F7E7CE,#EAD3B0);}
+  .warm2{background:radial-gradient(circle at 38% 32%,#E6EAD2,#CFD9B0);}
+  .warm3{background:radial-gradient(circle at 38% 32%,#F6E3CE,#E9C9A6);}
+  .warm4{background:radial-gradient(circle at 38% 32%,#F3DAD2,#E3B6AC);}
+
+  /* ---------- bottom tab ---------- */
+  .tab{position:absolute;left:0;right:0;bottom:0;height:62px;background:#fff;
+    border-top:1px solid var(--line);display:flex;padding-bottom:6px;}
+  .tab .t{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-size:11px;color:var(--muted);}
+  .tab .t.on{color:var(--green);font-weight:600;}
+  .tab .ic{width:23px;height:23px;}
+
+  /* ---------- HOME ---------- */
+  .home-hd{background:linear-gradient(160deg,#234B3A,#2C5A45);padding:4px 20px 26px;color:#fff;border-radius:0 0 22px 22px;}
+  .brandrow{display:flex;align-items:center;gap:11px;}
+  .logo{width:44px;height:44px;border-radius:13px;background:#fff;display:flex;align-items:center;
+    justify-content:center;color:var(--green);font-weight:800;font-size:19px;box-shadow:0 3px 10px rgba(0,0,0,.15);}
+  .brandname{font-size:19px;font-weight:700;letter-spacing:1.5px;}
+  .brandsub{font-size:11.5px;opacity:.78;margin-top:3px;letter-spacing:.5px;}
+  .bal{margin-left:auto;text-align:right;}
+  .bal .n{font-size:21px;font-weight:800;}
+  .bal .l{font-size:10.5px;opacity:.78;margin-top:1px;}
+  .seg{display:flex;background:rgba(255,255,255,.14);border-radius:13px;padding:4px;margin-top:18px;}
+  .seg .s{flex:1;text-align:center;padding:10px;border-radius:10px;font-size:14px;color:#fff;font-weight:500;}
+  .seg .s.on{background:#fff;color:var(--green);font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+
+  .scan{display:flex;align-items:center;gap:13px;background:var(--card);border-radius:16px;padding:15px;
+    box-shadow:0 6px 20px rgba(35,75,58,.07);margin:-14px 18px 0;position:relative;}
+  .scan .qr{width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,#2F6B4F,#234B3A);color:#fff;
+    display:flex;align-items:center;justify-content:center;}
+  .scan .tx b{font-size:15px;color:var(--ink);}.scan .tx p{font-size:11.5px;color:var(--muted);margin-top:3px;}
+  .scan .go{margin-left:auto;color:#cdbfa6;font-size:20px;}
+
+  .banner{margin:16px 18px 0;border-radius:20px;overflow:hidden;height:158px;position:relative;
+    background:linear-gradient(120deg,#F0E6D3 60%,#E7D6BB);display:flex;align-items:center;padding:0 20px;}
+  .banner .txt{z-index:2;}
+  .banner .txt .tag{font-size:10.5px;color:#fff;background:var(--terra);padding:3px 10px;border-radius:10px;display:inline-block;}
+  .banner .txt h3{font-size:22px;color:var(--green);font-weight:800;margin-top:8px;letter-spacing:1px;}
+  .banner .txt p{font-size:11.5px;color:#8a754f;margin-top:5px;}
+  .banner .txt .b{display:inline-block;margin-top:12px;background:var(--green);color:#fff;font-size:12px;
+    padding:7px 16px;border-radius:20px;font-weight:600;}
+  .banner .art{position:absolute;right:2px;bottom:0;height:160px;}
+
+  .pts{margin:16px 18px 0;background:linear-gradient(120deg,#fff,#FBF4E9);border-radius:16px;padding:15px 16px;
+    display:flex;align-items:center;gap:13px;box-shadow:0 5px 18px rgba(35,75,58,.05);border:1px solid #F0E6D2;}
+  .pts .coin{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#E8A23C,#C8643C);
+    display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;box-shadow:0 3px 8px rgba(200,100,60,.3);}
+  .pts b{font-size:15px;color:var(--ink);}.pts p{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .pts .num{margin-left:auto;font-size:24px;font-weight:800;color:var(--terra-ink);}
+
+  .sec-title{display:flex;align-items:center;padding:22px 18px 10px;}
+  .sec-title h4{font-size:17px;color:var(--ink);font-weight:700;}
+  .sec-title h4::before{content:"";display:inline-block;width:4px;height:15px;background:var(--terra);border-radius:2px;
+    margin-right:8px;vertical-align:-2px;}
+  .sec-title .more{margin-left:auto;font-size:12px;color:var(--muted);}
+  .promos{display:flex;gap:13px;padding:2px 18px 20px;}
+  .promo{flex:1;background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 5px 18px rgba(35,75,58,.06);}
+  .promo .img{height:104px;}
+  .promo .ct{padding:11px 13px;}.promo .ct b{font-size:14px;color:var(--ink);}
+  .promo .ct .pr{color:var(--terra-ink);font-weight:800;font-size:16px;margin-top:5px;}
+  .promo .ct .pr small{font-size:10.5px;font-weight:400;color:var(--muted);}
+
+  /* ---------- MENU ---------- */
+  .navbar{height:46px;display:flex;align-items:center;padding:0 16px;background:var(--cream);}
+  .navbar .bk{font-size:22px;color:var(--ink);width:24px;}.navbar .ti{font-weight:700;color:var(--ink);font-size:16px;margin:0 auto;}
+  .shopbar{background:#fff;padding:13px 16px;display:flex;align-items:center;gap:7px;box-shadow:0 1px 0 var(--line);}
+  .shopbar .pin{color:var(--green);font-size:15px;}.shopbar b{font-size:14px;color:var(--ink);}
+  .shopbar .mode{margin-left:auto;font-size:11.5px;color:#fff;background:var(--green);padding:4px 12px;border-radius:12px;font-weight:600;}
+  .menu-wrap{display:flex;height:calc(100% - 46px - 47px);}
+  .rail{width:98px;background:#EEE7DA;overflow:auto;}
+  .rail .r{padding:17px 6px;text-align:center;font-size:13px;color:#6b6357;position:relative;line-height:1.35;}
+  .rail .r.on{background:#fff;color:var(--green);font-weight:700;}
+  .rail .r.on::before{content:"";position:absolute;left:0;top:15px;bottom:15px;width:4px;background:var(--green);border-radius:0 2px 2px 0;}
+  .rail .r .bd{display:inline-block;min-width:15px;margin-top:5px;font-size:10px;color:#fff;background:var(--terra);
+    border-radius:9px;padding:1px 6px;font-weight:600;}
+  .list{flex:1;background:#fff;overflow:auto;padding:4px 14px 14px;}
+  .fcard{display:flex;gap:13px;padding:15px 0;border-bottom:1px solid var(--line);}
+  .fcard .ph{width:88px;height:88px;border-radius:14px;flex:none;}
+  .fcard .info{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .fcard .info h5{font-size:15.5px;color:var(--ink);font-weight:600;}
+  .fcard .info p{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.4;}
+  .fcard .btm{display:flex;align-items:center;margin-top:auto;padding-top:8px;}
+  .fcard .pr{color:var(--terra-ink);font-weight:800;font-size:17px;}.fcard .pr small{font-size:11px;font-weight:400;color:var(--muted);}
+  .fcard .add{margin-left:auto;width:30px;height:30px;border-radius:50%;background:var(--green);color:#fff;
+    font-size:21px;line-height:28px;text-align:center;box-shadow:0 3px 8px rgba(35,75,58,.25);}
+  .cartbar{position:absolute;left:0;right:0;bottom:47px;height:54px;background:linear-gradient(120deg,#234B3A,#2C5A45);
+    display:flex;align-items:center;padding:0 16px;color:#fff;}
+  .cartbar .ic{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;font-size:17px;}
+  .cartbar .sum{margin-left:11px;}.cartbar .sum .p{font-size:19px;font-weight:800;}.cartbar .sum .c{font-size:10.5px;opacity:.8;}
+  .cartbar .go{margin-left:auto;background:var(--terra);padding:10px 24px;border-radius:22px;font-weight:700;font-size:14px;box-shadow:0 4px 12px rgba(200,100,60,.35);}
+
+  /* ---------- ORDER ---------- */
+  .ocard{background:#fff;margin:13px 16px 0;border-radius:16px;padding:16px;box-shadow:0 5px 18px rgba(35,75,58,.05);}
+  .ocard .row{display:flex;align-items:center;padding:10px 0;font-size:14px;color:var(--ink);border-bottom:1px solid var(--line);}
+  .ocard .row:last-child{border-bottom:none;}.ocard .row .k{color:var(--muted);}.ocard .row .v{margin-left:auto;}
+  .oshop{display:flex;align-items:center;gap:8px;}.oshop b{font-size:16px;color:var(--ink);}.oshop .d{margin-left:auto;font-size:12px;color:var(--muted);}
+  .oitem{display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line);}
+  .oitem .ph{width:56px;height:56px;border-radius:12px;flex:none;}
+  .oitem .nm{font-size:14.5px;color:var(--ink);}.oitem .sp{font-size:11px;color:var(--muted);margin-top:3px;}
+  .oitem .pr{margin-left:auto;text-align:right;}.oitem .pr b{color:var(--terra-ink);font-size:15px;}.oitem .pr .q{font-size:11px;color:var(--muted);margin-top:2px;}
+  .pay{display:flex;align-items:center;padding:12px 0;font-size:14px;color:var(--ink);border-bottom:1px solid var(--line);}
+  .pay:last-child{border-bottom:none;}.pay .radio{margin-left:auto;width:19px;height:19px;border-radius:50%;border:2px solid #cdbfa6;position:relative;}
+  .pay .radio.on{border-color:var(--green);}.pay .radio.on::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--green);}
+  .sech{font-size:13px;color:var(--muted);font-weight:600;padding:0 0 6px;}
+  .obar{position:absolute;left:0;right:0;bottom:47px;height:60px;background:#fff;border-top:1px solid var(--line);
+    display:flex;align-items:center;padding:0 18px;}
+  .obar .tot{font-size:25px;font-weight:800;color:var(--terra-ink);}.obar .save{font-size:11px;color:var(--muted);margin-left:8px;}
+  .obar .submit{margin-left:auto;background:var(--green);color:#fff;padding:13px 36px;border-radius:24px;font-weight:700;box-shadow:0 5px 14px rgba(35,75,58,.3);}
+</style>
+</head>
+<body>
+
+<!-- chef art reused -->
+<svg style="display:none"><symbol id="chef" viewBox="0 0 200 210">
+  <ellipse cx="100" cy="198" rx="74" ry="11" fill="#caa46f" opacity=".35"/>
+  <!-- toque -->
+  <circle cx="78" cy="44" r="19" fill="#fff" stroke="#234B3A" stroke-width="4"/>
+  <circle cx="122" cy="44" r="19" fill="#fff" stroke="#234B3A" stroke-width="4"/>
+  <circle cx="100" cy="30" r="23" fill="#fff" stroke="#234B3A" stroke-width="4"/>
+  <path d="M60 46h80v16a7 7 0 0 1-7 7H67a7 7 0 0 1-7-7z" fill="#fff" stroke="#234B3A" stroke-width="4"/>
+  <rect x="64" y="69" width="72" height="13" rx="4" fill="#234B3A"/>
+  <!-- face -->
+  <circle cx="100" cy="104" r="26" fill="#F4DBBE" stroke="#234B3A" stroke-width="4"/>
+  <circle cx="90" cy="101" r="2.8" fill="#234B3A"/><circle cx="110" cy="101" r="2.8" fill="#234B3A"/>
+  <circle cx="84" cy="110" r="4" fill="#E69A82" opacity=".6"/><circle cx="116" cy="110" r="4" fill="#E69A82" opacity=".6"/>
+  <path d="M91 114q9 7 18 0" fill="none" stroke="#234B3A" stroke-width="3" stroke-linecap="round"/>
+  <!-- body / apron -->
+  <path d="M70 134q30 14 60 0l12 56q-42 16-84 0z" fill="#2F6B4F"/>
+  <path d="M100 132v58" stroke="#1c3a2d" stroke-width="3"/>
+  <rect x="88" y="158" width="24" height="20" rx="3" fill="#234B3A"/>
+  <!-- arms holding tray -->
+  <path d="M72 140q-22 8-24 34" fill="none" stroke="#F4DBBE" stroke-width="13" stroke-linecap="round"/>
+  <path d="M128 140q22 8 24 34" fill="none" stroke="#F4DBBE" stroke-width="13" stroke-linecap="round"/>
+  <!-- tray + cloche -->
+  <path d="M96 168q-8-12 0-22M104 168q8-12 0-22" fill="none" stroke="#C8643C" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="100" cy="188" rx="66" ry="12" fill="#E3DCCE" stroke="#234B3A" stroke-width="4"/>
+  <path d="M58 186q42-44 84 0z" fill="#C8643C" stroke="#234B3A" stroke-width="4"/>
+  <circle cx="100" cy="150" r="3.5" fill="#234B3A"/>
+</symbol></svg>
+
+<!-- ===================== HOME ===================== -->
+<div class="phone"><div class="label">首页</div><div class="screen">
+  <div class="statusbar"><span>9:41</span><span>● ● ▮</span></div>
+  <div class="body"><div class="scroll">
+    <div class="home-hd">
+      <div class="brandrow">
+        <div class="logo">春</div>
+        <div><div class="brandname">四月春膳</div><div class="brandsub">一汤一蔬 · 阅沐春风</div></div>
+        <div class="bal"><div class="n">¥200.00</div><div class="l">账户余额</div></div>
+      </div>
+      <div class="seg"><div class="s on">🍽 堂食点餐</div><div class="s">🛵 外卖到家</div></div>
+    </div>
+    <div class="scan">
+      <div class="qr"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3M20 14v7M14 20h3"/></svg></div>
+      <div class="tx"><b>扫码点餐</b><p>扫描餐桌二维码，立即开点</p></div>
+      <div class="go">›</div>
+    </div>
+    <div class="banner">
+      <div class="txt"><span class="tag">本周新品</span><h3>春日时令</h3><p>鲜采时蔬 · 现点现做</p><span class="b">查看今日菜单 ›</span></div>
+      <svg class="art"><use href="#chef"/></svg>
+    </div>
+    <div class="pts">
+      <div class="coin">币</div>
+      <div><b>福利金</b><p>每周可领 · 下单立减</p></div>
+      <div class="num">600</div>
+    </div>
+    <div class="sec-title"><h4>福利放送</h4><span class="more">更多 ›</span></div>
+    <div class="promos">
+      <div class="promo"><div class="img tile warm1"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="74" rx="32" ry="6" fill="rgba(0,0,0,.07)"/><path d="M18 48 Q50 90 82 48 Z" fill="#fff" stroke="#234B3A" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="50" cy="48" rx="32" ry="8" fill="#234B3A"/><ellipse cx="50" cy="47" rx="27" ry="6" fill="#F2D29A"/><circle cx="42" cy="46" r="4.5" fill="#C8643C"/><circle cx="59" cy="47" r="4" fill="#7BA05B"/><circle cx="51" cy="44" r="3.5" fill="#D24B3A"/><path d="M42 39q-5-9 2-16M59 41q5-9 0-16" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".7"/></svg></div><div class="ct"><b>招牌套餐</b><div class="pr">¥38<small> 起</small></div></div></div>
+      <div class="promo"><div class="img tile warm2"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="70" rx="34" ry="9" fill="#fff" stroke="#234B3A" stroke-width="2.5"/><ellipse cx="50" cy="66" rx="30" ry="6" fill="#EAF0DC"/><circle cx="40" cy="62" r="7" fill="#7BA05B"/><circle cx="55" cy="60" r="8" fill="#4E7C3F"/><circle cx="62" cy="66" r="5" fill="#9CB86A"/><circle cx="44" cy="68" r="5" fill="#C8643C"/></svg></div><div class="ct"><b>时令鲜蔬</b><div class="pr">¥18<small> 起</small></div></div></div>
+    </div>
+  </div></div>
+  <div class="tab">
+    <div class="t on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#234B3A" stroke-width="2"><path d="M5 9h14l-1.2 11H6.2z"/><path d="M5 9 12 3l7 6"/></svg>点餐</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><path d="M16 8a4 4 0 1 0-8 0M4 21c0-4 4-6 8-6s8 2 8 6"/><path d="M18 6h4M20 4v4"/></svg>邀请</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>我的</div>
+  </div>
+</div></div>
+
+<!-- ===================== MENU ===================== -->
+<div class="phone"><div class="label">菜品选择</div><div class="screen">
+  <div class="statusbar dark"><span>9:41</span><span>● ● ▮</span></div>
+  <div class="body">
+    <div class="navbar"><span class="bk">‹</span><span class="ti">点餐</span><span style="width:24px"></span></div>
+    <div class="shopbar"><span class="pin">📍</span><b>四月春膳（南强街店）</b><span class="mode">堂食 · A01</span></div>
+    <div class="menu-wrap">
+      <div class="rail">
+        <div class="r on">热卖招牌<span class="bd">27</span></div>
+        <div class="r">今日优惠<span class="bd">9</span></div>
+        <div class="r">时令鲜蔬</div>
+        <div class="r">汤羹炖品</div>
+        <div class="r">饮品甜点</div>
+      </div>
+      <div class="list">
+        <div class="fcard"><div class="ph tile warm1"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="74" rx="32" ry="6" fill="rgba(0,0,0,.07)"/><path d="M18 48 Q50 90 82 48 Z" fill="#fff" stroke="#234B3A" stroke-width="2.5" stroke-linejoin="round"/><ellipse cx="50" cy="48" rx="32" ry="8" fill="#234B3A"/><ellipse cx="50" cy="47" rx="27" ry="6" fill="#F2D29A"/><circle cx="42" cy="46" r="4.5" fill="#C8643C"/><circle cx="59" cy="47" r="4" fill="#7BA05B"/><circle cx="51" cy="44" r="3.5" fill="#D24B3A"/></svg></div><div class="info"><h5>现切压沙瓜</h5><p>1份 / 净肉约800g · 清甜多汁</p><div class="btm"><span class="pr">¥25</span><span class="add">+</span></div></div></div>
+        <div class="fcard"><div class="ph tile warm2"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="70" rx="34" ry="9" fill="#fff" stroke="#234B3A" stroke-width="2.5"/><ellipse cx="50" cy="66" rx="30" ry="6" fill="#EAF0DC"/><circle cx="40" cy="62" r="7" fill="#7BA05B"/><circle cx="55" cy="60" r="8" fill="#4E7C3F"/><circle cx="62" cy="66" r="5" fill="#9CB86A"/><circle cx="44" cy="68" r="5" fill="#C8643C"/></svg></div><div class="info"><h5>蒜蓉时蔬</h5><p>1份 · 当季鲜采清炒</p><div class="btm"><span class="pr">¥18</span><span class="add">+</span></div></div></div>
+        <div class="fcard"><div class="ph tile warm3"><svg viewBox="0 0 100 100"><path d="M26 44h48v18a24 24 0 0 1-48 0z" fill="#7a3b22" stroke="#234B3A" stroke-width="2.5"/><ellipse cx="50" cy="44" rx="24" ry="6" fill="#9a4d2e"/><ellipse cx="50" cy="43" rx="19" ry="4" fill="#E0A35C"/><path d="M40 36q-5-9 2-16M58 38q5-9 0-15" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".65"/></svg></div><div class="info"><h5>招牌春膳煲</h5><p>2-3人份 · 文火慢炖</p><div class="btm"><span class="pr">¥68<small> 起</small></span><span class="add">+</span></div></div></div>
+        <div class="fcard"><div class="ph tile warm4"><svg viewBox="0 0 100 100"><ellipse cx="50" cy="72" rx="32" ry="7" fill="#fff" stroke="#234B3A" stroke-width="2.5"/><ellipse cx="50" cy="68" rx="28" ry="5" fill="#F0E2D0"/><circle cx="42" cy="62" r="9" fill="#B23B3B"/><circle cx="58" cy="62" r="9" fill="#C24A36"/><circle cx="50" cy="58" r="6" fill="#7BA05B"/></svg></div><div class="info"><h5>红烧狮子头</h5><p>2颗 / 份 · 肥而不腻</p><div class="btm"><span class="pr">¥32</span><span class="add">+</span></div></div></div>
+      </div>
+    </div>
+    <div class="cartbar"><div class="ic">🛒</div><div class="sum"><div class="p">¥75.00</div><div class="c">已选 3 件</div></div><div class="go">去结算</div></div>
+  </div>
+  <div class="tab">
+    <div class="t on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#234B3A" stroke-width="2"><path d="M5 9h14l-1.2 11H6.2z"/><path d="M5 9 12 3l7 6"/></svg>点餐</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><path d="M16 8a4 4 0 1 0-8 0M4 21c0-4 4-6 8-6s8 2 8 6"/><path d="M18 6h4M20 4v4"/></svg>邀请</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>我的</div>
+  </div>
+</div></div>
+
+<!-- ===================== ORDER ===================== -->
+<div class="phone"><div class="label">下单</div><div class="screen">
+  <div class="statusbar dark"><span>9:41</span><span>● ● ▮</span></div>
+  <div class="body">
+    <div class="navbar"><span class="bk">‹</span><span class="ti">确认订单</span><span style="width:24px"></span></div>
+    <div class="scroll" style="padding-bottom:120px;">
+      <div class="ocard"><div class="oshop"><span style="color:#234B3A">📍</span><b>四月春膳（南强街店）</b><span class="d">500m</span></div>
+        <div class="row" style="margin-top:6px"><span class="k">预留电话</span><span class="v">187****2237</span></div>
+        <div class="row"><span class="k">用餐桌号</span><span class="v">A01</span></div>
+      </div>
+      <div class="ocard">
+        <div class="sech">商品明细</div>
+        <div class="oitem"><div class="ph tile warm1"><svg viewBox="0 0 100 100"><path d="M22 50 Q50 86 78 50 Z" fill="#fff" stroke="#234B3A" stroke-width="3"/><ellipse cx="50" cy="50" rx="28" ry="7" fill="#234B3A"/><ellipse cx="50" cy="49" rx="23" ry="5" fill="#F2D29A"/><circle cx="44" cy="48" r="4" fill="#C8643C"/><circle cx="58" cy="49" r="3.5" fill="#7BA05B"/></svg></div><div><div class="nm">现切压沙瓜</div><div class="sp">正常冰 · 正常糖</div></div><div class="pr"><b>¥25</b><div class="q">x1</div></div></div>
+        <div class="oitem"><div class="ph tile warm3"><svg viewBox="0 0 100 100"><path d="M28 46h44v16a22 22 0 0 1-44 0z" fill="#7a3b22" stroke="#234B3A" stroke-width="3"/><ellipse cx="50" cy="46" rx="22" ry="5" fill="#E0A35C"/></svg></div><div><div class="nm">招牌春膳煲</div><div class="sp">标准份</div></div><div class="pr"><b>¥68</b><div class="q">x1</div></div></div>
+        <div class="row"><span class="k">福利金抵扣</span><span class="v" style="color:#234B3A">-¥18.00</span></div>
+        <div class="row"><span class="k" style="color:#2A2723;font-weight:600">合计</span><span class="v" style="color:#B0491F;font-weight:800;font-size:18px">¥75.00</span></div>
+      </div>
+      <div class="ocard">
+        <div class="sech">支付方式</div>
+        <div class="pay">💰 福利金抵扣 <span style="font-size:12px;color:#8A8275;margin-left:8px">可用 ¥600</span><div class="radio on"></div></div>
+        <div class="pay">🟢 微信支付<div class="radio"></div></div>
+      </div>
+    </div>
+    <div class="obar"><span class="tot">¥75</span><span class="save">已抵扣 ¥18</span><span class="submit">提交订单</span></div>
+  </div>
+  <div class="tab">
+    <div class="t on"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#234B3A" stroke-width="2"><path d="M5 9h14l-1.2 11H6.2z"/><path d="M5 9 12 3l7 6"/></svg>点餐</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><path d="M16 8a4 4 0 1 0-8 0M4 21c0-4 4-6 8-6s8 2 8 6"/><path d="M18 6h4M20 4v4"/></svg>邀请</div>
+    <div class="t"><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="#8A8275" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>我的</div>
+  </div>
+</div></div>
+
+</body>
+</html>
