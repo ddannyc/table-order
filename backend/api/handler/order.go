@@ -12,7 +12,6 @@ import (
 	"github.com/example/table-order/services"
 	"github.com/example/table-order/utils"
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -181,7 +180,12 @@ func CreateOrder(c *gin.Context) {
 		req.Amount = req.Amount - deductAmount
 	}
 
-	orderNo := fmt.Sprintf("%s%s", time.Now().Format("20060102150405"), uuid.New().String()[:8])
+	// Delivery reuses the order_no minted at quote time (= shansong thirdOrderNo);
+	// dine-in mints a fresh one.
+	orderNo := generateOrderNo()
+	if orderType == "delivery" && deliveryClaims != nil && deliveryClaims.OrderNo != "" {
+		orderNo = deliveryClaims.OrderNo
+	}
 
 	order := models.Order{
 		OrderNo:      orderNo,

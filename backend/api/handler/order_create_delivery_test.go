@@ -12,11 +12,13 @@ import (
 	"github.com/example/table-order/models"
 )
 
-// validToken signs a quote token the way the quote endpoint would.
+// validToken signs a quote token the way the quote endpoint would, carrying a
+// minted order_no that CreateOrder must reuse.
 func validToken(shopID uint, fee, lat, lng float64) string {
 	return signQuoteToken(quoteClaims{
 		ShopID: shopID, Fee: fee, Lat: lat, Lng: lng,
-		ShansongQuote: "SS-Q-XYZ", Exp: time.Now().Add(10 * time.Minute).Unix(),
+		ShansongQuote: "SS-Q-XYZ", OrderNo: "QUOTE-ORDER-NO-1",
+		Exp: time.Now().Add(10 * time.Minute).Unix(),
 	})
 }
 
@@ -61,6 +63,10 @@ func TestCreateOrder_DeliveryPersistsOrderDeliveryWithTrustedFee(t *testing.T) {
 	config.DB.Where("user_id = ?", user.ID).Order("id desc").First(&order)
 	if order.OrderType != "delivery" {
 		t.Errorf("expected order_type delivery, got %q", order.OrderType)
+	}
+	// order_no must be reused from the quote token (= shansong thirdOrderNo).
+	if order.OrderNo != "QUOTE-ORDER-NO-1" {
+		t.Errorf("expected order_no reused from token, got %q", order.OrderNo)
 	}
 	// order.Amount is the reward base = items - reward (no reward here) = 100, NOT incl. fee.
 	if order.Amount != 100 {

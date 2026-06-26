@@ -33,7 +33,7 @@ func TestDeliveryQuote_ReturnsFeeAndVerifiableToken(t *testing.T) {
 	cleanup := withStubShansong(t, `{"status":200,"msg":"ok","data":{"totalFeeAfterCommission":8.5,"orderNumber":"SS-Q-1"}}`)
 	defer cleanup()
 
-	shop := models.Shop{Name: "Geo Shop", MerchantID: 1, Status: 1, Latitude: 39.9, Longitude: 116.4}
+	shop := models.Shop{Name: "Geo Shop", MerchantID: 1, Status: 1, City: "北京市", Latitude: 39.9, Longitude: 116.4}
 	config.DB.Create(&shop)
 
 	r := setupRouter()
@@ -96,6 +96,30 @@ func TestDeliveryQuote_RejectsMissingShopCoords(t *testing.T) {
 
 	if w.Code != http.StatusBadRequest {
 		t.Errorf("expected 400 when shop has no coords, got %d", w.Code)
+	}
+}
+
+func TestDeliveryQuote_RejectsMissingCity(t *testing.T) {
+	setupTestDB(t)
+	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeAfterCommission":8.5,"orderNumber":"X"}}`)
+	defer cleanup()
+
+	// Coords set but no city → orderCalculate can't be built.
+	shop := models.Shop{Name: "No City Shop", MerchantID: 1, Status: 1, Latitude: 39.9, Longitude: 116.4}
+	config.DB.Create(&shop)
+
+	r := setupRouter()
+	r.POST("/api/delivery/quote", DeliveryQuote)
+	body, _ := json.Marshal(map[string]any{
+		"shop_id": shop.ID, "recipient_lat": 39.91, "recipient_lng": 116.41,
+	})
+	req, _ := http.NewRequest("POST", "/api/delivery/quote", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("expected 400 when shop has no city, got %d", w.Code)
 	}
 }
 

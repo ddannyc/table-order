@@ -26,7 +26,8 @@ type quoteClaims struct {
 	Fee           float64 `json:"f"`
 	Lat           float64 `json:"lat"`
 	Lng           float64 `json:"lng"`
-	ShansongQuote string  `json:"q"` // shansong's own quote token, replayed at dispatch
+	ShansongQuote string  `json:"q"` // shansong issOrderNo (from orderCalculate), replayed at orderPlace
+	OrderNo       string  `json:"o"` // our order_no, minted at quote time (= shansong thirdOrderNo)
 	Exp           int64   `json:"e"` // unix seconds
 }
 
@@ -105,16 +106,28 @@ func DeliveryQuote(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "门店未配置坐标，暂不支持外卖"})
 		return
 	}
+	if shop.City == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "门店未配置城市，暂不支持外卖"})
+		return
+	}
 
 	if services.Shansong == nil {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "外卖配送暂未开通"})
 		return
 	}
 
+	// Mint the order_no now so it is the third-party orderNo Shansong records at
+	// quote time; CreateOrder reuses it as the order's order_no.
+	orderNo := generateOrderNo()
+
 	res, err := services.Shansong.CalculatePrice(c.Request.Context(), services.QuoteRequest{
+		CityName:         shop.City,
 		SenderAddress:    shop.Address,
+		SenderName:       shop.Name,
+		SenderMobile:     shop.Phone,
 		SenderLat:        shop.Latitude,
 		SenderLng:        shop.Longitude,
+		ThirdOrderNo:     orderNo,
 		RecipientName:    req.RecipientName,
 		RecipientPhone:   req.RecipientPhone,
 		RecipientAddress: req.RecipientAddress,
@@ -132,6 +145,7 @@ func DeliveryQuote(c *gin.Context) {
 		Lat:           req.RecipientLat,
 		Lng:           req.RecipientLng,
 		ShansongQuote: res.QuoteToken,
+		OrderNo:       orderNo,
 		Exp:           time.Now().Add(quoteTokenTTL).Unix(),
 	})
 
