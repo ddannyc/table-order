@@ -32,7 +32,7 @@ func main() {
 
 	config.InitR2(cfg.R2)
 
-	services.InitShansongClient(cfg.Shansong.ClientID, cfg.Shansong.AppSecret, cfg.Shansong.BaseURL)
+	services.InitShansongClient(cfg.Shansong.ClientID, cfg.Shansong.AppSecret, cfg.Shansong.ShopID, cfg.Shansong.BaseURL)
 
 	gin.SetMode(cfg.Server.Mode)
 	r := gin.Default()

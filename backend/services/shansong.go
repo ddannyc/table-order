@@ -1,7 +1,6 @@
 package services
 
 import (
-	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/md5"
@@ -10,23 +9,24 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// ShansongClient talks to the Shansong (闪送) open platform for instant-courier
-// delivery: realtime price quote, order create, and cancel.
+// ShansongClient talks to the Shansong (闪送) open platform merchants/v5 API for
+// instant-courier delivery: realtime price quote (orderCalculate), order create
+// (orderPlace), and cancel (abortOrder).
 //
-// CALIBRATION: the exact endpoint paths, the signing recipe, and the response
-// field names below follow the documented Shansong OpenAPI conventions but MUST
-// be verified against the official docs during 联调. They are deliberately
-// isolated (signShansong + the path/field constants) so calibration is a
-// localized edit; the request-signing and envelope-parsing mechanics — which the
-// tests lock down — do not change.
+// Protocol (per official docs): POST application/x-www-form-urlencoded with
+// system params clientId/shopId/timestamp/sign and a compact-JSON business param
+// `data`. CALIBRATION remaining: the orderCalculate response fee field name and
+// the inbound callback payload format (confirmed at 联调).
 type ShansongClient struct {
 	ClientID  string
 	AppSecret string
+	ShopID    string
 	BaseURL   string // open.s.bingex.com（测试）/ open.ishansong.com（生产）
 	HTTP      httpDoer
 	Now       func() time.Time
@@ -42,18 +42,18 @@ var Shansong *ShansongClient
 
 // InitShansongClient builds the process-wide client. No-op (leaves Shansong nil)
 // when credentials are absent, so a deployment without delivery just disables it.
-func InitShansongClient(clientID, appSecret, baseURL string) {
+func InitShansongClient(clientID, appSecret, shopID, baseURL string) {
 	if clientID == "" || appSecret == "" {
 		return
 	}
-	Shansong = &ShansongClient{ClientID: clientID, AppSecret: appSecret, BaseURL: baseURL}
+	Shansong = &ShansongClient{ClientID: clientID, AppSecret: appSecret, ShopID: shopID, BaseURL: baseURL}
 }
 
-// Shansong OpenAPI paths (calibration point).
+// Shansong merchants/v5 API paths.
 const (
-	shansongPathQuote  = "/openapi/v3/order/precompute"
-	shansongPathCreate = "/openapi/v3/order/create"
-	shansongPathCancel = "/openapi/v3/order/cancel"
+	shansongPathQuote  = "/openapi/merchants/v5/orderCalculate"
+	shansongPathCreate = "/openapi/merchants/v5/orderPlace"
+	shansongPathCancel = "/openapi/merchants/v5/abortOrder"
 )
 
 // QuoteRequest is the business input for a delivery price quote.
@@ -97,25 +97,36 @@ type shansongResp struct {
 	Data   json.RawMessage `json:"data"`
 }
 
-// signShansong builds the request signature. CALIBRATION: confirm the exact
-// concatenation order and hash against the official docs. Documented recipe:
-// uppercase(MD5(clientId + appSecret + timestamp + bizContent)).
-func signShansong(clientID, appSecret, timestamp, bizContent string) string {
-	raw := clientID + appSecret + timestamp + bizContent
-	sum := md5.Sum([]byte(raw))
+// signShansong builds the request signature per the official rule:
+// MD5(appSecret + "clientId" + clientId + "data" + data + "shopId" + shopId +
+// "timestamp" + timestamp), uppercase. The "data" segment is omitted when data
+// is empty.
+func signShansong(clientID, appSecret, shopID, timestamp, data string) string {
+	var b strings.Builder
+	b.WriteString(appSecret)
+	b.WriteString("clientId")
+	b.WriteString(clientID)
+	if data != "" {
+		b.WriteString("data")
+		b.WriteString(data)
+	}
+	b.WriteString("shopId")
+	b.WriteString(shopID)
+	b.WriteString("timestamp")
+	b.WriteString(timestamp)
+	sum := md5.Sum([]byte(b.String()))
 	return strings.ToUpper(hex.EncodeToString(sum[:]))
 }
 
-// CallbackSign computes the signature for a payload. Exposed so the callback
-// handler (and tests) can verify/build signatures via the same recipe.
-func (c *ShansongClient) CallbackSign(timestamp, bizContent string) string {
-	return signShansong(c.ClientID, c.AppSecret, timestamp, bizContent)
+// CallbackSign computes the signature for a callback payload via the same recipe.
+func (c *ShansongClient) CallbackSign(timestamp, data string) string {
+	return signShansong(c.ClientID, c.AppSecret, c.ShopID, timestamp, data)
 }
 
 // VerifyCallback reports whether sign matches the expected signature for the
 // given callback payload (constant-time compare).
-func (c *ShansongClient) VerifyCallback(timestamp, bizContent, sign string) bool {
-	expected := c.CallbackSign(timestamp, bizContent)
+func (c *ShansongClient) VerifyCallback(timestamp, data, sign string) bool {
+	expected := c.CallbackSign(timestamp, data)
 	return hmac.Equal([]byte(expected), []byte(strings.ToUpper(sign)))
 }
 
@@ -136,26 +147,31 @@ func (c *ShansongClient) httpClient() httpDoer {
 // post signs and sends a business payload, returning the parsed envelope.
 // It errors if transport fails, the envelope is unparseable, or status != 200.
 func (c *ShansongClient) post(ctx context.Context, path string, biz map[string]any) (*shansongResp, error) {
-	bizContent, err := json.Marshal(biz)
-	if err != nil {
-		return nil, fmt.Errorf("shansong: marshal biz: %w", err)
+	var data string
+	if len(biz) > 0 {
+		b, err := json.Marshal(biz)
+		if err != nil {
+			return nil, fmt.Errorf("shansong: marshal biz: %w", err)
+		}
+		data = string(b)
 	}
 	timestamp := strconv.FormatInt(c.now().UnixMilli(), 10)
-	sign := signShansong(c.ClientID, c.AppSecret, timestamp, string(bizContent))
+	sign := signShansong(c.ClientID, c.AppSecret, c.ShopID, timestamp, data)
 
-	payload := map[string]string{
-		"clientId":   c.ClientID,
-		"timestamp":  timestamp,
-		"sign":       sign,
-		"bizContent": string(bizContent),
+	form := url.Values{}
+	form.Set("clientId", c.ClientID)
+	form.Set("shopId", c.ShopID)
+	form.Set("timestamp", timestamp)
+	form.Set("sign", sign)
+	if data != "" {
+		form.Set("data", data)
 	}
-	body, _ := json.Marshal(payload)
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.BaseURL+path, strings.NewReader(form.Encode()))
 	if err != nil {
 		return nil, fmt.Errorf("shansong: build request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := c.httpClient().Do(req)
 	if err != nil {

@@ -19,6 +19,7 @@ type Config struct {
 type ShansongConfig struct {
 	ClientID  string `mapstructure:"clientid"`
 	AppSecret string `mapstructure:"appsecret"`
+	ShopID    string `mapstructure:"shop_id"`    // 闪送商家门店号（系统参数）
 	BaseURL   string `mapstructure:"base_url"`   // open.s.bingex.com（测试）/ open.ishansong.com（生产）
 	NotifyURL string `mapstructure:"notify_url"` // 闪送状态回调地址
 }
@@ -129,6 +130,7 @@ func LoadConfig(path string) (*Config, error) {
 	// Shansong env vars (Railway) — credentials must never live in the repo
 	cfg.Shansong.ClientID = getEnv("SHANSONG_CLIENT_ID", cfg.Shansong.ClientID)
 	cfg.Shansong.AppSecret = getEnv("SHANSONG_APP_SECRET", cfg.Shansong.AppSecret)
+	cfg.Shansong.ShopID = getEnv("SHANSONG_SHOP_ID", cfg.Shansong.ShopID)
 	cfg.Shansong.BaseURL = getEnv("SHANSONG_BASE_URL", cfg.Shansong.BaseURL)
 	cfg.Shansong.NotifyURL = getEnv("SHANSONG_NOTIFY_URL", cfg.Shansong.NotifyURL)
 

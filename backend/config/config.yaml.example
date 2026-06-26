@@ -38,6 +38,7 @@ wechat:
 shansong:
   clientid: "your-shansong-clientid"
   appsecret: "your-shansong-appsecret"
+  shop_id: "your-shansong-shop-id"             # 商家门店号（系统参数 shopId）
   base_url: "https://open.s.bingex.com"        # 测试环境；生产 https://open.ishansong.com
   notify_url: "https://your-domain.com/api/shansong/callback"
 

@@ -43,29 +43,34 @@ func fixedClient(d httpDoer) *ShansongClient {
 	return &ShansongClient{
 		ClientID:  "cid-1",
 		AppSecret: "secret-1",
+		ShopID:    "shop-9",
 		BaseURL:   "https://open.s.bingex.com",
 		HTTP:      d,
 		Now:       func() time.Time { return time.Unix(1700000000, 0) },
 	}
 }
 
-// Signing must be deterministic for a known input — this is the contract a real
-// Shansong sandbox call is validated against during 联调.
-func TestShansongSign_Deterministic(t *testing.T) {
-	got := signShansong("cid-1", "secret-1", "1700000000000", `{"a":1}`)
-	again := signShansong("cid-1", "secret-1", "1700000000000", `{"a":1}`)
-	if got != again {
-		t.Fatalf("sign not deterministic: %q vs %q", got, again)
+// Real Shansong recipe: MD5(appSecret + "clientId" + clientId + "data" + data +
+// "shopId" + shopId + "timestamp" + timestamp), uppercase; data segment omitted
+// when data is empty. Golden value computed from the documented rule.
+func TestShansongSign_RealRecipe(t *testing.T) {
+	got := signShansong("cid-1", "secret-1", "shop-9", "1700000000000", `{"a":1}`)
+	if got != "683042FE4702409D69A75ABB10D43409" {
+		t.Fatalf("sign mismatch vs golden, got %s", got)
 	}
-	if got != strings.ToUpper(got) {
-		t.Errorf("sign should be uppercase hex, got %q", got)
+	if len(got) != 32 || got != strings.ToUpper(got) {
+		t.Errorf("expected 32-char uppercase hex, got %q", got)
 	}
-	if len(got) != 32 {
-		t.Errorf("expected 32-char MD5 hex, got %d chars", len(got))
+	// Must depend on shopId and appSecret.
+	if signShansong("cid-1", "secret-1", "other-shop", "1700000000000", `{"a":1}`) == got {
+		t.Errorf("sign must depend on shopId")
 	}
-	// A changed secret must change the signature.
-	if signShansong("cid-1", "other", "1700000000000", `{"a":1}`) == got {
+	if signShansong("cid-1", "other", "shop-9", "1700000000000", `{"a":1}`) == got {
 		t.Errorf("sign must depend on appSecret")
+	}
+	// Empty data omits the data segment, so the signature differs.
+	if signShansong("cid-1", "secret-1", "shop-9", "1700000000000", "") == got {
+		t.Errorf("empty data must omit the data segment and change the signature")
 	}
 }
 
@@ -87,12 +92,14 @@ func TestCalculatePrice_SignsRequestAndParsesFee(t *testing.T) {
 	if res.QuoteToken != "SS-Q-1" {
 		t.Errorf("expected quote token SS-Q-1, got %q", res.QuoteToken)
 	}
-	// The outgoing request must be signed and carry the client id.
-	if !strings.Contains(d.gotBody, "cid-1") {
-		t.Errorf("request body missing clientId: %s", d.gotBody)
+	// The outgoing request must be form-urlencoded with the system params.
+	if ct := d.gotReq.Header.Get("Content-Type"); !strings.Contains(ct, "x-www-form-urlencoded") {
+		t.Errorf("expected form-urlencoded content type, got %q", ct)
 	}
-	if !strings.Contains(d.gotBody, "sign") {
-		t.Errorf("request body missing sign: %s", d.gotBody)
+	for _, want := range []string{"clientId=cid-1", "shopId=shop-9", "sign=", "data="} {
+		if !strings.Contains(d.gotBody, want) {
+			t.Errorf("request body missing %q: %s", want, d.gotBody)
+		}
 	}
 }
 

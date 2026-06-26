@@ -8,7 +8,7 @@
 已确认决策：新增 Shop.City（商家维护）；/quote 生成 order_no 写入凭证、下单复用；保留回调 webhook、改真实验签+状态码。
 
 ## 协议层
-- [ ] **FT1** 传输 form-urlencoded + 真实签名（含 shopId）+ 系统参数 + merchants/v5 端点；config 加 ShopID — M
+- [x] **FT1** 传输 form-urlencoded + 真实签名（含 shopId）+ 系统参数 + merchants/v5 端点；config 加 ShopID — M ✅
 - [ ] **FT2** orderCalculate 请求结构（cityName/sender/receiverList，字符串坐标，goodType=6）+ orderPlace 仅 issOrderNo + 状态码 20/30/40/50/60 — M
 
 ## 数据 + 贯通
