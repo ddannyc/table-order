@@ -90,6 +90,9 @@ func Setup(r *gin.Engine) {
 	// WeChat Pay notification callback (public — WeChat server calls this)
 	api.POST("/orders/notify", handler.WechatPayNotify)
 
+	// Shansong delivery status callback (public — verified by Shansong signature)
+	api.POST("/shansong/callback", handler.ShansongCallback)
+
 	// Invite (authenticated)
 	invite := api.Group("/invites")
 	invite.Use(middleware.AuthMiddleware())

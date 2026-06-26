@@ -3,6 +3,7 @@ package services
 import (
 	"bytes"
 	"context"
+	"crypto/hmac"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -103,6 +104,19 @@ func signShansong(clientID, appSecret, timestamp, bizContent string) string {
 	raw := clientID + appSecret + timestamp + bizContent
 	sum := md5.Sum([]byte(raw))
 	return strings.ToUpper(hex.EncodeToString(sum[:]))
+}
+
+// CallbackSign computes the signature for a payload. Exposed so the callback
+// handler (and tests) can verify/build signatures via the same recipe.
+func (c *ShansongClient) CallbackSign(timestamp, bizContent string) string {
+	return signShansong(c.ClientID, c.AppSecret, timestamp, bizContent)
+}
+
+// VerifyCallback reports whether sign matches the expected signature for the
+// given callback payload (constant-time compare).
+func (c *ShansongClient) VerifyCallback(timestamp, bizContent, sign string) bool {
+	expected := c.CallbackSign(timestamp, bizContent)
+	return hmac.Equal([]byte(expected), []byte(strings.ToUpper(sign)))
 }
 
 func (c *ShansongClient) now() time.Time {
