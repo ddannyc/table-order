@@ -31,18 +31,27 @@ type quoteClaims struct {
 	Exp           int64   `json:"e"` // unix seconds
 }
 
-func quoteSecret() []byte {
+// quoteSecret returns the HMAC key for quote tokens. It fails closed: with no
+// configured JWT secret it returns ok=false so signing/verification refuse,
+// rather than falling back to a predictable constant that would let a client
+// forge the delivery fee.
+func quoteSecret() ([]byte, bool) {
 	if config.AppConfig != nil && config.AppConfig.JWT.Secret != "" {
-		return []byte(config.AppConfig.JWT.Secret)
+		return []byte(config.AppConfig.JWT.Secret), true
 	}
-	return []byte("dev-quote-secret-fallback")
+	return nil, false
 }
 
-// signQuoteToken returns "<payload>.<hmac>" (both base64url).
+// signQuoteToken returns "<payload>.<hmac>" (both base64url). Returns "" when
+// no quote secret is configured (DeliveryQuote guards this before calling).
 func signQuoteToken(claims quoteClaims) string {
+	secret, ok := quoteSecret()
+	if !ok {
+		return ""
+	}
 	payload, _ := json.Marshal(claims)
 	b64 := base64.RawURLEncoding.EncodeToString(payload)
-	mac := hmac.New(sha256.New, quoteSecret())
+	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(b64))
 	sig := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 	return b64 + "." + sig
@@ -50,11 +59,15 @@ func signQuoteToken(claims quoteClaims) string {
 
 // verifyQuoteToken checks the HMAC and expiry, returning the trusted claims.
 func verifyQuoteToken(token string) (*quoteClaims, error) {
+	secret, ok := quoteSecret()
+	if !ok {
+		return nil, errors.New("quote signing not configured")
+	}
 	parts := strings.SplitN(token, ".", 2)
 	if len(parts) != 2 {
 		return nil, errors.New("malformed quote token")
 	}
-	mac := hmac.New(sha256.New, quoteSecret())
+	mac := hmac.New(sha256.New, secret)
 	mac.Write([]byte(parts[0]))
 	expected := base64.RawURLEncoding.EncodeToString(mac.Sum(nil))
 	if !hmac.Equal([]byte(expected), []byte(parts[1])) {
@@ -70,6 +83,9 @@ func verifyQuoteToken(token string) (*quoteClaims, error) {
 	}
 	if time.Now().Unix() > claims.Exp {
 		return nil, errors.New("quote expired")
+	}
+	if claims.Fee < 0 {
+		return nil, errors.New("invalid quote fee")
 	}
 	return &claims, nil
 }
@@ -112,6 +128,10 @@ func DeliveryQuote(c *gin.Context) {
 	}
 
 	if services.Shansong == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "外卖配送暂未开通"})
+		return
+	}
+	if _, ok := quoteSecret(); !ok {
 		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "外卖配送暂未开通"})
 		return
 	}

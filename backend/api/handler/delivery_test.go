@@ -28,8 +28,19 @@ func withStubShansong(t *testing.T, envelope string) func() {
 	}
 }
 
+// withQuoteSecret sets a non-empty JWT secret so quote signing is enabled
+// (fail-closed: an empty secret refuses to sign/verify).
+func withQuoteSecret(t *testing.T) func() {
+	t.Helper()
+	prev := config.AppConfig
+	config.AppConfig = &config.Config{}
+	config.AppConfig.JWT.Secret = "test-quote-secret"
+	return func() { config.AppConfig = prev }
+}
+
 func TestDeliveryQuote_ReturnsFeeAndVerifiableToken(t *testing.T) {
 	setupTestDB(t)
+	defer withQuoteSecret(t)()
 	cleanup := withStubShansong(t, `{"status":200,"msg":"ok","data":{"totalFeeAfterSave":850,"orderNumber":"SS-Q-1"}}`)
 	defer cleanup()
 
@@ -146,6 +157,7 @@ func TestDeliveryQuote_RejectsMissingRecipientCoords(t *testing.T) {
 
 func TestDeliveryQuote_QuoteFailureSurfaces(t *testing.T) {
 	setupTestDB(t)
+	defer withQuoteSecret(t)()
 	cleanup := withStubShansong(t, `{"status":500,"msg":"out of range","data":null}`)
 	defer cleanup()
 
@@ -168,6 +180,7 @@ func TestDeliveryQuote_QuoteFailureSurfaces(t *testing.T) {
 }
 
 func TestVerifyQuoteToken_RejectsTampered(t *testing.T) {
+	defer withQuoteSecret(t)()
 	token := signQuoteToken(quoteClaims{ShopID: 1, Fee: 8.5, Lat: 39.9, Lng: 116.4, ShansongQuote: "Q", Exp: 1 << 62})
 	if _, err := verifyQuoteToken(token); err != nil {
 		t.Fatalf("valid token should verify: %v", err)
@@ -178,8 +191,43 @@ func TestVerifyQuoteToken_RejectsTampered(t *testing.T) {
 }
 
 func TestVerifyQuoteToken_RejectsExpired(t *testing.T) {
+	defer withQuoteSecret(t)()
 	token := signQuoteToken(quoteClaims{ShopID: 1, Fee: 8.5, Exp: 1}) // far past
 	if _, err := verifyQuoteToken(token); err == nil {
 		t.Errorf("expired token must be rejected")
+	}
+}
+
+func TestVerifyQuoteToken_RejectsNegativeFee(t *testing.T) {
+	defer withQuoteSecret(t)()
+	token := signQuoteToken(quoteClaims{ShopID: 1, Fee: -5, Exp: 1 << 62})
+	if _, err := verifyQuoteToken(token); err == nil {
+		t.Errorf("negative-fee token must be rejected")
+	}
+}
+
+func TestDeliveryQuote_RequiresConfiguredSecret(t *testing.T) {
+	setupTestDB(t)
+	prev := config.AppConfig
+	config.AppConfig = &config.Config{} // empty JWT secret → quote signing fails closed
+	defer func() { config.AppConfig = prev }()
+	cleanup := withStubShansong(t, `{"status":200,"data":{"totalFeeAfterSave":850,"orderNumber":"X"}}`)
+	defer cleanup()
+
+	shop := models.Shop{Name: "Secretless Shop", MerchantID: 1, Status: 1, City: "北京市", Latitude: 39.9, Longitude: 116.4}
+	config.DB.Create(&shop)
+
+	r := setupRouter()
+	r.POST("/api/delivery/quote", DeliveryQuote)
+	body, _ := json.Marshal(map[string]any{
+		"shop_id": shop.ID, "recipient_lat": 39.91, "recipient_lng": 116.41,
+	})
+	req, _ := http.NewRequest("POST", "/api/delivery/quote", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 when quote secret unconfigured, got %d body: %s", w.Code, w.Body.String())
 	}
 }

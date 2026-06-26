@@ -41,6 +41,13 @@ func setupTestDB(t *testing.T) {
 
 	config.DB = db
 
+	// Quote tokens fail closed without a configured secret; mirror production by
+	// ensuring a JWT secret is set (non-destructive to any other config a test sets).
+	if config.AppConfig == nil {
+		config.AppConfig = &config.Config{}
+	}
+	config.AppConfig.JWT.Secret = "test-quote-secret"
+
 	// Recreate tables
 	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
 

@@ -4,7 +4,7 @@
 基线：绝不 git add `frontend/config.js` / `.claude/` / `specs/shansong-delivery.md`；密钥仅 env。
 
 ## 阻断项
-- [ ] **BLK1** 报价密钥 fail-closed（去常量回退）+ 拒绝负运费 — S
+- [x] **BLK1** 报价密钥 fail-closed（去常量回退）+ 拒绝负运费 — S ✅
 - [ ] **BLK2** 暴露派单状态：0=待派单 / -1=派单失败 落库与标签 — S
 - [ ] **BLK3** 支付转移原子化（守卫 UPDATE，竞态只发一次奖励/派单）— M
 
