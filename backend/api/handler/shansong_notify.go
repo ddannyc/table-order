@@ -47,9 +47,12 @@ func ShansongCallback(c *gin.Context) {
 	}
 
 	// Match on either the dispatched order no or the quote no (both hold the
-	// shansong issOrderNo depending on what orderPlace echoed).
+	// shansong issOrderNo depending on what orderPlace echoed). Never regress a
+	// terminal status (50 已完成 / 60 已取消): a late/out-of-order callback that
+	// would move it backward is ignored (RowsAffected==0) but still acked.
 	res := config.DB.Model(&models.OrderDelivery{}).
-		Where("shansong_order_no = ? OR shansong_quote_no = ?", biz.IssOrderNo, biz.IssOrderNo).
+		Where("(shansong_order_no = ? OR shansong_quote_no = ?) AND shansong_status NOT IN (?)",
+			biz.IssOrderNo, biz.IssOrderNo, []int{50, 60}).
 		Update("shansong_status", biz.OrderStatus)
 	if res.Error != nil {
 		log.Printf("[shansong] callback update failed issOrderNo=%s: %v", biz.IssOrderNo, res.Error)

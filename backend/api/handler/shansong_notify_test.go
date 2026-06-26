@@ -115,6 +115,25 @@ func TestShansongCallback_Idempotent(t *testing.T) {
 	}
 }
 
+// A late/out-of-order callback must not move a terminal status backward
+// (e.g. 已完成 50 -> 派单中 20).
+func TestShansongCallback_DoesNotRegressTerminalStatus(t *testing.T) {
+	setupTestDB(t)
+	cleanup := withCallbackClient(t)
+	defer cleanup()
+	od := seedDelivery(t, "SS-CB-DONE", 50) // 已完成 (terminal)
+
+	w := postCallback(t, "SS-CB-DONE", 20, true) // stale 派单中 arrives late
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 ack, got %d", w.Code)
+	}
+	var got models.OrderDelivery
+	config.DB.First(&got, od.ID)
+	if got.ShansongStatus != 50 {
+		t.Errorf("terminal status 50 must not regress, got %d", got.ShansongStatus)
+	}
+}
+
 // Matching also works when only the quote no holds the issOrderNo.
 func TestShansongCallback_MatchesByQuoteNo(t *testing.T) {
 	setupTestDB(t)
