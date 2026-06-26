@@ -87,8 +87,8 @@ Page({
   },
 
   refreshCartDisplay() {
-    const cart = getCart(this.data.shopId)
-    const total = getCartTotal(this.data.shopId)
+    const cart = getCart(this.data.shopId, this.data.orderType)
+    const total = getCartTotal(this.data.shopId, this.data.orderType)
     const cartItems = cart.map(item => ({
       ...item,
       subtotal: (Number(item.price) * Number(item.quantity)).toFixed(2)
@@ -245,7 +245,7 @@ Page({
         }
         // Zero-amount order: skip WeChat Pay, go straight to success
         if (res.status === 2) {
-          clearCart(this.data.shopId)
+          clearCart(this.data.shopId, this.data.orderType)
           wx.showModal({
             title: '下单成功',
             content: '福利金已全额抵扣，可在"我的"页面查看订单详情',
@@ -265,7 +265,7 @@ Page({
           signType: res.sign_type,
           paySign: res.pay_sign,
           success: () => {
-            clearCart(this.data.shopId)
+            clearCart(this.data.shopId, this.data.orderType)
             wx.showModal({
               title: '支付成功',
               content: '订单已提交，可在"我的"页面查看订单详情',

@@ -115,8 +115,8 @@ Page({
   },
 
   updateCartInfo() {
-    const { boundShopId } = this.data
-    const cart = getCart(boundShopId)
+    const { boundShopId, orderType } = this.data
+    const cart = getCart(boundShopId, orderType)
     let cartQtyByKey = {}
     let cartQtyByProduct = {}
     let cartCount = 0
@@ -140,7 +140,7 @@ Page({
     const productId = e.currentTarget.dataset.id
     const product = this.data.products.find(p => String(p.id) === String(productId))
     if (!product) return
-    addToCart(this.data.boundShopId, product, null, 1)
+    addToCart(this.data.boundShopId, product, null, 1, this.data.orderType)
     this.updateCartInfo()
     wx.showToast({ title: '已加入', icon: 'success' })
   },
@@ -149,7 +149,7 @@ Page({
     const productId = e.currentTarget.dataset.id
     const key = `${productId}_0`
     const qty = (this.data.cartQtyByKey[key] || 0) + 1
-    updateCartQuantity(this.data.boundShopId, key, qty)
+    updateCartQuantity(this.data.boundShopId, key, qty, this.data.orderType)
     this.updateCartInfo()
   },
 
@@ -157,7 +157,7 @@ Page({
     const productId = e.currentTarget.dataset.id
     const key = `${productId}_0`
     const qty = this.data.cartQtyByKey[key] || 0
-    updateCartQuantity(this.data.boundShopId, key, qty <= 1 ? 0 : qty - 1)
+    updateCartQuantity(this.data.boundShopId, key, qty <= 1 ? 0 : qty - 1, this.data.orderType)
     this.updateCartInfo()
   },
 
@@ -180,7 +180,7 @@ Page({
     if (!product) return
     const spec = product.specs.find(s => String(s.id) === String(specId))
     if (!spec) return
-    addToCart(this.data.boundShopId, product, spec, 1)
+    addToCart(this.data.boundShopId, product, spec, 1, this.data.orderType)
     this.updateCartInfo()
     wx.showToast({ title: '已加入', icon: 'success' })
   },

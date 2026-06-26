@@ -5,7 +5,7 @@
 
 ## 任务（纵切，按依赖顺序）
 - [x] **M1** 移除菜单切换 + 只读模式标识 + 单型可靠推导 — M ✅
-- [ ] **M2** 购物车按 shopId+orderType 隔离（storage/product/menu/order-confirm）— M（依赖 M1）
+- [x] **M2** 购物车按 shopId+orderType 隔离（storage/product/menu/order-confirm）— M（依赖 M1）✅
 - [ ] **M3** CSS/SVG 分类占位图 + 图片兜底助手（无二进制资源）— S（独立）
 - [ ] **M4** 左右布局 + 大图卡片（左类目轨 / 右卡片，激活态绿竖条）— L（依赖 M1、M3）
 

@@ -39,19 +39,20 @@ export const setUser = (user) => {
   wx.setStorageSync('user', user)
 }
 
-export const getCart = (shopId) => {
-  const key = `cart_v2_${shopId}`
-  return wx.getStorageSync(key) || []
+// Cart storage is keyed by shop AND order type, so a shop's dine-in and
+// delivery carts never share storage (orderType defaults to dine_in).
+const cartStoreKey = (shopId, orderType = 'dine_in') => `cart_v2_${shopId}_${orderType}`
+
+export const getCart = (shopId, orderType = 'dine_in') => {
+  return wx.getStorageSync(cartStoreKey(shopId, orderType)) || []
 }
 
-export const setCart = (shopId, cart) => {
-  const key = `cart_v2_${shopId}`
-  wx.setStorageSync(key, cart)
+export const setCart = (shopId, cart, orderType = 'dine_in') => {
+  wx.setStorageSync(cartStoreKey(shopId, orderType), cart)
 }
 
-export const clearCart = (shopId) => {
-  const key = `cart_v2_${shopId}`
-  wx.setStorageSync(key, [])
+export const clearCart = (shopId, orderType = 'dine_in') => {
+  wx.setStorageSync(cartStoreKey(shopId, orderType), [])
 }
 
 // 认证函数已迁移至 utils/auth.js，此处重导出以保持向后兼容
