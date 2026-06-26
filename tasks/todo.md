@@ -20,11 +20,12 @@
 - [x] **T8** GetOrders/GetOrder 回传 delivery + 我的订单展示配送状态 — M ✅
 
 ## P4 联调 Checkpoint
-- [ ] 三套测试全绿（go / jest / vitest）
-- [ ] 真机：chooseAddress+getLocation 授权（mp 后台开通 getLocation + 隐私指引）
-- [ ] 测试环境全链路：选址→报价→支付→派单→回调→我的订单可见
-- [ ] 堂食回归通过；运费不进返利/福利金
-- [ ] 仓库无闪送真实密钥；重出 GO/NO-GO
+- [x] 三套测试全绿（go / jest 94 / vitest 21）✅
+- [x] 仓库无闪送真实密钥（config.yaml.example 仅占位；secrets 扫描通过）✅
+- [ ] 真机：chooseAddress+getLocation 授权（mp 后台开通 getLocation + 隐私指引）— 需人工
+- [ ] 测试环境全链路：选址→报价→支付→派单→回调→我的订单可见 — 需人工/凭据
+- [ ] 联调校准 CALIBRATION 点（闪送 endpoint / 签名 / 运费单位 / 状态码）— 见 services/shansong.go
+- [ ] 堂食回归通过（自动化已覆盖；真机复核）；重出 GO/NO-GO
 
 ## 不做（本期）
 - 取消/退款（闪送取消 + 退运费）— 留后续
