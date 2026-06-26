@@ -22,3 +22,17 @@ describe('menu reskin — Pine-Ink surfaces (T4)', () => {
     expect(wxss).toMatch(/\.menu-list\s*\{[^}]*background:\s*var\(--weui-BG-1\)/)
   })
 })
+
+describe('menu reskin — category line glyphs (T5)', () => {
+  it.each(['cup', 'bubble', 'cheese', 'sparkle'])(
+    'defines a gold line-glyph for %s',
+    (g) => {
+      const re = new RegExp('\\.menu-thumb-ph_' + g + '\\s*\\{[^}]*data:image\\/svg\\+xml')
+      expect(wxss).toMatch(re)
+    }
+  )
+
+  it('keeps the text label in the placeholder for recognition/a11y', () => {
+    expect(wxml).toMatch(/\{\{p\.ph\.label\}\}/)
+  })
+})
