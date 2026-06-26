@@ -22,7 +22,8 @@
 ## Checkpoint 联调
 - [x] 三套测试全绿（go / jest 94 / vitest 21）✅
 - [x] 仓库无真实密钥（secrets 扫描通过；config.yaml.example 仅占位）✅
-- [ ] 真实凭据跑 orderCalculate 确认运费字段名（回填 FT2 CALIBRATION）— 需凭据
+- [x] 真实凭据跑 orderCalculate：运费字段=totalFeeAfterSave/totalAmount（单位**分**）；已修 FT2 ✅
+- [x] 本地 ShansongClient 实测 test 环境 orderCalculate 成功（fee=38.64 元，issOrderNo 返回）✅
 - [ ] 校准回调入站格式（FT6 CALIBRATION）— 需闪送回调文档/真实回调
 - [ ] 真机全链路：选址→报价→支付→orderPlace→回调→我的订单 — 需人工
 - [ ] 重出 GO/NO-GO

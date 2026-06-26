@@ -223,21 +223,22 @@ func (c *ShansongClient) CalculatePrice(ctx context.Context, q QuoteRequest) (*Q
 	if err != nil {
 		return nil, err
 	}
+	// orderCalculate returns fees in 分 (cents). totalFeeAfterSave is the
+	// merchant-payable total after coupon; totalAmount is the pre-coupon total.
+	// (Verified against a live test orderCalculate response.)
 	var data struct {
-		// CALIBRATION: confirm the exact total-fee field name + unit (元 vs 分)
-		// against a real orderCalculate response during 联调.
-		TotalFeeAfterCommission float64 `json:"totalFeeAfterCommission"`
-		TotalFee                float64 `json:"totalFee"`
-		OrderNumber             string  `json:"orderNumber"`
+		TotalFeeAfterSave int64  `json:"totalFeeAfterSave"`
+		TotalAmount       int64  `json:"totalAmount"`
+		OrderNumber       string `json:"orderNumber"`
 	}
 	if err := json.Unmarshal(env.Data, &data); err != nil {
 		return nil, fmt.Errorf("shansong: parse quote data: %w", err)
 	}
-	fee := data.TotalFeeAfterCommission
-	if fee == 0 {
-		fee = data.TotalFee
+	feeCents := data.TotalFeeAfterSave
+	if feeCents == 0 {
+		feeCents = data.TotalAmount
 	}
-	return &QuoteResult{DeliveryFee: fee, QuoteToken: data.OrderNumber}, nil
+	return &QuoteResult{DeliveryFee: float64(feeCents) / 100.0, QuoteToken: data.OrderNumber}, nil
 }
 
 // CreateOrder places the courier order against a prior quote (orderPlace). The

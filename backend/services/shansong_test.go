@@ -91,7 +91,8 @@ func TestShansongSign_RealRecipe(t *testing.T) {
 }
 
 func TestCalculatePrice_BuildsOrderCalculateRequestAndParsesFee(t *testing.T) {
-	d := &stubDoer{resp: `{"status":200,"msg":"success","data":{"totalFeeAfterCommission":8.5,"orderNumber":"SS-Q-1"}}`}
+	// Real orderCalculate response shape: fees in 分, totalFeeAfterSave is payable.
+	d := &stubDoer{resp: `{"status":200,"msg":"success","data":{"totalAmount":900,"totalFeeAfterSave":850,"couponSaveFee":50,"orderNumber":"SS-Q-1"}}`}
 	c := fixedClient(d)
 
 	res, err := c.CalculatePrice(context.Background(), QuoteRequest{
