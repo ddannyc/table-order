@@ -8,6 +8,7 @@ const path = require('path')
 
 const wxss = fs.readFileSync(path.join(__dirname, '../pages/menu/index.wxss'), 'utf8')
 const wxml = fs.readFileSync(path.join(__dirname, '../pages/menu/index.wxml'), 'utf8')
+const art = fs.readFileSync(path.join(__dirname, '../pages/menu/menu-art.wxss'), 'utf8')
 
 describe('menu reskin — Pine-Ink surfaces (T4)', () => {
   it('price uses the bronze price-ink token', () => {
@@ -23,12 +24,12 @@ describe('menu reskin — Pine-Ink surfaces (T4)', () => {
   })
 })
 
-describe('menu reskin — category line glyphs (T5)', () => {
+describe('menu — category placeholder illustrations (D3, in menu-art.wxss)', () => {
   it.each(['cup', 'bubble', 'cheese', 'sparkle'])(
-    'defines a gold line-glyph for %s',
+    'defines a colored drink illustration for %s',
     (g) => {
       const re = new RegExp('\\.menu-thumb-ph_' + g + '\\s*\\{[^}]*data:image\\/svg\\+xml')
-      expect(wxss).toMatch(re)
+      expect(art).toMatch(re)
     }
   )
 
@@ -59,8 +60,9 @@ describe('menu reskin — photo-first cards + category counts (R3)', () => {
     expect(wxml).toMatch(/menu-add-round/)
   })
 
-  it('category placeholder glyphs are terracotta accent, not the old gold', () => {
-    expect(wxss).toMatch(/\.menu-thumb-ph_cup\s*\{[^}]*%23C8643C/i)
-    expect(wxss).not.toMatch(/%23C98A2B/i) // no gold left anywhere in menu wxss
+  it('placeholder illustrations are colored (brand green outline), not the old gold single-line', () => {
+    expect(art).toMatch(/%23234B3A/i) // brand-green outline in the drink illustrations
+    expect(art).not.toMatch(/%23C98A2B/i) // no leftover gold
+    expect(wxss).not.toMatch(/%23C98A2B/i)
   })
 })

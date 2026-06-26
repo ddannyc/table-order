@@ -1,4 +1,6 @@
-/* pages/menu/index.wxss — 点餐菜单页（weui 原生） */
+/* pages/menu/index.wxss — 点餐菜单页（weui 原生）。分类占位插画见 menu-art.wxss。 */
+@import './menu-art.wxss';
+
 .menu-main {
   /* 左右布局自身按视口高度铺满；底部留白由右侧列表负责 */
 }
@@ -116,9 +118,8 @@
   display: block;
 }
 
-/* 展位图：暖陶土浅底 + 陶土橙单线 glyph（背景）+ 分类标签（底部 caption）。
-   设计过的占位（非空块），无真照片时也不显空。glyph 描边 #C8643C 与 --accent 同源。
-   有 product.image（OSS）时此块不出现。 */
+/* 展位图：暖底 + 彩色饮品插画（见 menu-art.wxss）。设计过的占位（非空块），
+   无真照片时也不显空。有 product.image（OSS）时此块不出现。分类标签作底部 caption。 */
 .menu-thumb-ph {
   width: 100%;
   height: 100%;
@@ -126,26 +127,10 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: var(--space-xs);
-  background-color: #F4E6DD; /* 浅陶土暖底 */
-  background-repeat: no-repeat;
-  background-position: center 34%;
-  background-size: 56rpx 56rpx;
+  background-color: #F4E6DD; /* 暖底 */
   border: 1rpx solid var(--weui-FG-3);
-  color: var(--price-ink); /* 陶土标签（4.66:1 on 浅陶土底） */
+  color: var(--price-ink);
   font-size: var(--font-caption);
-}
-
-.menu-thumb-ph_cup {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M14%2016h20l-2%2022a3%203%200%200%201-3%203H19a3%203%200%200%201-3-3z'%2F%3E%3Cpath%20d%3D'M12%2016h24'%2F%3E%3Cpath%20d%3D'M27%208l-2%208'%2F%3E%3C%2Fsvg%3E");
-}
-.menu-thumb-ph_bubble {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Ccircle%20cx%3D'20'%20cy%3D'29'%20r%3D'8'%2F%3E%3Ccircle%20cx%3D'32'%20cy%3D'20'%20r%3D'5'%2F%3E%3Ccircle%20cx%3D'31'%20cy%3D'34'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
-}
-.menu-thumb-ph_cheese {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M9%2031l25-11%206%2011z'%2F%3E%3Ccircle%20cx%3D'22'%20cy%3D'28'%20r%3D'1.6'%2F%3E%3Ccircle%20cx%3D'31'%20cy%3D'27'%20r%3D'1.4'%2F%3E%3C%2Fsvg%3E");
-}
-.menu-thumb-ph_sparkle {
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2048%2048'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M24%208c2%209%205%2012%2014%2016-9%204-12%207-14%2016-2-9-5-12-14-16%209-4%2012-7%2014-16z'%2F%3E%3C%2Fsvg%3E");
 }
 
 .menu-card-bd {
