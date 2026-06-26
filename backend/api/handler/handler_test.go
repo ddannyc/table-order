@@ -148,6 +148,7 @@ func TestCreateOrder_NoRewardForNonReferredUser(t *testing.T) {
 }
 
 func TestCreateOrder_DeductsRewardBalanceButNotBalance(t *testing.T) {
+	setupTestDB(t)
 
 	// Create shop
 	shop := models.Shop{Name: "Deduct Shop", MerchantID: 1, Status: 1, RewardRateSelf: 0.03}

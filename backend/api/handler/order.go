@@ -74,63 +74,62 @@ func CreateOrder(c *gin.Context) {
 	var lines []resolvedLine
 	var calculatedAmount float64
 
-	if len(req.Items) > 0 {
-		productCache := map[uint]models.Product{}
-		for _, item := range req.Items {
-			product, cached := productCache[item.ProductID]
-			if !cached {
-				if err := config.DB.Where("id = ? AND shop_id = ?", item.ProductID, req.ShopID).First(&product).Error; err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "invalid products"})
-					return
-				}
-				productCache[item.ProductID] = product
-			}
-			if product.Status != 1 {
-				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("product %s not available", product.Name)})
+	// items is guaranteed non-empty (rejected above); always price server-side.
+	productCache := map[uint]models.Product{}
+	for _, item := range req.Items {
+		product, cached := productCache[item.ProductID]
+		if !cached {
+			if err := config.DB.Where("id = ? AND shop_id = ?", item.ProductID, req.ShopID).First(&product).Error; err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid products"})
 				return
 			}
-
-			price := product.Price
-			var specID uint
-			var specName string
-			if item.SpecID != 0 {
-				var spec models.ProductSpec
-				if err := config.DB.Where("id = ? AND product_id = ?", item.SpecID, item.ProductID).First(&spec).Error; err != nil {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "invalid spec"})
-					return
-				}
-				if spec.Status != 1 {
-					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec %s not available", spec.Name)})
-					return
-				}
-				price = spec.Price
-				specID = spec.ID
-				specName = spec.Name
-			} else {
-				// No spec chosen — only allowed for plain products. A product is
-				// spec-priced if it has any non-下架 spec (上架=1 or 售罄=2), so a
-				// bare spec_id:0 would underpay at the base price; reject it.
-				// 下架=0 specs are excluded: the merchant removed those variants, so
-				// the product reverts to base-price ordering.
-				// Fail closed on a DB error rather than skipping the guard.
-				var specCount int64
-				if err := config.DB.Model(&models.ProductSpec{}).
-					Where("product_id = ? AND status <> 0", item.ProductID).Count(&specCount).Error; err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "spec lookup failed"})
-					return
-				}
-				if specCount > 0 {
-					c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec required for %s", product.Name)})
-					return
-				}
-			}
-
-			calculatedAmount += price * float64(item.Quantity)
-			lines = append(lines, resolvedLine{product: product, specID: specID, specName: specName, price: price, quantity: item.Quantity})
+			productCache[item.ProductID] = product
+		}
+		if product.Status != 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("product %s not available", product.Name)})
+			return
 		}
 
-		req.Amount = calculatedAmount
+		price := product.Price
+		var specID uint
+		var specName string
+		if item.SpecID != 0 {
+			var spec models.ProductSpec
+			if err := config.DB.Where("id = ? AND product_id = ?", item.SpecID, item.ProductID).First(&spec).Error; err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "invalid spec"})
+				return
+			}
+			if spec.Status != 1 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec %s not available", spec.Name)})
+				return
+			}
+			price = spec.Price
+			specID = spec.ID
+			specName = spec.Name
+		} else {
+			// No spec chosen — only allowed for plain products. A product is
+			// spec-priced if it has any non-下架 spec (上架=1 or 售罄=2), so a
+			// bare spec_id:0 would underpay at the base price; reject it.
+			// 下架=0 specs are excluded: the merchant removed those variants, so
+			// the product reverts to base-price ordering.
+			// Fail closed on a DB error rather than skipping the guard.
+			var specCount int64
+			if err := config.DB.Model(&models.ProductSpec{}).
+				Where("product_id = ? AND status <> 0", item.ProductID).Count(&specCount).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "spec lookup failed"})
+				return
+			}
+			if specCount > 0 {
+				c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("spec required for %s", product.Name)})
+				return
+			}
+		}
+
+		calculatedAmount += price * float64(item.Quantity)
+		lines = append(lines, resolvedLine{product: product, specID: specID, specName: specName, price: price, quantity: item.Quantity})
 	}
+
+	req.Amount = calculatedAmount
 
 	// Get user (for openid and reward balance)
 	var user models.User

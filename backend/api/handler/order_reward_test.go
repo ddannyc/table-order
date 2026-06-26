@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,13 +51,17 @@ func TestCreateOrder_RewardDeductionGuardedAgainstConcurrentDrain(t *testing.T) 
 		t.Fatalf("failed to lock user row: %v", err)
 	}
 
-	done := make(chan int, 1)
+	type result struct {
+		code int
+		body string
+	}
+	done := make(chan result, 1)
 	go func() {
 		req, _ := http.NewRequest("POST", "/api/orders", bytes.NewBuffer(jsonBody))
 		req.Header.Set("Content-Type", "application/json")
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
-		done <- w.Code
+		done <- result{w.Code, w.Body.String()}
 	}()
 
 	// Let the handler reach (and block on) its guarded deduction UPDATE, then
@@ -68,10 +73,14 @@ func TestCreateOrder_RewardDeductionGuardedAgainstConcurrentDrain(t *testing.T) 
 	}
 	lockTx.Commit()
 
-	code := <-done
+	res := <-done
 
-	if code != http.StatusBadRequest {
-		t.Errorf("expected 400 (deduction rejected after drain), got %d", code)
+	if res.code != http.StatusBadRequest {
+		t.Errorf("expected 400 (deduction rejected after drain), got %d", res.code)
+	}
+	// Assert it failed for the right reason — the guard, not some unrelated 400.
+	if !strings.Contains(res.body, "reward balance insufficient") {
+		t.Errorf("expected 'reward balance insufficient' rejection, got body: %s", res.body)
 	}
 	config.DB.First(&user, user.ID)
 	if user.RewardBalance < 0 {
@@ -84,5 +93,11 @@ func TestCreateOrder_RewardDeductionGuardedAgainstConcurrentDrain(t *testing.T) 
 	config.DB.Model(&models.Order{}).Where("user_id = ?", user.ID).Count(&orderCount)
 	if orderCount != 0 {
 		t.Errorf("expected the order to roll back (0 persisted), got %d", orderCount)
+	}
+	// The whole tx rolled back, so no deduct wallet log should exist.
+	var deductLogs int64
+	config.DB.Model(&models.WalletLog{}).Where("user_id = ? AND type = ?", user.ID, "deduct").Count(&deductLogs)
+	if deductLogs != 0 {
+		t.Errorf("expected no deduct wallet log after rollback, got %d", deductLogs)
 	}
 }
