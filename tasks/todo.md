@@ -17,7 +17,7 @@
 
 ## 派单 + 回调
 - [x] **FT5** DispatchShansong→orderPlace，初始状态改 20（原 60=已取消，必错）— S ✅
-- [ ] **FT6** 回调验签改真实规则 + 解析 issOrderNo/orderStatus — M
+- [x] **FT6** 回调验签改真实规则 + 解析 issOrderNo/orderStatus — M ✅
 
 ## Checkpoint 联调
 - [ ] 三套测试全绿（go / jest / vitest）
