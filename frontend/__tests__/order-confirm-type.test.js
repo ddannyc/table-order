@@ -11,6 +11,9 @@ global.wx = {
   switchTab: jest.fn(),
 }
 
+const fs = require('fs')
+const path = require('path')
+
 let pageConfig
 global.Page = (config) => {
   pageConfig = config
@@ -48,5 +51,18 @@ describe('order-confirm — order_type from route', () => {
     const merged = Object.assign({}, ...ctx.setData.mock.calls.map((c) => c[0]))
     expect(merged.orderType).toBe('dine_in')
     expect(merged.orderTypeLabel).toBe('堂食')
+  })
+})
+
+describe('order-confirm — cart list key', () => {
+  const wxml = fs.readFileSync(
+    path.join(__dirname, '../pages/order-confirm/index.wxml'),
+    'utf8'
+  )
+
+  it('keys the cart list by the cart item key, not a nonexistent id', () => {
+    // Cart items are { key, productId, specId, ... } — no `id` field.
+    expect(wxml).toMatch(/wx:for="\{\{cartItems\}\}"[^>]*wx:key="key"/)
+    expect(wxml).not.toMatch(/wx:for="\{\{cartItems\}\}"[^>]*wx:key="id"/)
   })
 })

@@ -17,7 +17,7 @@
   <view class="order-items card">
     <view class="section-title">订单明细</view>
     <mp-cells>
-      <view wx:for="{{cartItems}}" wx:key="id">
+      <view wx:for="{{cartItems}}" wx:key="key">
         <mp-cell>
           <view slot="title" class="order-item-cell">
             <text class="item-name">{{item.name}}{{item.specName ? ' · ' + item.specName : ''}}</text>
