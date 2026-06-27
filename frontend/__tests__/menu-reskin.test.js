@@ -60,9 +60,15 @@ describe('menu reskin — photo-first cards + category counts (R3)', () => {
     expect(wxml).toMatch(/menu-add-round/)
   })
 
-  it('placeholder illustrations are colored (brand green outline), not the old gold single-line', () => {
-    expect(art).toMatch(/%23234B3A/i) // brand-green outline in the drink illustrations
+  it('placeholder illustrations are colored (brand pink outline), not the old gold single-line', () => {
+    expect(art).toMatch(/%23FF4896/i) // brand-pink outline in the drink illustrations
     expect(art).not.toMatch(/%23C98A2B/i) // no leftover gold
     expect(wxss).not.toMatch(/%23C98A2B/i)
+  })
+
+  it('has no leftover Pine-Ink green in the menu skin (pin / cartbar / illustrations)', () => {
+    expect(wxss).not.toMatch(/%23234B3A/i)
+    expect(wxss).not.toMatch(/#2C5A45/i)
+    expect(art).not.toMatch(/%23234B3A/i)
   })
 })

@@ -10,7 +10,7 @@
   width: 200rpx;
   height: 168rpx;
   margin: 0 auto;
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20120%20100'%20fill%3D'none'%20stroke%3D'%23C8643C'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cellipse%20cx%3D'60'%20cy%3D'54'%20rx%3D'32'%20ry%3D'8'%2F%3E%3Cpath%20d%3D'M30%2054q30%2036%2060%200'%2F%3E%3Cpath%20d%3D'M38%2040l46-12M40%2047l46-12'%2F%3E%3Cpath%20d%3D'M58%2022q-5-7%200-13M70%2020q4-5%200-10'%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20120%20100'%20fill%3D'none'%20stroke%3D'%23FF4896'%20stroke-width%3D'3'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cellipse%20cx%3D'60'%20cy%3D'54'%20rx%3D'32'%20ry%3D'8'%2F%3E%3Cpath%20d%3D'M30%2054q30%2036%2060%200'%2F%3E%3Cpath%20d%3D'M38%2040l46-12M40%2047l46-12'%2F%3E%3Cpath%20d%3D'M58%2022q-5-7%200-13M70%2020q4-5%200-10'%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
@@ -33,7 +33,7 @@
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23234B3A'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20%2010c0%206-8%2012-8%2012s-8-6-8-12a8%208%200%200%201%2016%200z'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'10'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23FF4896'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20%2010c0%206-8%2012-8%2012s-8-6-8-12a8%208%200%200%201%2016%200z'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'10'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
 }
 
 .menu-shopname {
@@ -147,7 +147,7 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: var(--space-xs);
-  background-color: #F4E6DD; /* 暖底 */
+  background-color: #FBE9F0; /* 暖底 */
   border: 1rpx solid var(--weui-FG-3);
   color: var(--price-ink);
   font-size: var(--font-caption);
@@ -256,7 +256,7 @@
   align-items: center;
   justify-content: space-between;
   padding: var(--space-sm) var(--space-lg);
-  background: linear-gradient(120deg, var(--weui-BRAND), #2C5A45);
+  background: linear-gradient(120deg, var(--weui-BRAND), var(--green-2));
   z-index: 20;
 }
 

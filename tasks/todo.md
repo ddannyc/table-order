@@ -20,7 +20,7 @@ nudged 工作值：`--price-ink #D11414`(红字 on 卡)、`--pink-deep #D81A60`(
 - [ ] **Checkpoint A**：`npx jest theme-tokens custom-tabbar` 绿 + 全局变粉 + 人工评审
 
 ### Phase 2 — 各屏
-- [ ] **T3** 菜单页：黄底红字价签 / `#`深蓝标题 / 优惠圈 / 粉加购 / 针+插画描边改粉 + `menu-reskin.test.js` — M
+- [x] **T3** 菜单页：价格红(令牌已粉)/ 针+空碗+饮品插画描边改粉 / cartbar 渐变→深粉 / 暖瓦底→粉 + `menu-reskin.test.js` — M ✅ (优惠圈属新组件需数据，本期不加；菜单为左轨非#标题)
 - [ ] **T4** 首页：粉渐变头 / 分段+图标改粉 / nav 色 / banner / 促销 + **品牌文案改鸡福旺(四月春膳→鸡福旺、tagline、logo 春→鸡、json 标题)** + `home-reskin.test.js`(含 `/四月春膳/`→`/鸡福旺/`) + `nav-color.test.js` — M
 - [ ] **T5** 结算页：门店卡 / `#`明细 / 应付红 / 福利金开关 / 确认支付 + 内联 switch 色 — S
 - [ ] **T6** 我的页：粉会员头 / 金余额 / 三栏 / tab 激活粉 / 订单卡 — M
