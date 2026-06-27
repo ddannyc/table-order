@@ -1,16 +1,16 @@
 /**
- * Navigation bars follow the v6 cream/pine scheme so the top area shares the
- * unified cream base (#F3EEE4). Home keeps a pine bar (#234B3A) so its green
- * brand header reaches the top; the other pages use the cream top with dark text.
+ * Navigation bars follow the 鸡福旺 (JFW) scheme: the top area shares the light
+ * page base (#FBEFF3). Home keeps a brand-pink bar (#FF4896) so its pink brand
+ * header reaches the top; the other pages use the light top with dark text.
  */
 const fs = require('fs')
 const path = require('path')
 const j = (rel) => JSON.parse(fs.readFileSync(path.join(__dirname, '..', rel), 'utf8'))
 
-describe('navigation bars — v6 cream/pine scheme', () => {
-  it('app.json window defaults to the cream base with dark text', () => {
+describe('navigation bars — JFW pink/light scheme', () => {
+  it('app.json window defaults to the light page base with dark text', () => {
     const w = j('app.json').window
-    expect(w.navigationBarBackgroundColor).toBe('#F3EEE4')
+    expect(w.navigationBarBackgroundColor).toBe('#FBEFF3')
     expect(w.navigationBarTextStyle).toBe('black')
   })
 
@@ -20,9 +20,9 @@ describe('navigation bars — v6 cream/pine scheme', () => {
     expect(h.navigationBarTextStyle).toBe('white')
   })
 
-  it.each(['menu', 'invite', 'profile', 'order-confirm'])('%s uses the cream top', (p) => {
+  it.each(['menu', 'invite', 'profile', 'order-confirm'])('%s uses the light top', (p) => {
     const c = j(`pages/${p}/index.json`)
-    expect(c.navigationBarBackgroundColor).toBe('#F3EEE4')
+    expect(c.navigationBarBackgroundColor).toBe('#FBEFF3')
     expect(c.navigationBarTextStyle).toBe('black')
   })
 

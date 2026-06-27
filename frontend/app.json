@@ -9,10 +9,10 @@
     "pages/share-code/index"
   ],
   "window": {
-    "navigationBarBackgroundColor": "#F3EEE4",
+    "navigationBarBackgroundColor": "#FBEFF3",
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "餐饮点餐",
-    "backgroundColor": "#F3EEE4"
+    "navigationBarTitleText": "鸡福旺",
+    "backgroundColor": "#FBEFF3"
   },
   "lazyCodeLoading": "requiredComponents",
   "requiredPrivateInfos": ["chooseAddress", "getLocation", "chooseLocation"],
