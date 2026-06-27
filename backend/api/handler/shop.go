@@ -9,11 +9,14 @@ import (
 )
 
 type CreateShopRequest struct {
-	Name        string `json:"name" binding:"required"`
-	Description string `json:"description"`
-	Address     string `json:"address"`
-	Phone       string `json:"phone"`
-	Hours       string `json:"hours"`
+	Name        string  `json:"name" binding:"required"`
+	Description string  `json:"description"`
+	Address     string  `json:"address"`
+	City        string  `json:"city"`
+	Phone       string  `json:"phone"`
+	Hours       string  `json:"hours"`
+	Latitude    float64 `json:"latitude"`  // 门店纬度（外卖寄件方）
+	Longitude   float64 `json:"longitude"` // 门店经度
 }
 
 func CreateShop(c *gin.Context) {
@@ -30,8 +33,11 @@ func CreateShop(c *gin.Context) {
 		Name:        req.Name,
 		Description: req.Description,
 		Address:     req.Address,
+		City:        req.City,
 		Phone:       req.Phone,
 		Hours:       req.Hours,
+		Latitude:    req.Latitude,
+		Longitude:   req.Longitude,
 		Status:      1,
 	}
 

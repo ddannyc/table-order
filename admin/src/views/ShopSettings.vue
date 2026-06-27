@@ -20,6 +20,7 @@ function blankForm() {
     name: '',
     description: '',
     address: '',
+    city: '',
     phone: '',
     hours: '',
     latitude: 0,
@@ -37,6 +38,7 @@ function fillForm(shop) {
     name: shop.name || '',
     description: shop.description || '',
     address: shop.address || '',
+    city: shop.city || '',
     phone: shop.phone || '',
     hours: shop.hours || '',
     latitude: shop.latitude || 0,
@@ -85,8 +87,11 @@ async function save() {
         name: form.value.name,
         description: form.value.description,
         address: form.value.address,
+        city: form.value.city,
         phone: form.value.phone,
         hours: form.value.hours,
+        latitude: form.value.latitude,
+        longitude: form.value.longitude,
       })
       auth.setShop(shop.id)
       ElMessage.success('店铺已创建，请刷新页面以在顶部切换器中看到它')
@@ -96,6 +101,7 @@ async function save() {
         name: form.value.name,
         description: form.value.description,
         address: form.value.address,
+        city: form.value.city,
         phone: form.value.phone,
         hours: form.value.hours,
         latitude: form.value.latitude,
@@ -140,6 +146,9 @@ async function save() {
       <el-form-item label="地址">
         <el-input v-model="form.address" />
       </el-form-item>
+      <el-form-item label="城市">
+        <el-input v-model="form.city" placeholder="如：上海市（外卖配送必填）" />
+      </el-form-item>
       <el-form-item label="电话">
         <el-input v-model="form.phone" />
       </el-form-item>
@@ -151,6 +160,9 @@ async function save() {
         <span class="unit">纬度</span>
         <el-input-number v-model="form.longitude" :precision="6" :step="0.0001" :controls="false" placeholder="经度" style="margin-left: 12px" />
         <span class="unit">经度</span>
+      </el-form-item>
+      <el-form-item label="">
+        <span class="hint">城市与坐标用于外卖配送报价（闪送）；未填写时该门店无法下外卖单。</span>
       </el-form-item>
 
       <template v-if="hasShop">
@@ -197,5 +209,10 @@ async function save() {
 .unit {
   margin-left: 8px;
   color: #909399;
+}
+.hint {
+  color: #909399;
+  font-size: 12px;
+  line-height: 1.5;
 }
 </style>

@@ -35,6 +35,40 @@ func TestUpdateShop_PersistsCity(t *testing.T) {
 	}
 }
 
+// A shop must be createable with its city and coordinates in one step, so a new
+// delivery shop isn't born with city="" / coords=0 (the "门店未配置坐标/城市" gates).
+func TestCreateShop_PersistsCityAndCoords(t *testing.T) {
+	setupTestDB(t)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/merchant/shops", CreateShop, 9)
+	body, _ := json.Marshal(map[string]any{
+		"name":      "New Delivery Shop",
+		"address":   "世纪广场1楼111号",
+		"city":      "上海市",
+		"latitude":  31.230416,
+		"longitude": 121.473701,
+	})
+	req, _ := http.NewRequest("POST", "/api/merchant/shops", bytes.NewBuffer(body))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var shop models.Shop
+	if err := config.DB.Where("merchant_id = ?", 9).First(&shop).Error; err != nil {
+		t.Fatalf("created shop not found: %v", err)
+	}
+	if shop.City != "上海市" {
+		t.Errorf("expected city persisted, got %q", shop.City)
+	}
+	if shop.Latitude == 0 || shop.Longitude == 0 {
+		t.Errorf("expected coords persisted, got lat=%v lng=%v", shop.Latitude, shop.Longitude)
+	}
+}
+
 func TestGetShop_DTOIncludesCity(t *testing.T) {
 	setupTestDB(t)
 	shop := models.Shop{Name: "City DTO Shop", MerchantID: 1, Status: 1, City: "上海市"}
