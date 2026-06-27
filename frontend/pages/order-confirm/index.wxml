@@ -41,7 +41,7 @@
         <view slot="footer" class="value-text">¥{{deliveryFee}}</view>
       </mp-cell>
       <mp-cell wx:if="{{useReward}}">
-        <view slot="title" class="text-primary">福利金抵扣</view>
+        <view slot="title" class="text-discount">福利金抵扣</view>
         <view slot="footer" class="text-discount">-¥{{rewardDeduct}}</view>
       </mp-cell>
       <mp-cell>

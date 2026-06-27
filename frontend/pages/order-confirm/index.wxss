@@ -116,7 +116,7 @@
   font-weight: 500;
 }
 
-.text-discount { color: var(--weui-BRAND); }
+.text-discount { color: var(--green-2); } /* 深粉 #D81A60：对齐设计稿且 -¥ 小字 4.96:1 达标 */
 
 .total-label {
   font-weight: 600;
@@ -154,7 +154,7 @@
   width: 44rpx;
   height: 44rpx;
   border-radius: 10rpx;
-  background: #1AAD19; /* 微信品牌绿 */
+  background: #07C160; /* 微信品牌绿（新版，对齐设计稿） */
   color: #fff;
   font-size: 24rpx;
   display: flex;

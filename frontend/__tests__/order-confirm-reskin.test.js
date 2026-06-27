@@ -40,3 +40,16 @@ describe('order-confirm — payment method + reward toggle (D4, v6)', () => {
     expect(wxml).not.toMatch(/reward-amount-card/)
   })
 })
+
+describe('order-confirm — 对齐 mock-screens 设计细节', () => {
+  it('抵扣行 label + 金额都用深粉（设计稿；且 #FF4896 -¥5 对比度失守，深粉 4.96:1 达标）', () => {
+    // 标签也走 text-discount（与金额同深粉），不再用亮粉 text-primary
+    expect(wxml).toMatch(/slot="title"\s+class="text-discount">福利金抵扣/)
+    expect(wxss).toMatch(/\.text-discount\s*\{[^}]*color:\s*var\(--green-2\)/)
+  })
+
+  it('微信徽章用新版微信绿 #07C160（设计稿）', () => {
+    expect(wxss).toMatch(/\.wx-badge\s*\{[^}]*background:\s*#07C160/i)
+    expect(wxss).not.toMatch(/#1AAD19/i)
+  })
+})
