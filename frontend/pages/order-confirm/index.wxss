@@ -102,6 +102,7 @@
   flex: none;
   font-size: var(--font-price);
   font-weight: 600;
+  font-family: var(--font-number);
   color: var(--price-ink);
 }
 
@@ -124,8 +125,9 @@
 }
 
 .total-amount {
-  font-size: var(--font-title);
+  font-size: var(--font-h2); /* 应付总额放大到 40rpx，对齐设计稿 22px */
   font-weight: bold;
+  font-family: var(--font-number);
   color: var(--price-ink); /* 应付总额红，与底部提交栏一致（对齐设计稿） */
 }
 
@@ -192,5 +194,6 @@
 .submit-amount {
   font-size: var(--font-price-large);
   font-weight: bold;
+  font-family: var(--font-number);
   color: var(--price-ink); /* 陶土橙大额，照搬参考图底部总价 */
 }

@@ -253,6 +253,7 @@
   color: var(--price-ink);
   font-size: var(--font-price);
   font-weight: 700;
+  font-family: var(--font-number);
   padding: 2rpx 14rpx;
   border-radius: 8rpx;
 }
@@ -345,6 +346,7 @@
 .menu-cart-total {
   font-size: var(--font-price);
   font-weight: 800;
+  font-family: var(--font-number);
   color: var(--weui-BG-0); /* 奶油字 */
   line-height: 1.1;
 }

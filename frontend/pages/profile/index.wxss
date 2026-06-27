@@ -65,6 +65,7 @@
 .balance-amount {
   font-size: var(--font-price-large);
   font-weight: bold;
+  font-family: var(--font-number);
   color: #fff;
 }
 
@@ -88,6 +89,7 @@
 .stat-value {
   font-size: var(--font-title);
   font-weight: bold;
+  font-family: var(--font-number);
   color: var(--weui-FG-0);
   margin-bottom: var(--space-xs);
 }
