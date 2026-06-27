@@ -33,6 +33,11 @@ page {
   --jf-tag-pink: #FFE0ED;  /* 优惠圈底 */
   --jf-tag-red: #C2185B;   /* 优惠圈字（on tag-pink 4.79:1，过 AA） */
   --jf-orange: #FFB829;    /* 饮品/果茶配图主色 */
+  /* 金色余额卡（设计稿金卡的 WCAG 折中：金底渐变 + 深琥珀字达标） */
+  --jf-gold-bg-0: #FFF4DA; /* 金卡渐变浅端 */
+  --jf-gold-bg-1: #FFE7A8; /* 金卡渐变深端（文字对比最坏处） */
+  --jf-gold-line: #FFE08A; /* 金卡描边 */
+  --jf-gold-ink: #8A5500;  /* 金卡文字·深琥珀（on 金底深端 5.1:1，过 AA） */
 
   /* Spacing */
   --space-xs: 8rpx;

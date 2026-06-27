@@ -54,6 +54,10 @@ describe('theme tokens — 鸡福旺 (JFW) palette', () => {
     '--jf-tag-pink': '#FFE0ED', // 优惠圈底
     '--jf-tag-red': '#C2185B', // 优惠圈字
     '--jf-orange': '#FFB829', // 饮品/果茶
+    '--jf-gold-bg-0': '#FFF4DA', // 金卡渐变浅端
+    '--jf-gold-bg-1': '#FFE7A8', // 金卡渐变深端
+    '--jf-gold-line': '#FFE08A', // 金卡描边
+    '--jf-gold-ink': '#8A5500', // 金卡深琥珀字
   }
 
   it.each(Object.entries(expected))('defines %s = %s', (name, hex) => {
@@ -114,5 +118,8 @@ describe('theme tokens — WCAG contrast floors', () => {
   })
   it('coupon text passes AA on the coupon pink (>=4.5:1)', () => {
     expect(contrast(TAG_RED, TAG_PINK)).toBeGreaterThanOrEqual(4.5)
+  })
+  it('gold-card ink passes AA on the gold gradient deep end (>=4.5:1) — 设计金卡的折中达标', () => {
+    expect(contrast(token('--jf-gold-ink'), token('--jf-gold-bg-1'))).toBeGreaterThanOrEqual(4.5)
   })
 })
