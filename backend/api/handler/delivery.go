@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -155,6 +156,10 @@ func DeliveryQuote(c *gin.Context) {
 		RecipientLng:     req.RecipientLng,
 	})
 	if err != nil {
+		// Surface the real Shansong failure (transport/range/sign/balance) — the
+		// client message stays generic, but ops needs the cause in the logs.
+		log.Printf("[shansong] quote failed shopID=%d city=%q sender=(%f,%f) recipient=(%f,%f): %v",
+			req.ShopID, shop.City, shop.Latitude, shop.Longitude, req.RecipientLat, req.RecipientLng, err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "配送报价失败，可能超出配送范围"})
 		return
 	}
