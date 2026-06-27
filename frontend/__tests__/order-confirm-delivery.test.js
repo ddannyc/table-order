@@ -11,7 +11,7 @@ global.wx = {
   showToast: jest.fn(),
   showModal: jest.fn(),
   chooseAddress: jest.fn(),
-  getLocation: jest.fn(),
+  chooseLocation: jest.fn(),
   requestPayment: jest.fn(),
   reLaunch: jest.fn(),
   switchTab: jest.fn(),
@@ -114,14 +114,18 @@ describe('order-confirm delivery — handlePay', () => {
 })
 
 describe('order-confirm delivery — chooseDeliveryAddress', () => {
-  it('gets location then fetches a quote and stores fee + token', async () => {
+  it('uses the map-picked point (not device location) for the quote coords', async () => {
     wx.chooseAddress.mockImplementation(({ success }) =>
       success({
         userName: '张三', telNumber: '13800000000',
         provinceName: '北京市', cityName: '北京市', countyName: '朝阳区', detailInfo: '某路1号',
       })
     )
-    wx.getLocation.mockImplementation(({ success }) => success({ latitude: 39.9, longitude: 116.4 }))
+    // Recipient coords come from the chosen delivery point on the map, so a far
+    // address quotes against its own location — not wherever the phone is.
+    wx.chooseLocation.mockImplementation(({ success }) =>
+      success({ latitude: 39.9, longitude: 116.4, name: '收货点', address: '北京市朝阳区某路1号' })
+    )
 
     const ctx = makeCtx({ orderType: 'delivery', shopId: 1 })
     pageConfig.chooseDeliveryAddress.call(ctx)

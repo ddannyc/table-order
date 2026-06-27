@@ -136,19 +136,21 @@ Page({
     })
   },
 
-  // Delivery: pick the WeChat address (text), then the current location (coords),
-  // then fetch a quote. wx.getLocation supplies the destination coordinates that
-  // chooseAddress does not return.
+  // Delivery: pick the WeChat address (name/phone/region text), then confirm the
+  // exact delivery point on the map. chooseLocation returns the RECIPIENT's
+  // coordinates — chooseAddress does not, and the device's own location (the old
+  // wx.getLocation) is wrong whenever the buyer isn't standing at the address,
+  // which made every far address quote against the phone's position.
   chooseDeliveryAddress() {
     wx.chooseAddress({
       success: (addr) => {
-        wx.getLocation({
-          type: 'gcj02',
+        wx.chooseLocation({
           success: (loc) => this.applyDeliveryAddress(addr, loc.latitude, loc.longitude),
-          fail: () => {
+          fail: (err) => {
+            if (err && /cancel/.test(err.errMsg || '')) return // user backed out of the map
             wx.showModal({
-              title: '需要位置权限',
-              content: '请允许获取当前位置以计算配送费',
+              title: '需要选择收货位置',
+              content: '请在地图上确认收货地点以计算配送费',
               showCancel: false
             })
           }

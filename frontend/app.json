@@ -15,7 +15,7 @@
     "backgroundColor": "#F3EEE4"
   },
   "lazyCodeLoading": "requiredComponents",
-  "requiredPrivateInfos": ["chooseAddress", "getLocation"],
+  "requiredPrivateInfos": ["chooseAddress", "getLocation", "chooseLocation"],
   "permission": {
     "scope.userLocation": {
       "desc": "用于计算外卖配送费用"
