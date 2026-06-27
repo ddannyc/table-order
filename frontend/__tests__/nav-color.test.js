@@ -14,9 +14,9 @@ describe('navigation bars — v6 cream/pine scheme', () => {
     expect(w.navigationBarTextStyle).toBe('black')
   })
 
-  it('home uses a pine bar so the brand header reaches the top', () => {
+  it('home uses a brand-pink bar so the brand header reaches the top', () => {
     const h = j('pages/home/index.json')
-    expect(h.navigationBarBackgroundColor).toBe('#234B3A')
+    expect(h.navigationBarBackgroundColor).toBe('#FF4896')
     expect(h.navigationBarTextStyle).toBe('white')
   })
 

@@ -1,13 +1,13 @@
 <!-- pages/home/index.wxml — 选餐入口（v6 设计稿：品牌头 + 堂食/外卖分段 + 扫码卡 + 厨师 banner + 福利放送） -->
 <view class="page home-page">
 
-  <!-- 品牌头（深松绿渐变）：字标 + 分段。不含余额/福利金。 -->
+  <!-- 品牌头（品牌粉渐变）：字标 + 分段。不含余额/福利金。 -->
   <view class="home-hd">
     <view class="brandrow">
-      <view class="logo">春</view>
+      <view class="logo">鸡</view>
       <view class="brandtext">
-        <view class="brandname">四月春膳</view>
-        <view class="brandsub">一汤一蔬 · 阅沐春风</view>
+        <view class="brandname">鸡福旺</view>
+        <view class="brandsub">五指毛桃鸡 · 现炸小食</view>
       </view>
     </view>
     <view class="seg">
@@ -30,29 +30,29 @@
     <view class="scan-go">›</view>
   </view>
 
-  <!-- 厨师 banner（v1 插画） -->
+  <!-- 现炸 banner（炸鸡插画） -->
   <view class="banner">
     <view class="banner-txt">
-      <view class="banner-h">四月春膳</view>
-      <view class="banner-p">时令鲜蔬 · 现点现做</view>
+      <view class="banner-h">现炸出炉</view>
+      <view class="banner-p">五指毛桃鸡 · 现点现做</view>
       <view class="banner-b" bindtap="scanDineIn">查看今日菜单</view>
     </view>
     <view class="home-hero"></view>
   </view>
 
-  <!-- 福利放送（静态装饰位，暂不接数据；日后可接精选菜品） -->
+  <!-- 人气推荐（静态装饰位，暂不接数据；日后可接精选菜品） -->
   <view class="sec-title">
-    <view class="sec-h">福利放送</view>
+    <view class="sec-h">人气推荐</view>
     <view class="sec-more">更多 ›</view>
   </view>
   <view class="promos">
     <view class="promo">
       <view class="promo-img warm1 promo-bowl"></view>
-      <view class="promo-ct"><view class="promo-n">招牌套餐</view><view class="promo-pr">¥38<text class="promo-from">起</text></view></view>
+      <view class="promo-ct"><view class="promo-n">招牌窑鸡</view><view class="promo-pr">¥38<text class="promo-from">起</text></view></view>
     </view>
     <view class="promo">
       <view class="promo-img warm2 promo-greens"></view>
-      <view class="promo-ct"><view class="promo-n">时令鲜蔬</view><view class="promo-pr">¥18<text class="promo-from">起</text></view></view>
+      <view class="promo-ct"><view class="promo-n">黄金鸡米花</view><view class="promo-pr">¥18<text class="promo-from">起</text></view></view>
     </view>
   </view>
 

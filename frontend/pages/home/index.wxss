@@ -90,7 +90,7 @@
   border-radius: 28rpx;
   padding: 28rpx;
   margin: -28rpx 36rpx 0;
-  box-shadow: 0 10rpx 36rpx rgba(35, 75, 58, 0.08);
+  box-shadow: 0 10rpx 36rpx rgba(214, 26, 96, 0.08);
 }
 
 .scan-qr {
@@ -117,7 +117,7 @@
 
 .scan-go {
   margin-left: auto;
-  color: #cdbfa6;
+  color: var(--weui-BRAND);
   font-size: 40rpx;
 }
 
@@ -125,14 +125,14 @@
   opacity: 0.9;
 }
 
-/* 厨师 banner */
+/* 现炸 banner */
 .banner {
   position: relative;
   margin: 32rpx 36rpx 0;
   height: 300rpx;
   border-radius: 36rpx;
   overflow: hidden;
-  background: linear-gradient(135deg, #EFE6D6, #E7D9C2);
+  background: linear-gradient(120deg, var(--jf-orange), var(--weui-BRAND));
   display: flex;
   align-items: center;
   padding: 0 36rpx;
@@ -146,22 +146,23 @@
 .banner-h {
   font-size: 40rpx;
   font-weight: 800;
-  color: var(--weui-BRAND);
+  color: #fff;
+  text-shadow: 0 1rpx 3rpx rgba(0, 0, 0, 0.18);
 }
 
 .banner-p {
   font-size: 24rpx;
-  color: #7a6a52;
+  color: rgba(255, 255, 255, 0.92);
   margin-top: 8rpx;
 }
 
 .banner-b {
   display: inline-block;
   margin-top: 20rpx;
-  background: var(--weui-BRAND);
-  color: #fff;
+  background: var(--accent);
+  color: var(--jf-title-blue);
   font-size: 24rpx;
-  font-weight: 600;
+  font-weight: 800;
   padding: 12rpx 28rpx;
   border-radius: 40rpx;
 }
@@ -177,7 +178,7 @@
   background-size: contain;
 }
 
-/* 福利放送 */
+/* 人气推荐 */
 .sec-title {
   display: flex;
   align-items: center;
@@ -186,19 +187,17 @@
 
 .sec-h {
   font-size: 34rpx;
-  font-weight: 700;
-  color: var(--weui-FG-0);
+  font-weight: 800;
+  color: var(--jf-title-blue);
   display: flex;
-  align-items: center;
+  align-items: baseline;
 }
 
 .sec-h::before {
-  content: "";
-  width: 8rpx;
-  height: 30rpx;
-  background: var(--accent);
-  border-radius: 4rpx;
-  margin-right: 16rpx;
+  content: "#";
+  color: var(--weui-BRAND);
+  font-weight: 800;
+  margin-right: 6rpx;
 }
 
 .sec-more {
@@ -218,7 +217,7 @@
   background: var(--weui-BG-1);
   border-radius: 28rpx;
   overflow: hidden;
-  box-shadow: 0 10rpx 36rpx rgba(35, 75, 58, 0.06);
+  box-shadow: 0 10rpx 36rpx rgba(214, 26, 96, 0.06);
 }
 
 .promo-img {
@@ -228,8 +227,8 @@
   background-size: 70% 70%;
 }
 
-.warm1 { background-color: #EAD3B0; }
-.warm2 { background-color: #CFD9B0; }
+.warm1 { background: radial-gradient(circle at 40% 35%, #FFE6B0, #F6B450); }
+.warm2 { background: radial-gradient(circle at 40% 35%, #FFEFC2, #FFC94D); }
 
 .promo-ct {
   padding: 22rpx 26rpx;

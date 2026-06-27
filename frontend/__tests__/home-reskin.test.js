@@ -15,7 +15,7 @@ const art = read('../pages/home/home-art.wxss')
 describe('home v6 — brand header (no wallet)', () => {
   it('shows the brand header, not a wallet balance/reward', () => {
     expect(wxml).toMatch(/home-hd/)
-    expect(wxml).toMatch(/四月春膳/)
+    expect(wxml).toMatch(/鸡福旺/)
     expect(wxml).not.toMatch(/balanceText/)
     expect(wxml).not.toMatch(/rewardText/)
   })
@@ -29,9 +29,9 @@ describe('home v6 — segmented 堂食/外卖 with line icons', () => {
     expect(wxml).toMatch(/bindtap="chooseDelivery"/)
   })
 
-  it('the segment icons recolor between states (white inactive, green active)', () => {
+  it('the segment icons recolor between states (white inactive, pink active)', () => {
     expect(art).toMatch(/\.seg-ic_dine\s*\{[^}]*data:image\/svg\+xml/)
-    expect(art).toMatch(/s_on .seg-ic_dine\s*\{[^}]*%23234B3A/i)
+    expect(art).toMatch(/s_on .seg-ic_dine\s*\{[^}]*%23FF4896/i)
   })
 })
 
@@ -41,11 +41,13 @@ describe('home v6 — scan card + chef banner + promos', () => {
     expect(wxml).toMatch(/bindtap="scanDineIn"/)
   })
 
-  it('chef banner is a colored data-uri illustration (brand + terracotta fills)', () => {
+  it('hero banner is a colored data-uri illustration (pink outline + orange fills, no Pine-Ink residue)', () => {
     expect(wxml).toMatch(/home-hero/)
     expect(art).toMatch(/\.home-hero\s*\{[^}]*data:image\/svg\+xml/)
-    expect(art).toMatch(/%23234B3A/i)
-    expect(art).toMatch(/%23C8643C/i)
+    expect(art).toMatch(/%23FF4896/i)
+    expect(art).toMatch(/%23F0801A/i)
+    expect(art).not.toMatch(/%23234B3A/i)
+    expect(art).not.toMatch(/%23C8643C/i)
   })
 
   it('福利放送 has two static illustrated promo cards', () => {

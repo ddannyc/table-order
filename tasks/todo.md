@@ -21,7 +21,7 @@ nudged 工作值：`--price-ink #D11414`(红字 on 卡)、`--pink-deep #D81A60`(
 
 ### Phase 2 — 各屏
 - [x] **T3** 菜单页：价格红(令牌已粉)/ 针+空碗+饮品插画描边改粉 / cartbar 渐变→深粉 / 暖瓦底→粉 + `menu-reskin.test.js` — M ✅ (优惠圈属新组件需数据，本期不加；菜单为左轨非#标题)
-- [ ] **T4** 首页：粉渐变头 / 分段+图标改粉 / nav 色 / banner / 促销 + **品牌文案改鸡福旺(四月春膳→鸡福旺、tagline、logo 春→鸡、json 标题)** + `home-reskin.test.js`(含 `/四月春膳/`→`/鸡福旺/`) + `nav-color.test.js` — M
+- [x] **T4** 首页：按 screens-shot 重设计 — 粉渐变头 / 分段图标粉 / nav 粉 / 现炸 banner(炸鸡插画) / `#`人气推荐 / 招牌窑鸡·黄金鸡米花促销 + 品牌改鸡福旺(logo 鸡、tagline、json 标题) + `home-reskin`/`nav-color` 测试 — M ✅ (新增炸鸡腿/鸡米花 SVG,已 chrome 验证)
 - [ ] **T5** 结算页：门店卡 / `#`明细 / 应付红 / 福利金开关 / 确认支付 + 内联 switch 色 — S
 - [ ] **T6** 我的页：粉会员头 / 金余额 / 三栏 / tab 激活粉 / 订单卡 — M
 - [ ] **Checkpoint B**：`npx jest` 全量绿 + 四屏贴合效果图 + 人工评审
