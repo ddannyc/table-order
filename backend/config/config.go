@@ -101,6 +101,10 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.Server.Port = getEnv("PORT", cfg.Server.Port)
 	cfg.Server.Mode = getEnv("MODE", cfg.Server.Mode)
 	cfg.Server.BaseURL = getEnv("BASE_URL", cfg.Server.BaseURL)
+	// JWT secret: Railway has no config.yaml, so it must be injectable via env.
+	// An empty secret signs forgeable tokens and makes the quote-token secret
+	// fail closed (delivery returns "外卖配送暂未开通").
+	cfg.JWT.Secret = getEnv("JWT_SECRET", cfg.JWT.Secret)
 	// CORS allowlist: comma-separated origins. Defaults cover the deployed admin SPA and local dev.
 	for _, o := range strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "https://table-order-admin.pages.dev,http://localhost:5173"), ",") {
 		if o = strings.TrimSpace(o); o != "" {
