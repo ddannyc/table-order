@@ -36,5 +36,10 @@ nudged 工作值：`--price-ink #D11414`(红字 on 卡)、`--pink-deep #D81A60`(
 - T3 → `menu-reskin.test.js`
 - T4 → `home-reskin.test.js` + `nav-color.test.js`
 
+## 跟进（T3/T5 仅改色，未对齐版式 → 补结构）
+- [x] **F1** 菜单页对齐 spec-shot：加品牌海报头(#鸡福旺+现炸出炉+标语药丸) + `#`板块标题 + 黄底红字价格标 + body 高度让位海报 — ✅ (chrome 验证 verify-menu.png；优惠圈需 per-item 数据,未加)
+- [x] **F2** 结算页对齐 screens-shot：应付总额 text-primary 粉→价格红(与提交栏一致) — ✅ (verify-oc.png)
+- 真机像素核对：weapp-dev mp_screenshot 本会话超时,待开发者工具人工核对
+
 ## 不在本期
 - 真实菜品摄影（OSS 后填，插画/占位过渡）；优惠券/自提/预约；新增屏

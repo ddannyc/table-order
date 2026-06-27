@@ -46,7 +46,7 @@
       </mp-cell>
       <mp-cell>
         <view slot="title" class="total-label">{{useReward ? '应付金额' : '合计'}}</view>
-        <view slot="footer" class="total-amount text-primary">¥{{actualPayAmount}}</view>
+        <view slot="footer" class="total-amount">¥{{actualPayAmount}}</view>
       </mp-cell>
     </mp-cells>
   </view>

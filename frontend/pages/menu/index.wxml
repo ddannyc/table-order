@@ -48,6 +48,15 @@
   <!-- 菜单主体 -->
   <view wx:else class="menu-main">
 
+    <!-- 品牌海报头（对齐设计稿：#鸡福旺 + 现炸出炉 + 标语药丸） -->
+    <view class="menu-poster">
+      <view class="menu-poster-row">
+        <view class="menu-poster-brand">#鸡福旺</view>
+        <view class="menu-poster-tag">现炸出炉</view>
+      </view>
+      <view class="menu-poster-sub">五指毛桃鸡 · 鲜烤窑鸡 · 现炸零食小食</view>
+    </view>
+
     <!-- 门店栏 + 只读点餐方式（单型在首页唯一入口确定，菜单内不可切换） -->
     <view class="menu-shopbar">
       <view class="menu-shop-pin" aria-hidden="true"></view>
@@ -74,6 +83,7 @@
 
       <!-- 右：当前类目大图卡片 -->
       <scroll-view scroll-y class="menu-list" enable-flex>
+        <view class="menu-sec">{{activeCategory}}</view>
         <view class="menu-card" wx:for="{{productsByCategory[activeCategory]}}" wx:for-item="p" wx:key="id">
           <view class="menu-card-thumb">
             <image wx:if="{{p.hasImage}}" class="menu-thumb-img" src="{{p.image}}" mode="aspectFill" lazy-load="{{true}}" binderror="onImgError" data-id="{{p.id}}" />

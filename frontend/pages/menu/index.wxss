@@ -5,6 +5,60 @@
   /* 左右布局自身按视口高度铺满；底部留白由右侧列表负责 */
 }
 
+/* 品牌海报头（粉底，对齐设计稿：#鸡福旺 + 现炸出炉 + 标语药丸） */
+.menu-poster {
+  height: 160rpx;
+  box-sizing: border-box;
+  background: var(--weui-BRAND);
+  padding: 16rpx 24rpx 18rpx;
+}
+.menu-poster-row {
+  display: flex;
+  align-items: center;
+}
+.menu-poster-brand {
+  font-size: 48rpx;
+  font-weight: 900;
+  letter-spacing: 2rpx;
+  color: #fff;
+  line-height: 1.15;
+}
+.menu-poster-tag {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--jf-tag-red);
+  font-size: 20rpx;
+  font-weight: 900;
+  padding: 4rpx 14rpx;
+  border-radius: 8rpx;
+}
+.menu-poster-sub {
+  margin-top: 10rpx;
+  display: inline-block;
+  background: #fff;
+  color: var(--jf-title-blue);
+  font-size: 22rpx;
+  font-weight: 700;
+  padding: 6rpx 18rpx;
+  border-radius: 999rpx;
+}
+
+/* # 板块标题（深蓝 + 粉 #，对齐设计稿） */
+.menu-sec {
+  display: flex;
+  align-items: baseline;
+  font-size: 30rpx;
+  font-weight: 800;
+  color: var(--jf-title-blue);
+  padding: var(--space-sm) 0 var(--space-md);
+}
+.menu-sec::before {
+  content: "#";
+  color: var(--weui-BRAND);
+  font-weight: 800;
+  margin-right: 6rpx;
+}
+
 /* 未绑桌空状态：单线空碗插画（陶土橙描边，与 --accent 同源） */
 .menu-empty-illu {
   width: 200rpx;
@@ -61,7 +115,7 @@
 /* 左右布局：左类目轨 + 右大图卡片，各自独立滚动 */
 .menu-body {
   display: flex;
-  height: calc(100vh - 96rpx); /* 减去门店栏，左右轨独立滚动 */
+  height: calc(100vh - 96rpx - 160rpx); /* 减去门店栏 + 海报头，左右轨独立滚动 */
 }
 
 /* 左：竖向类目轨 */
@@ -190,17 +244,23 @@
   }
 }
 
+/* 黄底红字价格标（对齐设计稿；大字粗体数字 on 黄 3.2:1 过大字阈值） */
 .menu-price {
+  display: inline-flex;
+  align-items: baseline;
+  background: var(--accent);
+  color: var(--price-ink);
   font-size: var(--font-price);
-  font-weight: 600;
-  color: var(--price-ink); /* 暗金铜，仅大字粗体（3.7:1 过大字阈值） */
+  font-weight: 700;
+  padding: 2rpx 14rpx;
+  border-radius: 8rpx;
 }
 
 .menu-price-from {
   font-size: var(--font-caption);
   font-weight: 400;
   margin-left: 2rpx;
-  color: var(--weui-FG-2);
+  color: var(--price-ink);
 }
 
 .menu-action {

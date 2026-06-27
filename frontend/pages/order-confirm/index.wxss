@@ -126,6 +126,7 @@
 .total-amount {
   font-size: var(--font-title);
   font-weight: bold;
+  color: var(--price-ink); /* 应付总额红，与底部提交栏一致（对齐设计稿） */
 }
 
 .reward-toggle {
