@@ -24,7 +24,7 @@
   width: 84rpx;
   height: 84rpx;
   border-radius: 24rpx;
-  background: #fff;
+  background: var(--accent); /* 黄底品牌字标，对齐设计稿 */
   color: var(--weui-BRAND);
   font-size: 38rpx;
   font-weight: 800;
@@ -97,7 +97,7 @@
   width: 80rpx;
   height: 80rpx;
   border-radius: 20rpx;
-  background-color: var(--weui-BRAND);
+  background-color: var(--jf-tag-pink); /* 浅粉底，对齐设计稿 */
   background-repeat: no-repeat;
   background-position: center;
   background-size: 42rpx 42rpx;
@@ -203,7 +203,8 @@
 .sec-more {
   margin-left: auto;
   font-size: 24rpx;
-  color: var(--weui-FG-2);
+  font-weight: 700;
+  color: var(--jf-blue); /* 蓝色点缀，对齐设计稿 */
 }
 
 .promos {
@@ -236,6 +237,7 @@
 
 .promo-n {
   font-size: 28rpx;
+  font-weight: 800;
   color: var(--weui-FG-0);
 }
 

@@ -56,3 +56,27 @@ describe('home v6 — scan card + chef banner + promos', () => {
     expect(art).toMatch(/\.promo-bowl\s*\{[^}]*data:image\/svg\+xml/)
   })
 })
+
+describe('home — 对齐 mock-screens 设计细节', () => {
+  const rule = (sel) => wxss.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'))[1]
+
+  it('logo 用黄底（品牌字标，对齐设计稿）', () => {
+    expect(rule('.logo')).toMatch(/background:\s*var\(--accent\)/)
+  })
+
+  it('“更多›”用蓝色点缀 + 加粗（设计稿 sect-more 是蓝色）', () => {
+    const m = rule('.sec-more')
+    expect(m).toMatch(/color:\s*var\(--jf-blue\)/)
+    expect(m).toMatch(/font-weight:\s*700/)
+  })
+
+  it('promo 菜名加粗 800（设计稿 promo-n 800）', () => {
+    expect(rule('.promo-n')).toMatch(/font-weight:\s*800/)
+  })
+
+  it('扫码图标框用浅粉底 + 深粉二维码（设计稿 tag-pink 底 + tag-red 码）', () => {
+    expect(rule('.scan-qr')).toMatch(/background-color:\s*var\(--jf-tag-pink\)/)
+    expect(art).toMatch(/\.scan-qr-ic\s*\{[^}]*%23C2185B/i)
+    expect(art).not.toMatch(/\.scan-qr-ic\s*\{[^}]*stroke%3D'%23fff'/i)
+  })
+})
