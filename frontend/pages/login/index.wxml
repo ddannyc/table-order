@@ -26,7 +26,7 @@
   </view>
 
   <view class="login-btn-wrap">
-    <button class="weui-btn" type="primary" bindtap="handleLogin" loading="{{loading}}">
+    <button class="weui-btn weui-btn_primary" type="primary" bindtap="handleLogin" loading="{{loading}}">
       微信授权登录
     </button>
   </view>

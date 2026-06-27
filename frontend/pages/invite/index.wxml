@@ -37,7 +37,7 @@
     <view class="share-title">邀请好友赚福利金币</view>
     <view class="share-desc">直推10% · 间推4% · 自购3%</view>
 
-    <button wx:if="{{!needLogin}}" class="weui-btn" type="primary" open-type="share">分享到微信</button>
+    <button wx:if="{{!needLogin}}" class="weui-btn weui-btn_primary" type="primary" open-type="share">分享到微信</button>
     <button class="weui-btn weui-btn_default" bind:tap="goShareCode" style="margin-top:16rpx">我的推广码</button>
   </view>
 

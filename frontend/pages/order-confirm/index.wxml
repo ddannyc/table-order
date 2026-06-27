@@ -78,10 +78,10 @@
       <text class="submit-label">{{useReward ? '应付' : '合计'}}</text>
       <text class="submit-amount">¥{{actualPayAmount}}</text>
     </view>
-    <button wx:if="{{!needLogin}}" class="weui-btn" type="primary" bindtap="handlePay" loading="{{loading}}">
+    <button wx:if="{{!needLogin}}" class="weui-btn weui-btn_primary" type="primary" bindtap="handlePay" loading="{{loading}}">
       确认支付
     </button>
-    <button wx:else class="weui-btn" type="primary" bindtap="handleLogin">
+    <button wx:else class="weui-btn weui-btn_primary" type="primary" bindtap="handleLogin">
       登录后下单
     </button>
   </view>
