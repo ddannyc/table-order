@@ -1,10 +1,15 @@
 /**
- * Tests for the 松墨 Pine-Ink design tokens (T1).
+ * Tests for the 鸡福旺 (JFW) brand design tokens.
  * Guards three things:
  *   1. Each token is defined in app.wxss with its agreed hex value.
- *   2. .page paints the cream page background (--weui-BG-0).
+ *   2. .page paints the page background (--weui-BG-0).
  *   3. The chosen colors meet WCAG contrast floors — computed here, so a
  *      future token edit that quietly breaks contrast fails the suite.
+ *
+ * WCAG policy (see tasks/plan.md 决策 #3): small text keeps AA 4.5:1; the bright
+ * brand pink (--weui-BRAND) carries only fills + large brand text (AA-large 3:1,
+ * the correct threshold for >=18px/bold). Small light text rides --green-2 (deep
+ * pink). The price tag is red text on a light card, not red-on-yellow.
  */
 const fs = require('fs')
 const path = require('path')
@@ -32,25 +37,30 @@ const contrast = (a, b) => {
   return (hi + 0.05) / (lo + 0.05)
 }
 
-describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
+describe('theme tokens — 鸡福旺 (JFW) palette', () => {
   const expected = {
-    '--weui-BRAND': '#234B3A',
-    '--green-2': '#2F6B4F',
-    '--weui-BG-0': '#F3EEE4',
-    '--weui-BG-1': '#FBF8F2',
-    '--weui-BG-2': '#EFE9DD',
-    '--weui-FG-0': '#2A2723',
-    '--weui-FG-2': '#6E665A',
-    '--weui-FG-3': '#E3DCCE',
-    '--accent': '#C8643C',
-    '--price-ink': '#B0491F',
+    '--weui-BRAND': '#FF4896', // 主粉：按钮/激活/cartbar/徽章
+    '--green-2': '#D81A60', // 深粉：渐变深端 + 承载小号浅色文字（白字 ≈4.96:1）
+    '--weui-BG-0': '#FBEFF3', // 页面·淡粉
+    '--weui-BG-1': '#FFFDF8', // 卡面·暖近白
+    '--weui-BG-2': '#FCE7EF', // 左类目轨底
+    '--weui-FG-0': '#222222', // 正文
+    '--weui-FG-2': '#6E646A', // 次要文字（>=4.5:1 on 页/卡）
+    '--weui-FG-3': '#E8E8E8', // 分割线
+    '--accent': '#FFD300', // 亮黄：优惠圈/装饰（不垫价格数字）
+    '--price-ink': '#D11414', // 价格红（on 卡 ≈5.4:1）
+    '--jf-blue': '#0066FF', // 蓝点缀
+    '--jf-title-blue': '#0A2463', // # 板块标题
+    '--jf-tag-pink': '#FFE0ED', // 优惠圈底
+    '--jf-tag-red': '#C2185B', // 优惠圈字
+    '--jf-orange': '#FFB829', // 饮品/果茶
   }
 
   it.each(Object.entries(expected))('defines %s = %s', (name, hex) => {
     expect(token(name)).toBe(hex)
   })
 
-  it('.page paints the cream page background (--weui-BG-0)', () => {
+  it('.page paints the page background (--weui-BG-0)', () => {
     expect(css).toMatch(/\.page\s*\{[^}]*background:\s*var\(--weui-BG-0\)/)
   })
 
@@ -59,29 +69,50 @@ describe('theme tokens — 松墨 Pine-Ink palette (T1)', () => {
   // bright green. !important on the custom-property declaration is the fix — guard
   // it so a reformat/lint-autofix that drops it can't silently reintroduce the bug.
   it('pins --weui-BRAND with !important to beat weui\'s .wx-root green', () => {
-    expect(css).toMatch(/--weui-BRAND:\s*#234B3A\s*!important/i)
+    expect(css).toMatch(/--weui-BRAND:\s*#FF4896\s*!important/i)
+  })
+
+  it('leaves no Pine-Ink residue in the token block', () => {
+    for (const stale of ['#234B3A', '#2F6B4F', '#C8643C', '#B0491F']) {
+      expect(css).not.toContain(stale)
+    }
   })
 })
 
 describe('theme tokens — WCAG contrast floors', () => {
-  const BG0 = '#F3EEE4'
-  const BG1 = '#FBF8F2'
-  const BRAND = '#234B3A'
-  const FG0 = '#2A2723'
-  const FG2 = '#6E665A'
-  const PRICE = '#B0491F'
+  const BG0 = token('--weui-BG-0')
+  const BG1 = token('--weui-BG-1')
+  const BRAND = token('--weui-BRAND')
+  const PINK_DEEP = token('--green-2')
+  const FG0 = token('--weui-FG-0')
+  const FG2 = token('--weui-FG-2')
+  const PRICE = token('--price-ink')
+  const TITLE = token('--jf-title-blue')
+  const TAG_PINK = token('--jf-tag-pink')
+  const TAG_RED = token('--jf-tag-red')
+  const WHITE = '#FFFFFF'
 
-  it('price-ink passes AA on both backgrounds (>=4.5:1)', () => {
+  it('price red passes AA on both light backgrounds (>=4.5:1)', () => {
     expect(contrast(PRICE, BG0)).toBeGreaterThanOrEqual(4.5)
     expect(contrast(PRICE, BG1)).toBeGreaterThanOrEqual(4.5)
   })
-  it('secondary text passes AA for small text on cream (>=4.5:1)', () => {
+  it('secondary text passes AA for small text on the page (>=4.5:1)', () => {
     expect(contrast(FG2, BG0)).toBeGreaterThanOrEqual(4.5)
+    expect(contrast(FG2, BG1)).toBeGreaterThanOrEqual(4.5)
   })
-  it('body text is high-contrast on cream (>=7:1)', () => {
+  it('body text is high-contrast on the page (>=7:1)', () => {
     expect(contrast(FG0, BG0)).toBeGreaterThanOrEqual(7.0)
   })
-  it('cream text on the brand band passes AA (>=4.5:1)', () => {
-    expect(contrast(BG0, BRAND)).toBeGreaterThanOrEqual(4.5)
+  it('white small text on the deep-pink band passes AA (>=4.5:1)', () => {
+    expect(contrast(WHITE, PINK_DEEP)).toBeGreaterThanOrEqual(4.5)
+  })
+  it('white large brand text on bright pink passes AA-large (>=3:1)', () => {
+    expect(contrast(WHITE, BRAND)).toBeGreaterThanOrEqual(3.0)
+  })
+  it('# section title (blue) passes AA on the card (>=4.5:1)', () => {
+    expect(contrast(TITLE, BG1)).toBeGreaterThanOrEqual(4.5)
+  })
+  it('coupon text passes AA on the coupon pink (>=4.5:1)', () => {
+    expect(contrast(TAG_RED, TAG_PINK)).toBeGreaterThanOrEqual(4.5)
   })
 })

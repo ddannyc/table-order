@@ -2,22 +2,28 @@
 @import 'miniprogram_npm/weui-miniprogram/weui-wxss/dist/style/weui.wxss';
 
 page {
-  /* 松墨 Pine-Ink 配色（覆盖 weui 变量，须在上方 @import 之后生效）。
-     全部值已过 WCAG，详见 docs/ideas/texture-uplift-pine-ink.md / theme-tokens.test.js。 */
+  /* 鸡福旺 (JFW) 品牌配色（覆盖 weui 变量，须在上方 @import 之后生效）。
+     全部值已过 WCAG，详见 tasks/plan.md / theme-tokens.test.js。 */
   /* !important：weui 在更高特异性的 .wx-root 上把 --weui-BRAND 设为亮绿 #07c160，
      仅靠 page 选择器会被盖过（主按钮/cartbar/徽章因此发亮绿）。自定义属性声明加
-     !important 即可无视特异性胜出，让整套松墨主色真正生效。其余 BG/FG 令牌 weui
+     !important 即可无视特异性胜出，让整套品牌主色真正生效。其余 BG/FG 令牌 weui
      只定义在 page 上，无此问题。 */
-  --weui-BRAND: #234B3A !important;   /* 主色：品牌band/主按钮/激活竖条/cartbar/徽章底（对齐 v6 设计稿） */
-  --green-2: #2F6B4F;      /* 辅助绿：渐变/插画次色 */
-  --weui-BG-0: #F3EEE4;    /* 页面·燕麦奶油 */
-  --weui-BG-1: #FBF8F2;    /* 卡面·近白暖 */
-  --weui-BG-2: #EFE9DD;    /* 门店栏/左类目轨底 */
-  --weui-FG-0: #2A2723;    /* 正文（12:1） */
-  --weui-FG-2: #6E665A;    /* 次要文字（4.89:1，比参考 #8A8275 调暗以过 AA） */
-  --weui-FG-3: #E3DCCE;    /* 暖发丝线 */
-  --accent: #C8643C;       /* 陶土橙：标签/数量徽章/加购点缀（填充；小字文字对比不足，慎用） */
-  --price-ink: #B0491F;    /* 深陶土：价格文字（4.76:1，正文级也过） */
+  --weui-BRAND: #FF4896 !important;   /* 主粉：品牌band/主按钮/激活竖条/cartbar/徽章底（填充+大字；大字 on 粉 3.17:1 过 AA-large） */
+  --green-2: #D81A60;      /* 深粉：渐变深端 + 承载小号浅色文字（白字 4.96:1 过 AA）。沿用 green-2 槽位避免改名波及 */
+  --weui-BG-0: #FBEFF3;    /* 页面·淡粉 */
+  --weui-BG-1: #FFFDF8;    /* 卡面·暖近白 */
+  --weui-BG-2: #FCE7EF;    /* 门店栏/左类目轨底 */
+  --weui-FG-0: #222222;    /* 正文（on 页 14.2:1） */
+  --weui-FG-2: #6E646A;    /* 次要文字（on 页 5.07:1 / on 卡 5.59:1，过 AA） */
+  --weui-FG-3: #E8E8E8;    /* 分割线 */
+  --accent: #FFD300;       /* 亮黄：优惠圈环/装饰（填充；不垫在价格数字下，红字 on 黄仅 3.2:1） */
+  --price-ink: #D11414;    /* 价格红：价格文字（on 卡 5.41:1 / on 页 4.90:1，过 AA） */
+  /* JFW 新增色（规范扩展，无既有 weui 槽） */
+  --jf-blue: #0066FF;      /* 蓝点缀：饮品/链接/边框线 */
+  --jf-title-blue: #0A2463; /* # 板块标题（on 卡 14.3:1） */
+  --jf-tag-pink: #FFE0ED;  /* 优惠圈底 */
+  --jf-tag-red: #C2185B;   /* 优惠圈字（on tag-pink 4.79:1，过 AA） */
+  --jf-orange: #FFB829;    /* 饮品/果茶配图主色 */
 
   /* Spacing */
   --space-xs: 8rpx;
