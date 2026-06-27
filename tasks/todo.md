@@ -1,22 +1,40 @@
-# Todo：实现 v6 设计稿（首页 / 菜品 / 下单 / Tab）
+# Todo：鸡福旺 配色落地（Pine-Ink → JFW Reskin）
 
-详见 `tasks/plan.md`。视觉真源：`docs/design/mockup-v6.png`。
-一任务一提交，TDD（RED→GREEN→回归 jest）。本环境无模拟器，像素对齐靠 C1 真机核对。
-基线：绝不 git add `frontend/config.js` / `.claude/` / `specs/`；只 stage 该任务文件 + todo。
+详见 `tasks/plan.md`。视觉真源：`spec-shot.png`（菜单）/`screens-shot.png`（首页/结算/我的）。
+TDD、一任务一提交；改代码同提交内同步它守护的测试。设备核对用 weapp-dev MCP 截图对照效果图。
+**git 卫生**：只 stage 该任务文件 + `tasks/`；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`/`specs/`。
+
+## ✅ 已定（2026-06-28）
+- [x] Q1 WCAG = **微调色值达 4.5:1**（不放宽测试；粉双值 + 价签红字 on 卡 + tag-red 调深）
+- [x] Q2 品牌文案 = **一并改成鸡福旺**（随 T4）
+- [x] Q3 页面背景 = **淡粉 `#FBEFF3`**（`--weui-BG-0`）
+- [x] Q4 分支 = **当前 `feat/shansong-delivery`**
+
+nudged 工作值：`--price-ink #D11414`(红字 on 卡)、`--pink-deep #D81A60`(小字浅色带)、`--jf-tag-red #C2185B`(优惠圈字)；亮黄不垫价格数字。最终由 `theme-tokens.test.js` 对比度计算把关。
 
 ## 任务（纵切，按依赖顺序）
-- [x] **D1** 配色令牌对齐 v6（BRAND→#234B3A + --green-2）+ 对比度测试 — S（地基）✅
-- [x] **D2** 首页重构到 v6：品牌头(移除余额/福利金) + 堂食/外卖分段(线描图标) + 扫码卡 + v1厨师 banner + 福利放送 — L（依赖 D1）✅
-- [x] **D3** 菜品页到 v6：彩色饮品占位插画（匹配真实饮品分类）+ 购物车条已在 tab 之上 — L（依赖 D1）✅
-- [x] **D4** 下单页到 v6：福利金抵扣开关(墨绿 switch) + 支付方式仅微信(绿徽+勾) + 缩略图(R4) + 移除冗余福利金卡 — M（依赖 D3）✅
-- [x] **D5** Tab 线描图标对齐 v6（激活色 #2C4A3B→BRAND #234B3A，线描风格已符合）— S/M（依赖 D1）✅
 
-## Checkpoint
-- [~] **C1** 全量 jest 绿 ✅(150/150) + 真机/开发者工具逐屏对照 mockup-v6.png（⏳ 待人工：本环境无模拟器）
+### Phase 1 — 地基
+- [ ] **T1** `app.wxss` 令牌重映射到 JFW + 新增 5 个 `--jf-*` + 重写 `theme-tokens.test.js`（值 + 重定阈值）— S
+- [ ] **T2** tabbar 激活色 `#234B3A`→`#FF4896`（3×SVG + `.ctab-t_on`）+ `custom-tabbar.test.js` — S
+- [ ] **Checkpoint A**：`npx jest theme-tokens custom-tabbar` 绿 + 全局变粉 + 人工评审
 
-## Resolved Decisions（已定）
-- 福利放送 = 静态装饰卡（不接数据、不可点、占位，日后可接精选菜品）
-- 堂食/外卖分段：选外卖即 chooseDelivery 进配送流；扫码卡仅堂食 scanDineIn
+### Phase 2 — 各屏
+- [ ] **T3** 菜单页：黄底红字价签 / `#`深蓝标题 / 优惠圈 / 粉加购 / 针+插画描边改粉 + `menu-reskin.test.js` — M
+- [ ] **T4** 首页：粉渐变头 / 分段+图标改粉 / nav 色 / banner / 促销 + **品牌文案改鸡福旺(四月春膳→鸡福旺、tagline、logo 春→鸡、json 标题)** + `home-reskin.test.js`(含 `/四月春膳/`→`/鸡福旺/`) + `nav-color.test.js` — M
+- [ ] **T5** 结算页：门店卡 / `#`明细 / 应付红 / 福利金开关 / 确认支付 + 内联 switch 色 — S
+- [ ] **T6** 我的页：粉会员头 / 金余额 / 三栏 / tab 激活粉 / 订单卡 — M
+- [ ] **Checkpoint B**：`npx jest` 全量绿 + 四屏贴合效果图 + 人工评审
+
+### Phase 3 — 清扫 & QA
+- [ ] **T7** 残留色 grep 清扫 + app.json nav + invite/share-code/login 抽查 + 全设备 QA — S/M
+- [ ] **Checkpoint C**：全量绿 + 残留 grep 干净 + 真机贴合 → 可提交/开 PR
+
+## 守护测试映射（改代码即同步）
+- T1 → `theme-tokens.test.js`
+- T2 → `custom-tabbar.test.js`
+- T3 → `menu-reskin.test.js`
+- T4 → `home-reskin.test.js` + `nav-color.test.js`
 
 ## 不在本期
-- 真实菜品摄影（OSS 后填）；优惠券/自提/预约时间（无后端）；地址/选店/我的订单屏
+- 真实菜品摄影（OSS 后填，插画/占位过渡）；优惠券/自提/预约；新增屏
