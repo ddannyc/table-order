@@ -13,7 +13,7 @@
     </view>
     <view class="prompt-title">授权登录</view>
     <view class="prompt-desc">登录后查看推广码和福利金币</view>
-    <button class="weui-btn weui-btn_primary" type="primary" bind:tap="handleLogin">微信授权登录</button>
+    <button class="weui-btn weui-btn_primary" bind:tap="handleLogin">微信授权登录</button>
   </view>
 
   <!-- 已登录内容 -->
@@ -64,7 +64,7 @@
 
   <!-- Actions -->
   <view wx:if="{{!needLogin}}" class="actions">
-    <button class="weui-btn weui-btn_primary" type="primary" open-type="share">分享给好友</button>
+    <button class="weui-btn weui-btn_primary" open-type="share">分享给好友</button>
     <button class="weui-btn weui-btn_default" bind:tap="copyLink">复制邀请码</button>
   </view>
 </view>

@@ -12,7 +12,7 @@
     </view>
     <view class="weui-msg__opr-area">
       <view class="weui-btn-area">
-        <button class="weui-btn weui-btn_primary" type="primary" bind:tap="scanQR">扫码点餐</button>
+        <button class="weui-btn weui-btn_primary" bind:tap="scanQR">扫码点餐</button>
         <button class="weui-btn" type="default" bind:tap="goHome">返回首页</button>
       </view>
     </view>
@@ -32,7 +32,7 @@
     </view>
     <view class="weui-msg__opr-area">
       <view class="weui-btn-area">
-        <button class="weui-btn weui-btn_primary" type="primary" bind:tap="onRetry">重新加载</button>
+        <button class="weui-btn weui-btn_primary" bind:tap="onRetry">重新加载</button>
       </view>
     </view>
   </view>

@@ -1,7 +1,11 @@
 /**
- * 守护：原生 <button type="primary"> 自带微信绿 #07c160，会无视 --weui-BRAND 令牌。
- * 凡是主操作按钮都必须带 weui-btn_primary 类，这样背景才走品牌粉 var(--weui-BRAND)。
- * （weui 的 .weui-btn_primary{background-color:var(--weui-BRAND)} 会盖掉原生绿。）
+ * 守护：主操作按钮必须走品牌粉，不能露出微信原生绿 #07c160。
+ *
+ * 关键坑：原生 <button type="primary"> 的绿底由微信基础组件渲染，优先级高于
+ * 作者样式类——即使加了 .weui-btn_primary{background:var(--weui-BRAND)} 也盖不掉。
+ * （菜单里的“选规格”是 <view class="weui-btn_primary">，view 没有原生绿才显粉。）
+ * 因此正确做法是去掉 type="primary"，只留 weui-btn_primary 类，让 weui 的粉底生效；
+ * type 只影响原生配色，不影响 bindtap/loading/open-type 行为。
  */
 const fs = require('fs');
 const path = require('path');
@@ -18,29 +22,28 @@ function walkWxml(dir) {
   return out;
 }
 
-// 抓取每个 <button ...> 开标签
 function buttonTags(content) {
   return content.match(/<button\b[^>]*>/g) || [];
 }
 
-describe('主操作按钮走品牌粉，不留原生微信绿', () => {
+describe('主操作按钮走品牌粉，不露微信原生绿', () => {
   const files = walkWxml(PAGES_DIR);
 
-  it('存在带 type="primary" 的按钮（基线，确保用例有效）', () => {
+  it('任何页面都不再用 <button type="primary">（原生绿盖不掉）', () => {
+    const offenders = [];
+    for (const file of files) {
+      buttonTags(fs.readFileSync(file, 'utf8'))
+        .filter((t) => /type="primary"/.test(t))
+        .forEach((t) => offenders.push(`${path.relative(PAGES_DIR, file)}: ${t}`));
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('主操作按钮改用 weui-btn_primary 类（基线：至少有几个）', () => {
     const total = files.reduce(
-      (n, f) => n + buttonTags(fs.readFileSync(f, 'utf8')).filter((t) => /type="primary"/.test(t)).length,
+      (n, f) => n + buttonTags(fs.readFileSync(f, 'utf8')).filter((t) => /\bweui-btn_primary\b/.test(t)).length,
       0,
     );
     expect(total).toBeGreaterThan(0);
   });
-
-  for (const file of files) {
-    const rel = path.relative(PAGES_DIR, file);
-    const primaryBtns = buttonTags(fs.readFileSync(file, 'utf8')).filter((t) => /type="primary"/.test(t));
-    primaryBtns.forEach((tag, i) => {
-      it(`${rel} 第${i + 1}个 primary 按钮带 weui-btn_primary: ${tag.slice(0, 70)}`, () => {
-        expect(tag).toMatch(/class="[^"]*\bweui-btn_primary\b[^"]*"/);
-      });
-    });
-  }
 });
