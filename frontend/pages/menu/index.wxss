@@ -160,21 +160,22 @@
   border-left-color: var(--weui-BRAND);
 }
 
-/* 右：大图卡片列表（近白暖面板，与左侧 BG-2 轨形成层次） */
+/* 右：大图卡片列表（淡粉底，白卡浮于其上，对齐设计稿） */
 .menu-list {
   flex: 1;
   height: 100%;
-  background: var(--weui-BG-1);
+  background: var(--weui-BG-0);
   padding: var(--space-sm) var(--space-md) 220rpx; /* 底部留白避开购物车条 + tabbar */
 }
 
+/* 浮起的白色圆角卡片（对齐设计稿：白卡 + 圆角 + 粉调柔投影，卡间留白） */
 .menu-card {
   display: flex;
-  padding: var(--space-md) 0;
-  border-bottom: 1rpx solid var(--weui-FG-3);
-}
-.menu-card:last-child {
-  border-bottom: none;
+  padding: var(--space-md);
+  margin-bottom: var(--space-sm);
+  background: var(--weui-BG-1);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 4rpx 16rpx rgba(255, 72, 150, 0.08);
 }
 
 /* 缩略图：真实图或 CSS 占位块（同尺寸，避免布局跳动） */
@@ -357,7 +358,7 @@
 .menu-cart-go {
   flex: none;
   background: var(--accent);
-  color: #fff;
+  color: var(--jf-title-blue); /* 深蓝字 on 亮黄，对比度达标且对齐设计稿 */
   font-weight: 700;
   font-size: var(--font-body);
   padding: 18rpx 44rpx;

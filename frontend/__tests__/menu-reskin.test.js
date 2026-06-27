@@ -19,8 +19,22 @@ describe('menu reskin — Pine-Ink surfaces (T4)', () => {
     expect(wxss).toMatch(/\.menu-cartbar\s*\{[^}]*background:[^}]*var\(--weui-BRAND\)/)
   })
 
-  it('the content list reads as a near-white panel against the cream page', () => {
-    expect(wxss).toMatch(/\.menu-list\s*\{[^}]*background:\s*var\(--weui-BG-1\)/)
+  it('the list area is tinted so white product cards float on it (对齐设计稿)', () => {
+    expect(wxss).toMatch(/\.menu-list\s*\{[^}]*background:\s*var\(--weui-BG-0\)/)
+  })
+
+  it('product cards are elevated rounded tiles, not a flat divided list (对齐设计稿)', () => {
+    const card = wxss.match(/\.menu-card\s*\{([^}]*)\}/)[1]
+    expect(card).toMatch(/background:\s*var\(--weui-BG-1\)/) // 白卡
+    expect(card).toMatch(/border-radius/)
+    expect(card).toMatch(/box-shadow/)
+    expect(card).not.toMatch(/border-bottom/) // 不再用分隔线
+  })
+
+  it('去结算 药丸用深蓝字 on 黄底（白字 on 黄对比度失守且不符设计）', () => {
+    const go = wxss.match(/\.menu-cart-go\s*\{([^}]*)\}/)[1]
+    expect(go).toMatch(/color:\s*var\(--jf-title-blue\)/)
+    expect(go).not.toMatch(/color:\s*#fff/)
   })
 })
 
