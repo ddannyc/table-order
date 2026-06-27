@@ -143,11 +143,11 @@
 }
 
 .log-amount.plus {
-  color: var(--weui-BRAND);
+  color: var(--green-2); /* 深粉：收入，小字 on 卡 4.88:1 过 AA（亮粉 --weui-BRAND 仅 3.1） */
 }
 
 .log-amount.minus {
-  color: var(--weui-RED);
+  color: var(--price-ink); /* 价格红：支出，5.41:1 */
 }
 
 .order-item {
@@ -234,7 +234,7 @@
 
 .expiring-soon-bar {
   background: var(--weui-BG-1);
-  color: var(--weui-RED);
+  color: var(--price-ink); /* 价格红：警示文字小字过 AA（weui-RED on 近白仅 ~3.3） */
   padding: 20rpx var(--space-lg);
   font-size: var(--font-caption);
   margin-bottom: var(--space-sm);
