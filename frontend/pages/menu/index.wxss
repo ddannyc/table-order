@@ -7,21 +7,22 @@
 
 /* 品牌海报头（粉底，对齐设计稿：#鸡福旺 + 现炸出炉 + 标语药丸） */
 .menu-poster {
-  height: 160rpx;
+  height: 184rpx;
   box-sizing: border-box;
   background: var(--weui-BRAND);
-  padding: 16rpx 24rpx 18rpx;
+  padding: 18rpx 24rpx 20rpx;
 }
 .menu-poster-row {
   display: flex;
   align-items: center;
 }
 .menu-poster-brand {
-  font-size: 48rpx;
+  font-size: 60rpx;
   font-weight: 900;
   letter-spacing: 2rpx;
   color: #fff;
-  line-height: 1.15;
+  line-height: 1.1;
+  text-shadow: 3rpx 5rpx 0 var(--green-2); /* 深粉立体投影（补足无庆科黄油体的活泼感） */
 }
 .menu-poster-tag {
   margin-left: auto;
@@ -43,20 +44,31 @@
   border-radius: 999rpx;
 }
 
-/* # 板块标题（深蓝 + 粉 #，对齐设计稿） */
+/* # 板块标题（深蓝 + 粉 # + 蓝色横线填充整行，对齐设计稿） */
 .menu-sec {
   display: flex;
-  align-items: baseline;
-  font-size: 30rpx;
-  font-weight: 800;
-  color: var(--jf-title-blue);
+  align-items: center;
+  gap: var(--space-sm);
   padding: var(--space-sm) 0 var(--space-md);
 }
-.menu-sec::before {
+.menu-sec-t {
+  flex: none;
+  font-size: 34rpx;
+  font-weight: 900;
+  color: var(--jf-title-blue);
+}
+.menu-sec-t::before {
   content: "#";
   color: var(--weui-BRAND);
-  font-weight: 800;
-  margin-right: 6rpx;
+  font-weight: 900;
+  margin-right: 4rpx;
+}
+.menu-sec-line {
+  flex: 1;
+  height: 6rpx;
+  background: var(--jf-blue); /* 蓝色点缀横线 */
+  border-radius: 3rpx;
+  opacity: 0.85;
 }
 
 /* 未绑桌空状态：单线空碗插画（陶土橙描边，与 --accent 同源） */
@@ -74,25 +86,27 @@
 .menu-shopbar {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-md) var(--space-lg);
-  background: var(--weui-BG-1);
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg) var(--space-sm);
+  background: transparent; /* 坐在页面粉底上，对齐设计稿 */
 }
 
-/* 绿色定位针图标（线描，data-uri 自包含） */
+/* 定位针：粉色实心圆 + 白色线针（对齐设计稿） */
 .menu-shop-pin {
   flex: none;
-  width: 30rpx;
-  height: 30rpx;
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: var(--weui-BRAND);
   background-repeat: no-repeat;
   background-position: center;
-  background-size: contain;
-  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23FF4896'%20stroke-width%3D'2'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20%2010c0%206-8%2012-8%2012s-8-6-8-12a8%208%200%200%201%2016%200z'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'10'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
+  background-size: 22rpx 22rpx;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2024%2024'%20fill%3D'none'%20stroke%3D'%23fff'%20stroke-width%3D'2.4'%20stroke-linecap%3D'round'%20stroke-linejoin%3D'round'%3E%3Cpath%20d%3D'M20%2010c0%206-8%2012-8%2012s-8-6-8-12a8%208%200%200%201%2016%200z'%2F%3E%3Ccircle%20cx%3D'12'%20cy%3D'10'%20r%3D'3'%2F%3E%3C%2Fsvg%3E");
 }
 
 .menu-shopname {
-  font-size: var(--font-body);
-  font-weight: 600;
+  font-size: var(--font-subhead);
+  font-weight: 900;
   color: var(--weui-FG-0);
   flex: 1;
   overflow: hidden;
@@ -100,22 +114,22 @@
   white-space: nowrap;
 }
 
-/* 点餐方式：深绿实心药丸（照搬 v6 设计稿右上角标签） */
+/* 点餐方式：浅粉底 + 深粉字药丸（对齐设计稿） */
 .menu-mode {
   flex: none;
   margin-left: var(--space-sm);
   font-size: var(--font-caption);
-  color: #fff;
-  background: var(--weui-BRAND);
-  padding: 4rpx 16rpx;
+  color: var(--jf-tag-red);
+  background: var(--jf-tag-pink);
+  padding: 6rpx 18rpx;
   border-radius: var(--radius-lg);
-  font-weight: 600;
+  font-weight: 800;
 }
 
 /* 左右布局：左类目轨 + 右大图卡片，各自独立滚动 */
 .menu-body {
   display: flex;
-  height: calc(100vh - 96rpx - 160rpx); /* 减去门店栏 + 海报头，左右轨独立滚动 */
+  height: calc(100vh - 96rpx - 184rpx); /* 减去门店栏 + 海报头，左右轨独立滚动 */
 }
 
 /* 左：竖向类目轨 */
@@ -216,7 +230,7 @@
 }
 .menu-card-title {
   font-size: var(--font-subhead);
-  font-weight: 600;
+  font-weight: 900;
   color: var(--weui-FG-0);
 }
 .menu-card-desc {
@@ -252,10 +266,11 @@
   background: var(--accent);
   color: var(--price-ink);
   font-size: var(--font-price);
-  font-weight: 700;
+  font-weight: 800;
   font-family: var(--font-number);
-  padding: 2rpx 14rpx;
-  border-radius: 8rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 6rpx;
+  box-shadow: 0 4rpx 0 #E0B900; /* 黄色立体底影，对齐设计稿 */
 }
 
 .menu-price-from {
@@ -291,6 +306,20 @@
   gap: var(--space-sm);
 }
 
+/* 加减器：粉边圆按钮（对齐设计稿，替代 weui 灰按钮） */
+.menu-step-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  border: 3rpx solid var(--weui-BRAND);
+  background: #fff;
+  color: var(--weui-BRAND);
+  font-size: 32rpx;
+  font-weight: 800;
+  line-height: 50rpx;
+  text-align: center;
+}
+
 .menu-qty {
   min-width: 40rpx;
   text-align: center;
@@ -308,17 +337,19 @@
   color: var(--weui-FG-2);
 }
 
-/* 购物车结算条（tabbar 之上）：深松绿渐变压场（对齐 v6 设计稿） */
+/* 购物车结算条：浮动粉色药丸（内缩 + 大圆角 + 实心粉，对齐设计稿） */
 .menu-cartbar {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(100rpx + env(safe-area-inset-bottom));
+  left: var(--space-md);
+  right: var(--space-md);
+  bottom: calc(100rpx + env(safe-area-inset-bottom) + 16rpx);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) var(--space-lg);
-  background: linear-gradient(120deg, var(--weui-BRAND), var(--green-2));
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-lg);
+  background: var(--weui-BRAND);
+  border-radius: 56rpx;
+  box-shadow: 0 12rpx 28rpx rgba(255, 72, 150, 0.4);
   z-index: 20;
 }
 
@@ -333,7 +364,7 @@
   width: 72rpx;
   height: 72rpx;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--accent); /* 黄底车标，对齐设计稿 */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -347,7 +378,7 @@
   font-size: var(--font-price);
   font-weight: 800;
   font-family: var(--font-number);
-  color: var(--weui-BG-0); /* 奶油字 */
+  color: #fff;
   line-height: 1.1;
 }
 .menu-cart-count {
@@ -361,7 +392,7 @@
   flex: none;
   background: var(--accent);
   color: var(--jf-title-blue); /* 深蓝字 on 亮黄，对比度达标且对齐设计稿 */
-  font-weight: 700;
+  font-weight: 900;
   font-size: var(--font-body);
   padding: 18rpx 44rpx;
   border-radius: 44rpx;
