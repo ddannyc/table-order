@@ -41,9 +41,9 @@ describe('tabbar component', () => {
 
   // colour is baked into each SVG data-uri, so guard every icon in both states
   it.each(['menu', 'invite', 'profile'])(
-    '%s active icon is BRAND pine (#234B3A), inactive is muted (#8A8275)',
+    '%s active icon is BRAND pink (#FF4896), inactive is muted (#8A8275)',
     (icon) => {
-      expect(wxss).toMatch(new RegExp(`\\.ctab-t_on[^{]*\\.ctab-ic_${icon}[^}]*%23234B3A`))
+      expect(wxss).toMatch(new RegExp(`\\.ctab-t_on[^{]*\\.ctab-ic_${icon}[^}]*%23FF4896`, 'i'))
       expect(wxss).toMatch(new RegExp(`\\.ctab-ic_${icon}\\s*\\{[^}]*%238A8275`))
     }
   )

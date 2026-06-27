@@ -16,7 +16,7 @@ nudged 工作值：`--price-ink #D11414`(红字 on 卡)、`--pink-deep #D81A60`(
 
 ### Phase 1 — 地基
 - [x] **T1** `app.wxss` 令牌重映射到 JFW + 新增 5 个 `--jf-*` + 重写 `theme-tokens.test.js`（值 + 重定阈值）— S ✅ (176 绿；FG-2→#6E646A、price→#D11414、green-2 槽位复用为深粉)
-- [ ] **T2** tabbar 激活色 `#234B3A`→`#FF4896`（3×SVG + `.ctab-t_on`）+ `custom-tabbar.test.js` — S
+- [x] **T2** tabbar 激活色 `#234B3A`→`#FF4896`（3×SVG + `.ctab-t_on`）+ `custom-tabbar.test.js` — S ✅
 - [ ] **Checkpoint A**：`npx jest theme-tokens custom-tabbar` 绿 + 全局变粉 + 人工评审
 
 ### Phase 2 — 各屏
