@@ -50,9 +50,18 @@
 
 .section-title {
   font-size: var(--font-body);
-  font-weight: 600;
-  color: var(--weui-FG-0);
+  font-weight: 800;
+  color: var(--jf-title-blue);
   padding: var(--space-sm) 0;
+  display: flex;
+  align-items: baseline;
+}
+
+.section-title::before {
+  content: "#";
+  color: var(--weui-BRAND);
+  font-weight: 800;
+  margin-right: 6rpx;
 }
 
 /* 明细行：缩略图 + 名称/规格 + 数量 + 陶土橙小计（照搬参考图） */
@@ -71,7 +80,7 @@
   width: 96rpx;
   height: 96rpx;
   border-radius: var(--radius-md);
-  background: #F4E6DD; /* 浅陶土暖底，空图也不显空 */
+  background: #FBE9F0; /* 浅粉暖底，空图也不显空 */
 }
 .oc-item-thumb_ph {
   border: 1rpx solid var(--weui-FG-3);

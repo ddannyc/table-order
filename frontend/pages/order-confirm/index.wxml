@@ -58,7 +58,7 @@
         <view class="toggle-title">使用福利金抵扣</view>
         <view class="toggle-desc">可用 ¥{{rewardBalance}} · 最高抵扣 {{rewardCeiling}}%</view>
       </view>
-      <switch checked="{{useReward}}" color="#234B3A" bindchange="toggleUseReward" />
+      <switch checked="{{useReward}}" color="#FF4896" bindchange="toggleUseReward" />
     </view>
   </view>
 
