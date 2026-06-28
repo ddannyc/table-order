@@ -122,4 +122,15 @@ describe('theme tokens — WCAG contrast floors', () => {
   it('gold-card ink passes AA on the gold gradient deep end (>=4.5:1) — 设计金卡的折中达标', () => {
     expect(contrast(token('--jf-gold-ink'), token('--jf-gold-bg-1'))).toBeGreaterThanOrEqual(4.5)
   })
+
+  // 防回归：黄色药丸（左轨数量徽章/去结算）里的文字必须深色。白字 on 黄 = 1.44:1，
+  // 此前白字徽章把真实分类数量渲染成不可读（/ship 拦截）。深蓝字 on 黄 ≈ 11:1。
+  const ACCENT = token('--accent')
+  it('yellow-pill text (title-blue) passes AA for small text (>=4.5:1)', () => {
+    expect(contrast(TITLE, ACCENT)).toBeGreaterThanOrEqual(4.5)
+  })
+  // 价格数字 on 黄底是大字粗体，只需 AA-large 3:1（既有折中，价签数字够大够粗）
+  it('price red on the yellow tag meets AA-large for big bold numerals (>=3:1)', () => {
+    expect(contrast(PRICE, ACCENT)).toBeGreaterThanOrEqual(3.0)
+  })
 })

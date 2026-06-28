@@ -20,6 +20,15 @@ describe('Baloo 2 数字字体基建（app.wxss）', () => {
   it('定义 --font-number 令牌，回退系统字体', () => {
     expect(app).toMatch(/--font-number:\s*'Baloo2Num',[^;]*sans-serif/);
   });
+
+  it('内嵌 base64 解码后是合法 TTF（magic 00010000，防截断/损坏）', () => {
+    const m = app.match(/data:font\/ttf;base64,([A-Za-z0-9+/=]+)/);
+    expect(m).not.toBeNull();
+    const buf = Buffer.from(m[1], 'base64');
+    expect(buf.length).toBeGreaterThan(1500); // 子集 ttf ≈ 2.8KB
+    // sfnt/TrueType 版本号 0x00010000
+    expect([...buf.subarray(0, 4)]).toEqual([0x00, 0x01, 0x00, 0x00]);
+  });
 });
 
 describe('各页价格/金额套用 --font-number', () => {

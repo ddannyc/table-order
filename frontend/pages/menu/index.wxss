@@ -161,7 +161,7 @@
   font-size: 20rpx;
   line-height: 30rpx;
   text-align: center;
-  color: #fff;
+  color: var(--jf-title-blue); /* 深蓝字 on 亮黄（≈11:1）；白字 on 黄仅 1.44:1 不可读 */
   background: var(--accent);
   border-radius: 16rpx;
 }
@@ -297,7 +297,7 @@
   line-height: 56rpx;
   text-align: center;
   font-weight: 600;
-  box-shadow: 0 6rpx 16rpx rgba(35, 75, 58, 0.25);
+  box-shadow: 0 6rpx 16rpx rgba(255, 72, 150, 0.25);
 }
 
 .menu-stepper {
@@ -383,8 +383,8 @@
 }
 .menu-cart-count {
   font-size: var(--font-caption);
-  color: var(--weui-BG-0);
-  opacity: 0.8;
+  color: #fff;
+  opacity: 0.9;
 }
 
 /* 去结算：陶土橙药丸（照搬 v6 设计稿，绿底上的暖色行动点） */

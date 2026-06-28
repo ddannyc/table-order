@@ -25,6 +25,14 @@ describe('menu — # 板块标题加蓝色横线（设计签名）', () => {
   })
 })
 
+describe('menu — 黄色药丸内必须深色字（防白字 on 黄不可读回归）', () => {
+  it('左轨数量徽章用深蓝字，绝不用白字（白 on 黄仅 1.44:1）', () => {
+    const c = rule('.menu-rail-count')
+    expect(c).toMatch(/color:\s*var\(--jf-title-blue\)/)
+    expect(c).not.toMatch(/color:\s*#fff/i)
+  })
+})
+
 describe('menu — 门店栏对齐', () => {
   it('门店栏透明（坐在页面粉底上，非白底）', () => {
     expect(rule('.menu-shopbar')).not.toMatch(/background:\s*var\(--weui-BG-1\)/)
