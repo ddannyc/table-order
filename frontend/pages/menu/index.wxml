@@ -121,7 +121,7 @@
 
     <!-- 购物车结算条（浮动粉药丸：圆形车标 + 价格强调 + 黄色去结算药丸） -->
     <view wx:if="{{cartCount > 0}}" class="menu-cartbar">
-      <view class="menu-cart-left" bindtap="goCart">
+      <view class="menu-cart-left" bindtap="openCartSheet">
         <view class="menu-cart-icon">🛒</view>
         <view class="menu-cart-sum">
           <view class="menu-cart-total">¥{{cartTotal}}</view>
