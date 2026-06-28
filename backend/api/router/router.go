@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/example/table-order/api/handler"
 	"github.com/example/table-order/config"
@@ -46,7 +47,7 @@ func Setup(r *gin.Engine) {
 	// Auth (public)
 	auth := api.Group("/auth")
 	{
-		auth.POST("/login", handler.Login)
+		auth.POST("/login", middleware.RateLimit(10, time.Minute, middleware.ByIP), handler.Login)
 	}
 
 	// User (authenticated)
@@ -117,8 +118,8 @@ func Setup(r *gin.Engine) {
 	// Merchant - public endpoints
 	merchantPublic := api.Group("/merchant")
 	{
-		merchantPublic.POST("/login", handler.MerchantLogin)
-		merchantPublic.POST("/register", handler.RegisterMerchant)
+		merchantPublic.POST("/login", middleware.RateLimit(10, time.Minute, middleware.ByIP), handler.MerchantLogin)
+		merchantPublic.POST("/register", middleware.RateLimit(5, time.Minute, middleware.ByIP), handler.RegisterMerchant)
 	}
 
 	// Merchant (merchant auth required)
@@ -132,7 +133,7 @@ func Setup(r *gin.Engine) {
 		merchant.POST("/orders", handler.CreateMerchantOrder)
 		merchant.POST("/orders/:id/prepare", handler.PrepareOrder)
 		merchant.PUT("/orders/:id/status", handler.UpdateMerchantOrderStatus)
-		merchant.POST("/orders/:id/redispatch", handler.RedispatchOrder)
+		merchant.POST("/orders/:id/redispatch", middleware.RateLimit(10, time.Minute, middleware.ByUserID), handler.RedispatchOrder)
 		merchant.GET("/stats", handler.GetMerchantStats)
 		merchant.GET("/dashboard", handler.GetMerchantDashboard)
 		merchant.GET("/products", handler.GetMerchantProducts)
