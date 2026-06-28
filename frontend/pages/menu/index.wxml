@@ -137,7 +137,7 @@
                 <view wx:if="{{p.status === 2}}" class="menu-soldout">售罄</view>
                 <block wx:elif="{{p.hasSpecs}}">
                   <text wx:if="{{cartQtyByProduct[p.id]}}" class="menu-qbadge">{{cartQtyByProduct[p.id]}}</text>
-                  <view class="weui-btn weui-btn_mini weui-btn_primary" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
+                  <view class="menu-spec-btn" hover-class="menu-spec-btn_tap" bindtap="openSpecPicker" data-id="{{p.id}}">选规格</view>
                 </block>
                 <block wx:else>
                   <view wx:if="{{!cartQtyByKey[p.noSpecKey]}}" class="menu-add-round" bindtap="onAdd" data-id="{{p.id}}">+</view>

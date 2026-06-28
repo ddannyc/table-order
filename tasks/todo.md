@@ -8,7 +8,7 @@ TDD：先写测试再改；一任务一提交。
 
 ## 任务
 - [x] **T1** 价格格式化纯函数 `utils/price.js formatPrice`（整数去 .00 / 非整保两位）+ 接入 menu loadData（`priceText`/`specMinText`）+ 单测 — S ✅
-- [ ] **T2** 价格标瘦身 + `选规格` 紧凑原子（`menu-spec-btn`：nowrap+flex-shrink:0）+ `.menu-action{flex:none;margin-left:auto}` + `.menu-card-bottom{flex-wrap:wrap}` + WXML 加类 + 守护测试 — S
+- [x] **T2** 价格标瘦身 + `选规格` 紧凑原子（`menu-spec-btn`：nowrap+flex-shrink:0）+ `.menu-action{flex:none;margin-left:auto}` + `.menu-card-bottom{flex-wrap:wrap}` + WXML 加类 + 守护测试 — S ✅
 - [ ] **Checkpoint A** `npm test` 全绿 + 真机多档价格手测（两/三/四位数 + ¥38.50 + 带徽章均同行不断字）+ git diff 仅 frontend + 部署停等用户
 
 ## 守护测试映射
