@@ -15,6 +15,7 @@ type Order struct {
 	RewardAmount float64   `gorm:"type:numeric(12,2);default:0" json:"reward_amount"` // 返利金额
 	Status       int       `gorm:"default:1" json:"status"` // 1=pending, 2=paid, 3=completed, 4=cancelled
 	PaidAt       *time.Time `json:"paid_at"`
+	PreparedAt   *time.Time `json:"prepared_at"` // 出餐时间；已出餐 = 非空
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
