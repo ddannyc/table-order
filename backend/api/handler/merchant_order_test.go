@@ -547,3 +547,27 @@ func TestRedispatchOrder_QuoteFailureLeavesRowClean(t *testing.T) {
 			od.ShansongQuoteNo, od.ShansongOrderNo, od.ShansongStatus)
 	}
 }
+
+// T2: revenue/rewarded count only settled (paid/completed) orders, while the
+// list itself still includes unpaid + cancelled orders.
+func TestGetMerchantOrders_RevenueExcludesUnpaidAndCancelled(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9210)
+	shop := models.Shop{Name: "Rev Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	config.DB.Create(&models.Order{OrderNo: "RV_PAID", ShopID: shop.ID, OrderType: "dine_in", Amount: 100, RewardAmount: 10, Status: 2})
+	config.DB.Create(&models.Order{OrderNo: "RV_DONE", ShopID: shop.ID, OrderType: "dine_in", Amount: 50, RewardAmount: 5, Status: 3})
+	config.DB.Create(&models.Order{OrderNo: "RV_UNPAID", ShopID: shop.ID, OrderType: "dine_in", Amount: 999, RewardAmount: 99, Status: 1})
+	config.DB.Create(&models.Order{OrderNo: "RV_CANCELLED", ShopID: shop.ID, OrderType: "dine_in", Amount: 999, RewardAmount: 99, Status: 4})
+
+	resp := getMerchantOrders(t, merchantID, "")
+	if resp.Total != 4 {
+		t.Errorf("list should include all 4 (incl. unpaid/cancelled), got %d", resp.Total)
+	}
+	if resp.Revenue != 150 {
+		t.Errorf("revenue should be 100+50 (paid+completed only), got %v", resp.Revenue)
+	}
+	if resp.Rewarded != 15 {
+		t.Errorf("rewarded should be 10+5 (paid+completed only), got %v", resp.Rewarded)
+	}
+}

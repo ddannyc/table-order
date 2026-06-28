@@ -69,11 +69,14 @@ func GetMerchantOrders(c *gin.Context) {
 	// Totals reflect the full filtered set, not just the current page.
 	var total int64
 	filtered().Count(&total)
+	// Money totals count only settled orders (paid/completed); the list itself
+	// still includes unpaid/cancelled, so revenue must not.
 	var agg struct {
 		Revenue  float64
 		Rewarded float64
 	}
-	filtered().Select("COALESCE(SUM(amount),0) AS revenue, COALESCE(SUM(reward_amount),0) AS rewarded").Scan(&agg)
+	filtered().Where("status IN ?", []int{2, 3}).
+		Select("COALESCE(SUM(amount),0) AS revenue, COALESCE(SUM(reward_amount),0) AS rewarded").Scan(&agg)
 
 	// Pagination
 	page, _ := strconv.Atoi(c.Query("page"))

@@ -7,8 +7,8 @@ TDD：先写/改测试再改源码；一任务一提交。
 
 ## Phase 1 — 资金安全 + 金额正确性（GO 后端门槛）
 - [x] **T1 ★阻断** `RedispatchOrder` 原子认领：先 `CalculatePrice` → 条件 UPDATE `WHERE shansong_status IN (-1,60)`（`RowsAffected==1` 才派单，否则 409）→ `DispatchShansong`。并发测试(仅一单/orderPlace 一次) + 跨商家测试 + 询价失败不留脏数据 — M
-- [ ] **T2** revenue/rewarded 聚合限定 `status IN (2,3)`（列表仍含未支付/已取消）+ 测试（混合状态断言金额排除 1/4）— S
-- [ ] **Checkpoint A** `go test ./... -race` 全绿；阻断闭合；人工确认金额口径与 409 语义
+- [x] **T2** revenue/rewarded 聚合限定 `status IN (2,3)`（列表仍含未支付/已取消）+ 测试（混合状态断言金额排除 1/4）— S
+- [x] **Checkpoint A** `go test ./... -race` 全绿；阻断闭合；人工确认金额口径与 409 语义
 
 ## Phase 2 — 前端 triage 正确性（GO 门槛达成）
 - [ ] **T3** `needsAction` 纳入闪送 `60`（与 `canRedispatch` 对齐）+ 抽 `inBucket` 至 `orderBoard.js` 并补测 + `Orders.vue` 改引用 — S
