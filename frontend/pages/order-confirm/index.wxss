@@ -64,7 +64,7 @@
   margin-right: 6rpx;
 }
 
-/* 明细行：缩略图 + 名称/规格 + 数量 + 陶土橙小计（照搬参考图） */
+/* 明细行：缩略图 + 名称/规格 + 数量 + 价格红小计（照搬参考图） */
 .oc-item {
   display: flex;
   align-items: center;
@@ -195,5 +195,5 @@
   font-size: var(--font-price-large);
   font-weight: bold;
   font-family: var(--font-number);
-  color: var(--price-ink); /* 陶土橙大额，照搬参考图底部总价 */
+  color: var(--price-ink); /* 价格红大额，照搬参考图底部总价 */
 }

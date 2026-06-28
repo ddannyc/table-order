@@ -67,7 +67,7 @@
     <!-- 左右布局：左类目轨 + 右大图卡片 -->
     <view class="menu-body">
 
-      <!-- 左：竖向类目轨（激活态绿竖条，页面唯一亮点） -->
+      <!-- 左：竖向类目轨（激活态粉竖条） -->
       <scroll-view scroll-y class="menu-rail" enable-flex>
         <view
           wx:for="{{categories}}"
@@ -119,7 +119,7 @@
 
     </view>
 
-    <!-- 购物车结算条（v6：圆形车标 + 价格强调 + 陶土橙去结算药丸） -->
+    <!-- 购物车结算条（浮动粉药丸：圆形车标 + 价格强调 + 黄色去结算药丸） -->
     <view wx:if="{{cartCount > 0}}" class="menu-cartbar">
       <view class="menu-cart-left" bindtap="goCart">
         <view class="menu-cart-icon">🛒</view>

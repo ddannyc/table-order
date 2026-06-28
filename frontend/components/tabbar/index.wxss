@@ -22,7 +22,7 @@
   font-weight: 600;
 }
 
-/* 线描图标：默认灰，激活态切换为墨绿（颜色已烘焙进 SVG，故两套 data-uri） */
+/* 线描图标：默认灰，激活态切换为品牌粉（颜色已烘焙进 SVG，故两套 data-uri） */
 .ctab-ic {
   width: 46rpx;
   height: 46rpx;

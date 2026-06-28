@@ -71,7 +71,7 @@
   opacity: 0.85;
 }
 
-/* 未绑桌空状态：单线空碗插画（陶土橙描边，与 --accent 同源） */
+/* 未绑桌空状态：单线空碗插画（品牌粉描边） */
 .menu-empty-illu {
   width: 200rpx;
   height: 168rpx;
@@ -82,7 +82,7 @@
   background-size: contain;
 }
 
-/* 门店栏：白底 + 绿定位针 + 店名 + 绿色点餐方式药丸（对齐 v6 设计稿） */
+/* 门店栏：透明底 + 粉圆白针定位 + 店名 + 浅粉底深粉字点餐方式药丸 */
 .menu-shopbar {
   display: flex;
   align-items: center;
@@ -153,7 +153,7 @@
   border-left: 6rpx solid transparent; /* 激活竖条占位，避免跳动 */
 }
 
-/* 类目菜品数徽章：陶土橙药丸 + 白字（照搬 v6 设计稿，真数据） */
+/* 类目菜品数徽章：亮黄药丸 + 深蓝字（真数据；白字 on 黄不可读） */
 .menu-rail-count {
   min-width: 26rpx;
   margin-top: 6rpx;
@@ -166,7 +166,7 @@
   border-radius: 16rpx;
 }
 
-/* 激活态（页面唯一亮点）：绿竖条 + 白底凸出 + 加粗，不只靠颜色 */
+/* 激活态：粉竖条 + 白底凸出 + 加粗，不只靠颜色 */
 .menu-rail-item_on {
   background: var(--weui-BG-1); /* 近白凸出，对比左轨 BG-2 */
   color: var(--weui-FG-0);
@@ -286,7 +286,7 @@
   gap: var(--space-sm);
 }
 
-/* 圆形加购按钮（深绿实心 + 纯白 + + 柔投影），照搬 v6 设计稿 */
+/* 圆形加购按钮（品牌粉实心 + 纯白 + + 柔投影） */
 .menu-add-round {
   width: 60rpx;
   height: 60rpx;
@@ -387,7 +387,7 @@
   opacity: 0.9;
 }
 
-/* 去结算：陶土橙药丸（照搬 v6 设计稿，绿底上的暖色行动点） */
+/* 去结算：亮黄药丸 + 深蓝字（粉色车条上的行动点） */
 .menu-cart-go {
   flex: none;
   background: var(--accent);

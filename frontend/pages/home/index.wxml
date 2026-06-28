@@ -1,4 +1,4 @@
-<!-- pages/home/index.wxml — 选餐入口（v6 设计稿：品牌头 + 堂食/外卖分段 + 扫码卡 + 厨师 banner + 福利放送） -->
+<!-- pages/home/index.wxml — 选餐入口（鸡福旺设计：品牌头 + 堂食/外卖分段 + 扫码卡 + 现炸 banner + 人气推荐） -->
 <view class="page home-page">
 
   <!-- 品牌头（品牌粉渐变）：字标 + 分段。不含余额/福利金。 -->

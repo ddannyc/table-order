@@ -1,4 +1,4 @@
-/* pages/home/index.wxss — 选餐入口（v6 设计稿）。插画背景类见 home-art.wxss。 */
+/* pages/home/index.wxss — 选餐入口（鸡福旺设计）。插画背景类见 home-art.wxss。 */
 @import './home-art.wxss';
 
 .home-page {
@@ -6,7 +6,7 @@
   flex-direction: column;
 }
 
-/* 品牌头：深松绿渐变，圆角下沿 */
+/* 品牌头：品牌粉渐变，圆角下沿 */
 .home-hd {
   background: linear-gradient(160deg, var(--weui-BRAND), var(--green-2));
   padding: 24rpx 36rpx 48rpx;
