@@ -136,13 +136,15 @@
   <view wx:if="{{specPickerVisible}}">
     <view class="spec-mask" bindtap="closeSpecPicker"></view>
     <view class="spec-sheet">
-      <view class="spec-grab"></view>
+      <view class="spec-cover">
+        <image wx:if="{{specPickerProduct.hasImage}}" class="spec-cover-img" src="{{specPickerProduct.image}}" mode="aspectFill" />
+        <view wx:else class="spec-cover-ph menu-thumb-ph_{{specPickerProduct.ph.glyph}}">{{specPickerProduct.ph.label}}</view>
+        <view class="spec-cover-fade"></view>
+        <view class="spec-cover-x" bindtap="closeSpecPicker">✕</view>
+      </view>
       <view class="spec-hd">
-        <view class="spec-hd-bd">
-          <view class="spec-name">{{specPickerProduct.name}}</view>
-          <view class="spec-desc">{{specPickerProduct.description || '美味菜品'}}</view>
-        </view>
-        <view class="spec-x" bindtap="closeSpecPicker">✕</view>
+        <view class="spec-name">{{specPickerProduct.name}}</view>
+        <view class="spec-desc">{{specPickerProduct.description || '美味菜品'}}</view>
       </view>
 
       <view class="spec-group">

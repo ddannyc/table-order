@@ -415,19 +415,49 @@
   border-radius: 28rpx 28rpx 0 0;
   padding: 16rpx var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom));
   box-shadow: 0 -8rpx 28rpx rgba(0, 0, 0, 0.12);
+  overflow: hidden; /* 让整宽封面图被 sheet 顶部圆角裁切 */
 }
-.spec-grab {
-  width: 72rpx;
-  height: 8rpx;
-  border-radius: 8rpx;
-  background: var(--weui-FG-3);
-  margin: 0 auto var(--space-md);
+/* 整宽封面图：负边距抵消 sheet padding，铺满顶部至圆角；底部渐隐入白接住标题 */
+.spec-cover {
+  position: relative;
+  margin: -16rpx calc(-1 * var(--space-lg)) 0;
+  height: 280rpx;
+  overflow: hidden;
+}
+.spec-cover-img {
+  width: 100%;
+  height: 100%;
+}
+.spec-cover-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-h2);
+  font-weight: 800;
+  color: var(--jf-title-blue);
+}
+.spec-cover-fade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0) 40%, rgba(255, 255, 255, 0) 72%, #fff);
+}
+.spec-cover-x {
+  position: absolute;
+  top: 16rpx;
+  right: 20rpx;
+  width: 52rpx;
+  height: 52rpx;
+  line-height: 52rpx;
+  text-align: center;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.42);
+  color: #fff;
+  font-size: 26rpx;
 }
 .spec-hd {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-md);
+  margin-top: var(--space-sm);
 }
 .spec-name {
   font-size: var(--font-h2);
@@ -437,15 +467,6 @@
 .spec-desc {
   margin-top: 6rpx;
   font-size: var(--font-caption);
-  color: var(--weui-FG-2);
-}
-.spec-x {
-  flex: none;
-  width: 56rpx;
-  height: 56rpx;
-  line-height: 56rpx;
-  text-align: center;
-  font-size: 30rpx;
   color: var(--weui-FG-2);
 }
 

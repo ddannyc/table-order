@@ -98,3 +98,24 @@ describe('规格弹层版式（对齐参考图 + JFW）', () => {
     expect(wxss).toMatch(/\.spec-group-t::before\s*\{[^}]*content:\s*"#"/)
   })
 })
+
+describe('规格弹层头图（变体 A · 整宽封面图）', () => {
+  it('移除顶部短横线 grab', () => {
+    expect(wxml).not.toMatch(/spec-grab/)
+    expect(wxss).not.toMatch(/\.spec-grab/)
+  })
+  it('标题上方有整宽封面图（真实图 + 占位两路），关闭✕落在封面上', () => {
+    expect(wxml).toMatch(/class="spec-cover"/)
+    const sheet = wxml.slice(wxml.indexOf('spec-sheet'))
+    // 封面排在标题之前
+    expect(sheet.indexOf('spec-cover')).toBeLessThan(sheet.indexOf('spec-name'))
+    // 有图走 image，无图回退占位块
+    expect(wxml).toMatch(/class="spec-cover-img"[^>]*src="\{\{specPickerProduct\.image\}\}"/)
+    expect(wxml).toMatch(/spec-cover-ph/)
+    // ✕ 浮在封面上、绑 closeSpecPicker
+    expect(wxml).toMatch(/spec-cover-x[^>]*bindtap="closeSpecPicker"/)
+  })
+  it('封面整宽铺满 sheet（负边距抵消 padding）', () => {
+    expect(rule('.spec-cover')).toMatch(/margin/)
+  })
+})

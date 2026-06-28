@@ -220,9 +220,10 @@ Page({
     if (!product) return
     const specs = (product.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
     const def = pickDefaultSpec(specs)
+    const img = resolveProductImage(product)
     this.setData({
       specPickerVisible: true,
-      specPickerProduct: { ...product, specs },
+      specPickerProduct: { ...product, specs, hasImage: img.hasImage, ph: img.placeholder },
       selectedSpecId: def ? def.id : 0,
       specQty: 1
     })
