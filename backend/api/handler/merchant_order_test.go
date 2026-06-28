@@ -875,3 +875,85 @@ func TestGetMerchantOrders_PageSizeCappedAt100(t *testing.T) {
 		t.Errorf("total should be 101, got %d", resp.Total)
 	}
 }
+
+// T5(R3): a delivery order stranded at shansong_status=0 (claim committed, dispatch
+// never finished) is NOT re-dispatchable — pins the accepted limbo behavior so the
+// claimable set {-1,60} can't be widened by accident (that reopened the race in T3).
+func TestRedispatchOrder_StrandedZeroStatusRejected(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9560)
+	withShansong(t, mockShansong(
+		`{"status":200,"data":{"orderNumber":"RQ-Z","totalFeeAfterSave":900}}`,
+		`{"status":200,"data":{"orderNumber":"SS-Z"}}`))
+	order := newRedispatchOrder(t, merchantID, "RD_LIMBO0", 0) // stranded mid-claim
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("stranded status=0 must be rejected (accepted limbo risk), got %d", w.Code)
+	}
+}
+
+// T5(R3): a successful re-dispatch writes an audit record.
+func TestRedispatchOrder_WritesAuditLog(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9561)
+	withShansong(t, mockShansong(
+		`{"status":200,"data":{"orderNumber":"RQ-A","totalFeeAfterSave":900}}`,
+		`{"status":200,"data":{"orderNumber":"SS-A"}}`))
+	order := newRedispatchOrder(t, merchantID, "RD_AUDIT", -1)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var n int64
+	config.DB.Model(&models.OrderActionLog{}).Where("order_id = ? AND action = ?", order.ID, "redispatch").Count(&n)
+	if n != 1 {
+		t.Errorf("expected 1 redispatch audit log, got %d", n)
+	}
+}
+
+// T5(R3): the status transition whitelist — legal pairs succeed, everything else
+// is rejected with 400 and the status is left unchanged.
+func TestUpdateOrderStatus_TransitionWhitelist(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9562)
+	shop := models.Shop{Name: "WL Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+
+	cases := []struct {
+		from, to int
+		legal    bool
+	}{
+		{1, 4, true}, {2, 3, true}, {2, 4, true},
+		{2, 1, false}, {2, 2, false}, {3, 1, false}, {3, 4, false}, {4, 2, false}, {4, 3, false},
+	}
+	for i, tc := range cases {
+		order := models.Order{
+			OrderNo: "WL_" + itoa(uint(i)), ShopID: shop.ID, OrderType: "dine_in", Amount: 1, Status: tc.from,
+		}
+		config.DB.Create(&order)
+		w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+			"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": tc.to})
+
+		var got models.Order
+		config.DB.First(&got, order.ID)
+		if tc.legal {
+			if w.Code != http.StatusOK {
+				t.Errorf("%d->%d should be allowed, got %d", tc.from, tc.to, w.Code)
+			}
+			if got.Status != tc.to {
+				t.Errorf("%d->%d should persist new status, got %d", tc.from, tc.to, got.Status)
+			}
+		} else {
+			if w.Code != http.StatusBadRequest {
+				t.Errorf("%d->%d should be rejected, got %d", tc.from, tc.to, w.Code)
+			}
+			if got.Status != tc.from {
+				t.Errorf("%d->%d rejected but status changed to %d", tc.from, tc.to, got.Status)
+			}
+		}
+	}
+}
