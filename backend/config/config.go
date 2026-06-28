@@ -37,6 +37,7 @@ type ServerConfig struct {
 	Mode           string
 	BaseURL        string   // Public base URL for QR code generation (e.g. https://example.com)
 	AllowedOrigins []string // CORS allowlist for browser clients (the merchant admin SPA)
+	TrustedProxies []string // proxies allowed to set X-Forwarded-For (the platform edge); empty = trust none
 }
 
 type DatabaseConfig struct {
@@ -109,6 +110,14 @@ func LoadConfig(path string) (*Config, error) {
 	for _, o := range strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "https://table-order-admin.pages.dev,http://localhost:5173"), ",") {
 		if o = strings.TrimSpace(o); o != "" {
 			cfg.Server.AllowedOrigins = append(cfg.Server.AllowedOrigins, o)
+		}
+	}
+	// Trusted proxies: comma-separated IPs/CIDRs of the upstream edge allowed to set
+	// X-Forwarded-For. Empty (default) = trust no proxy, so ClientIP() ignores a
+	// client-spoofed XFF and the rate limiter keys on the real TCP peer.
+	for _, p := range strings.Split(getEnv("TRUSTED_PROXIES", ""), ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			cfg.Server.TrustedProxies = append(cfg.Server.TrustedProxies, p)
 		}
 	}
 	cfg.Database.Host = getEnv("PGHOST", getEnv("DB_HOST", cfg.Database.Host))

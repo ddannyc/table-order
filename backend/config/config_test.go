@@ -21,6 +21,24 @@ func TestLoadConfig_JWTSecretFromEnv(t *testing.T) {
 	}
 }
 
+// TrustedProxies must be injectable via env so the deployment can pin which
+// upstream (Railway's edge) is allowed to set X-Forwarded-For. Without it the
+// rate limiter keys on a client-spoofable IP.
+func TestLoadConfig_TrustedProxiesFromEnv(t *testing.T) {
+	os.Setenv("TRUSTED_PROXIES", "10.0.0.0/8, 172.16.0.1")
+	defer os.Unsetenv("TRUSTED_PROXIES")
+
+	cfg, err := LoadConfig(".")
+	if err != nil {
+		t.Fatalf("LoadConfig failed: %v", err)
+	}
+	if len(cfg.Server.TrustedProxies) != 2 ||
+		cfg.Server.TrustedProxies[0] != "10.0.0.0/8" ||
+		cfg.Server.TrustedProxies[1] != "172.16.0.1" {
+		t.Errorf("expected trusted proxies parsed+trimmed from env, got %#v", cfg.Server.TrustedProxies)
+	}
+}
+
 // Shansong credentials must be injectable via environment variables (Railway has
 // no config.yaml) and must never need to live in the repo.
 func TestLoadConfig_ShansongFromEnv(t *testing.T) {
