@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,16 +18,30 @@ import (
 )
 
 // shansongMock is an httpDoer returning canned envelopes per Shansong path:
-// orderCalculate (quote) vs orderPlace (create).
+// orderCalculate (quote) vs orderPlace (create). It counts orderPlace calls so
+// tests can assert a single physical dispatch under concurrency; createDelay
+// widens the race window.
 type shansongMock struct {
-	quoteResp  string
-	createResp string
+	quoteResp   string
+	createResp  string
+	quoteDelay  time.Duration // widens the window between the state guard and the claim write
+	createDelay time.Duration
+	mu          sync.Mutex
+	createCalls int
 }
 
 func (m *shansongMock) Do(req *http.Request) (*http.Response, error) {
 	body := m.quoteResp
 	if strings.Contains(req.URL.Path, "orderPlace") {
 		body = m.createResp
+		if m.createDelay > 0 {
+			time.Sleep(m.createDelay)
+		}
+		m.mu.Lock()
+		m.createCalls++
+		m.mu.Unlock()
+	} else if m.quoteDelay > 0 {
+		time.Sleep(m.quoteDelay)
 	}
 	return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
 }
@@ -442,5 +457,93 @@ func TestRedispatchOrder_DispatchFailureSurfacesMinusOne(t *testing.T) {
 	config.DB.Where("order_id = ?", order.ID).First(&od)
 	if od.ShansongStatus != -1 {
 		t.Errorf("expected shansong_status -1 surfaced after failed dispatch, got %d", od.ShansongStatus)
+	}
+}
+
+// T1: concurrent re-dispatch must place at most ONE real courier order.
+func TestRedispatchOrder_ConcurrentDispatchesOnce(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9505)
+	mock := &shansongMock{
+		quoteResp:  `{"status":200,"data":{"orderNumber":"RQ-C","totalFeeAfterSave":900}}`,
+		createResp: `{"status":200,"data":{"orderNumber":"SS-C"}}`,
+		quoteDelay: 50 * time.Millisecond, // hold all requests past the guard before any claim commits
+	}
+	withShansong(t, &services.ShansongClient{ClientID: "c", AppSecret: "s", BaseURL: "http://stub", HTTP: mock})
+	order := newRedispatchOrder(t, merchantID, "RD_CONC", -1)
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/merchant/orders/:id/redispatch", RedispatchOrder, merchantID)
+	url := "/api/merchant/orders/" + itoa(order.ID) + "/redispatch"
+
+	const N = 6
+	var wg sync.WaitGroup
+	codes := make([]int, N)
+	for i := 0; i < N; i++ {
+		wg.Add(1)
+		go func(idx int) {
+			defer wg.Done()
+			req, _ := http.NewRequest("POST", url, nil)
+			w := httptest.NewRecorder()
+			r.ServeHTTP(w, req)
+			codes[idx] = w.Code
+		}(i)
+	}
+	wg.Wait()
+
+	success := 0
+	for _, c := range codes {
+		if c == http.StatusOK {
+			success++
+		}
+	}
+	if success != 1 {
+		t.Errorf("expected exactly 1 success, got %d (codes=%v)", success, codes)
+	}
+	mock.mu.Lock()
+	calls := mock.createCalls
+	mock.mu.Unlock()
+	if calls != 1 {
+		t.Errorf("expected exactly 1 orderPlace call (no double dispatch), got %d", calls)
+	}
+}
+
+// T1: re-dispatch is ownership-checked like the other order actions.
+func TestRedispatchOrder_RejectsOtherMerchant(t *testing.T) {
+	setupTestDB(t)
+	owner := uint(9506)
+	other := uint(9507)
+	withShansong(t, mockShansong(`{"status":200,"data":{"orderNumber":"RQ"}}`, `{"status":200,"data":{"orderNumber":"X"}}`))
+	order := newRedispatchOrder(t, owner, "RD_OWN", -1)
+
+	w := doMerchantReq(t, other, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusForbidden && w.Code != http.StatusNotFound {
+		t.Fatalf("expected 403/404 for other merchant, got %d", w.Code)
+	}
+	var od models.OrderDelivery
+	config.DB.Where("order_id = ?", order.ID).First(&od)
+	if od.ShansongQuoteNo != "OLD-Q" || od.ShansongStatus != -1 {
+		t.Errorf("other merchant must not mutate the delivery row, got quote=%q status=%d", od.ShansongQuoteNo, od.ShansongStatus)
+	}
+}
+
+// T1: quote happens BEFORE the claim — a quote failure leaves the row untouched.
+func TestRedispatchOrder_QuoteFailureLeavesRowClean(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9508)
+	withShansong(t, mockShansong(`{"status":500,"msg":"out of range","data":null}`, `{"status":200,"data":{"orderNumber":"X"}}`))
+	order := newRedispatchOrder(t, merchantID, "RD_QFAIL", -1)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadGateway {
+		t.Fatalf("expected 502 on quote failure, got %d body: %s", w.Code, w.Body.String())
+	}
+	var od models.OrderDelivery
+	config.DB.Where("order_id = ?", order.ID).First(&od)
+	if od.ShansongQuoteNo != "OLD-Q" || od.ShansongOrderNo != "" || od.ShansongStatus != -1 {
+		t.Errorf("quote failure must not mutate the row, got quote=%q orderNo=%q status=%d",
+			od.ShansongQuoteNo, od.ShansongOrderNo, od.ShansongStatus)
 	}
 }

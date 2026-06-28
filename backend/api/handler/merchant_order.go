@@ -233,15 +233,24 @@ func RedispatchOrder(c *gin.Context) {
 		return
 	}
 
-	// Refresh the quote and clear the prior dispatch identity so DispatchShansong
-	// (which no-ops when shansong_order_no is set) will run against the new quote.
-	if err := config.DB.Model(&od).Updates(map[string]any{
-		"shansong_quote_no": res.QuoteToken,
-		"shansong_order_no": "",
-		"shansong_status":   0,
-		"delivery_fee":      res.DeliveryFee,
-	}).Error; err != nil {
+	// Atomically claim the row: the conditional UPDATE only matches while the order
+	// is still re-dispatchable, so two concurrent re-dispatch calls can never both
+	// place a (billable) courier order. Clearing shansong_order_no re-arms
+	// DispatchShansong against the fresh quote.
+	claim := config.DB.Model(&models.OrderDelivery{}).
+		Where("id = ? AND shansong_status IN ?", od.ID, []int{-1, 60}).
+		Updates(map[string]any{
+			"shansong_quote_no": res.QuoteToken,
+			"shansong_order_no": "",
+			"shansong_status":   0,
+			"delivery_fee":      res.DeliveryFee,
+		})
+	if claim.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "redispatch failed"})
+		return
+	}
+	if claim.RowsAffected == 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "order already being re-dispatched"})
 		return
 	}
 
