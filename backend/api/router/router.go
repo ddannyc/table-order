@@ -132,6 +132,7 @@ func Setup(r *gin.Engine) {
 		merchant.POST("/orders", handler.CreateMerchantOrder)
 		merchant.POST("/orders/:id/prepare", handler.PrepareOrder)
 		merchant.PUT("/orders/:id/status", handler.UpdateMerchantOrderStatus)
+		merchant.POST("/orders/:id/redispatch", handler.RedispatchOrder)
 		merchant.GET("/stats", handler.GetMerchantStats)
 		merchant.GET("/dashboard", handler.GetMerchantDashboard)
 		merchant.GET("/products", handler.GetMerchantProducts)

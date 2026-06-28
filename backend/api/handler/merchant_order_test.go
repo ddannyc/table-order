@@ -6,13 +6,43 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"github.com/example/table-order/services"
 )
+
+// shansongMock is an httpDoer returning canned envelopes per Shansong path:
+// orderCalculate (quote) vs orderPlace (create).
+type shansongMock struct {
+	quoteResp  string
+	createResp string
+}
+
+func (m *shansongMock) Do(req *http.Request) (*http.Response, error) {
+	body := m.quoteResp
+	if strings.Contains(req.URL.Path, "orderPlace") {
+		body = m.createResp
+	}
+	return &http.Response{StatusCode: 200, Header: make(http.Header), Body: io.NopCloser(strings.NewReader(body))}, nil
+}
+
+// withShansong swaps the process-wide client for the duration of a test.
+func withShansong(t *testing.T, c *services.ShansongClient) {
+	t.Helper()
+	prev := services.Shansong
+	services.Shansong = c
+	t.Cleanup(func() { services.Shansong = prev })
+}
+
+func mockShansong(quote, create string) *services.ShansongClient {
+	return &services.ShansongClient{ClientID: "c", AppSecret: "s", BaseURL: "http://stub",
+		HTTP: &shansongMock{quoteResp: quote, createResp: create}}
+}
 
 // doMerchantReq runs a single authenticated merchant request through a router
 // that maps routePath → handler. body is JSON-encoded when non-nil.
@@ -323,5 +353,94 @@ func TestUpdateOrderStatus_RejectsOtherMerchant(t *testing.T) {
 	config.DB.First(&got, order.ID)
 	if got.Status != 2 {
 		t.Errorf("must not change another merchant's order status, got %d", got.Status)
+	}
+}
+
+// --- T5: 重新派单 (RedispatchOrder) ---
+
+func newRedispatchOrder(t *testing.T, merchantID uint, orderNo string, shansongStatus int) models.Order {
+	t.Helper()
+	shop := models.Shop{Name: "RD Shop", MerchantID: merchantID, Status: 1,
+		Address: "门店地址", City: "北京市", Phone: "010-0000", Latitude: 39.9, Longitude: 116.4}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: orderNo, ShopID: shop.ID, OrderType: "delivery", Amount: 100, Status: 2}
+	config.DB.Create(&order)
+	config.DB.Create(&models.OrderDelivery{
+		OrderID: order.ID, ShansongStatus: shansongStatus, ShansongQuoteNo: "OLD-Q", ShansongOrderNo: "",
+		RecipientName: "张三", RecipientPhone: "13800000000", DetailAddress: "某路1号",
+		RecipientLat: 39.91, RecipientLng: 116.41, DeliveryFee: 8.5,
+	})
+	return order
+}
+
+func TestRedispatchOrder_SuccessReDispatches(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9501)
+	withShansong(t, mockShansong(
+		`{"status":200,"data":{"orderNumber":"RQ-1","totalFeeAfterSave":900}}`,
+		`{"status":200,"data":{"orderNumber":"SS-RD-1"}}`))
+	order := newRedispatchOrder(t, merchantID, "RD_OK", -1)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var od models.OrderDelivery
+	config.DB.Where("order_id = ?", order.ID).First(&od)
+	if od.ShansongStatus != 20 {
+		t.Errorf("expected shansong_status 20 after redispatch, got %d", od.ShansongStatus)
+	}
+	if od.ShansongOrderNo != "SS-RD-1" {
+		t.Errorf("expected new shansong_order_no, got %q", od.ShansongOrderNo)
+	}
+	if od.ShansongQuoteNo != "RQ-1" {
+		t.Errorf("expected refreshed quote, got %q", od.ShansongQuoteNo)
+	}
+}
+
+func TestRedispatchOrder_RejectsNonRedispatchableStatus(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9502)
+	withShansong(t, mockShansong(`{"status":200,"data":{"orderNumber":"RQ"}}`, `{"status":200,"data":{"orderNumber":"X"}}`))
+	order := newRedispatchOrder(t, merchantID, "RD_BADSTATE", 20) // 派单中, not re-dispatchable
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for non-redispatchable status, got %d", w.Code)
+	}
+}
+
+func TestRedispatchOrder_ServiceUnavailable(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9503)
+	withShansong(t, nil) // client not configured
+	order := newRedispatchOrder(t, merchantID, "RD_NOCLIENT", -1)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusServiceUnavailable {
+		t.Fatalf("expected 503 when Shansong unconfigured, got %d", w.Code)
+	}
+}
+
+func TestRedispatchOrder_DispatchFailureSurfacesMinusOne(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9504)
+	withShansong(t, mockShansong(
+		`{"status":200,"data":{"orderNumber":"RQ-2","totalFeeAfterSave":900}}`,
+		`{"status":500,"msg":"boom","data":null}`)) // quote ok, place fails
+	order := newRedispatchOrder(t, merchantID, "RD_FAIL", 60) // 已取消 → re-dispatchable
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadGateway {
+		t.Fatalf("expected 502 when re-dispatch fails, got %d body: %s", w.Code, w.Body.String())
+	}
+	var od models.OrderDelivery
+	config.DB.Where("order_id = ?", order.ID).First(&od)
+	if od.ShansongStatus != -1 {
+		t.Errorf("expected shansong_status -1 surfaced after failed dispatch, got %d", od.ShansongStatus)
 	}
 }

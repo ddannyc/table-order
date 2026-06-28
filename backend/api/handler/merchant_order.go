@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"github.com/example/table-order/services"
 	"gorm.io/gorm"
 )
 
@@ -179,6 +180,84 @@ func UpdateMerchantOrderStatus(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}
+
+// RedispatchOrder re-sends a failed (-1) or cancelled (60) delivery order to
+// Shansong. The stored quote may be stale, so it re-quotes (shop=sender,
+// OrderDelivery=recipient), refreshes the quote token, clears the prior dispatch
+// identity, resets status, then dispatches. Per product decision, a higher new
+// fee is recorded (delivery_fee) but the customer is NOT re-charged.
+func RedispatchOrder(c *gin.Context) {
+	merchantID := c.GetUint("user_id")
+	order, ok := loadOwnedOrder(c, merchantID)
+	if !ok {
+		return
+	}
+
+	var od models.OrderDelivery
+	if err := config.DB.Where("order_id = ?", order.ID).First(&od).Error; err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "not a delivery order"})
+		return
+	}
+	if od.ShansongStatus != -1 && od.ShansongStatus != 60 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order not in a re-dispatchable state"})
+		return
+	}
+	if services.Shansong == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "外卖配送暂未开通"})
+		return
+	}
+
+	var shop models.Shop
+	if err := config.DB.First(&shop, order.ShopID).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "shop not found"})
+		return
+	}
+
+	res, err := services.Shansong.CalculatePrice(c.Request.Context(), services.QuoteRequest{
+		CityName:         shop.City,
+		SenderAddress:    shop.Address,
+		SenderName:       shop.Name,
+		SenderMobile:     shop.Phone,
+		SenderLat:        shop.Latitude,
+		SenderLng:        shop.Longitude,
+		ThirdOrderNo:     order.OrderNo,
+		RecipientName:    od.RecipientName,
+		RecipientPhone:   od.RecipientPhone,
+		RecipientAddress: od.DetailAddress,
+		RecipientLat:     od.RecipientLat,
+		RecipientLng:     od.RecipientLng,
+	})
+	if err != nil {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "配送报价失败，可能超出配送范围"})
+		return
+	}
+
+	// Refresh the quote and clear the prior dispatch identity so DispatchShansong
+	// (which no-ops when shansong_order_no is set) will run against the new quote.
+	if err := config.DB.Model(&od).Updates(map[string]any{
+		"shansong_quote_no": res.QuoteToken,
+		"shansong_order_no": "",
+		"shansong_status":   0,
+		"delivery_fee":      res.DeliveryFee,
+	}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "redispatch failed"})
+		return
+	}
+
+	services.DispatchShansong(order.ID) // synchronous here so we can return the outcome
+
+	var updated models.OrderDelivery
+	config.DB.First(&updated, od.ID)
+	if updated.ShansongStatus == -1 {
+		c.JSON(http.StatusBadGateway, gin.H{"error": "重新派单失败，请稍后重试", "shansong_status": updated.ShansongStatus})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message":         "redispatched",
+		"shansong_status": updated.ShansongStatus,
+		"delivery_fee":    updated.DeliveryFee,
+	})
 }
 
 type CreateMerchantOrderRequest struct {
