@@ -43,6 +43,9 @@ function logout() {
         <el-menu-item index="products" :route="{ name: 'products' }">
           <el-icon><Dish /></el-icon><span>菜品管理</span>
         </el-menu-item>
+        <el-menu-item index="orders" :route="{ name: 'orders' }">
+          <el-icon><List /></el-icon><span>订单</span>
+        </el-menu-item>
         <el-menu-item index="shop" :route="{ name: 'shop' }">
           <el-icon><Shop /></el-icon><span>店铺与返利</span>
         </el-menu-item>

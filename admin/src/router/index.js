@@ -15,6 +15,7 @@ const routes = [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', name: 'dashboard', component: () => import('../views/Dashboard.vue') },
       { path: 'products', name: 'products', component: () => import('../views/Products.vue') },
+      { path: 'orders', name: 'orders', component: () => import('../views/Orders.vue') },
       { path: 'shop', name: 'shop', component: () => import('../views/ShopSettings.vue') },
       { path: 'qrcodes', name: 'qrcodes', component: () => import('../views/QRCodes.vue') },
     ],
