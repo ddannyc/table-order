@@ -4,6 +4,7 @@ const { getShopProducts, getCart, addToCart, updateCartQuantity, clearCart } = r
 const { resolveProductImage } = require('../../utils/menu-image.js')
 const { pickDefaultSpec, clampQty, specPickerState } = require('../../utils/spec.js')
 const { buildCartItems } = require('../../utils/cart-view.js')
+const { formatPrice } = require('../../utils/price.js')
 
 Page({
   data: {
@@ -129,8 +130,8 @@ Page({
             specs,
             hasSpecs,
             noSpecKey: `${p.id}_0`,
-            specMinText: hasSpecs ? Math.min(...specs.map(s => s.price)).toFixed(2) : null,
-            priceText: p.price.toFixed(2),
+            specMinText: hasSpecs ? formatPrice(Math.min(...specs.map(s => s.price))) : null,
+            priceText: formatPrice(p.price),
             hasImage: img.hasImage,
             ph: img.placeholder
           }
