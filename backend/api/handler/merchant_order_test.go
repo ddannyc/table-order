@@ -727,3 +727,67 @@ func TestRedispatchOrder_RejectsCancelledOrder(t *testing.T) {
 			od.ShansongQuoteNo, od.ShansongOrderNo, od.ShansongStatus)
 	}
 }
+
+// T5(R2): manual status changes follow a transition whitelist.
+func TestUpdateOrderStatus_RejectsIllegalTransition(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9530)
+	shop := models.Shop{Name: "Trans Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	// 1 (unpaid) → 2 (paid) is illegal: a merchant must not self-mark paid.
+	order := models.Order{OrderNo: "TR_ILLEGAL", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 1}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 2})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for illegal 1->2 transition, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.Status != 1 {
+		t.Errorf("status must stay 1 after rejected transition, got %d", got.Status)
+	}
+}
+
+// T5(R2): a legal status change writes an audit record.
+func TestUpdateOrderStatus_WritesAuditLog(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9531)
+	shop := models.Shop{Name: "Audit Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "TR_AUDIT", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 3})
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 for legal 2->3, got %d body: %s", w.Code, w.Body.String())
+	}
+	var logs []models.OrderActionLog
+	config.DB.Where("order_id = ? AND action = ?", order.ID, "status").Find(&logs)
+	if len(logs) != 1 {
+		t.Fatalf("expected 1 status audit log, got %d", len(logs))
+	}
+	if logs[0].OldStatus != 2 || logs[0].NewStatus != 3 || logs[0].MerchantID != merchantID {
+		t.Errorf("unexpected audit record: %+v", logs[0])
+	}
+}
+
+// T5(R2): a successful 出餐 also writes an audit record.
+func TestPrepareOrder_WritesAuditLog(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9532)
+	shop := models.Shop{Name: "Audit Prep Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_AUDIT", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	var n int64
+	config.DB.Model(&models.OrderActionLog{}).Where("order_id = ? AND action = ?", order.ID, "prepare").Count(&n)
+	if n != 1 {
+		t.Errorf("expected 1 prepare audit log, got %d", n)
+	}
+}

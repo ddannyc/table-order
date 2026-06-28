@@ -123,6 +123,22 @@ func GetMerchantOrders(c *gin.Context) {
 	})
 }
 
+// allowedStatusTransitions[from] is the set of to-states a merchant may set
+// manually. A merchant cannot self-grant "paid" (1→2) or resurrect terminal
+// states (3/4 → *).
+var allowedStatusTransitions = map[int]map[int]bool{
+	1: {4: true},          // pending → cancelled (abandon)
+	2: {3: true, 4: true}, // paid → completed / cancelled
+}
+
+// logOrderAction records a merchant action on an order for audit/forensics.
+func logOrderAction(orderID, merchantID uint, action string, oldStatus, newStatus int) {
+	config.DB.Create(&models.OrderActionLog{
+		OrderID: orderID, MerchantID: merchantID, Action: action,
+		OldStatus: oldStatus, NewStatus: newStatus,
+	})
+}
+
 // loadOwnedOrder loads the order at :id and verifies it belongs to one of the
 // merchant's shops. On failure it writes the response (404/403) and returns ok=false.
 func loadOwnedOrder(c *gin.Context, merchantID uint) (*models.Order, bool) {
@@ -159,6 +175,7 @@ func PrepareOrder(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "prepare failed"})
 			return
 		}
+		logOrderAction(order.ID, merchantID, "prepare", order.Status, order.Status)
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "prepared"})
 }
@@ -184,10 +201,16 @@ func UpdateMerchantOrderStatus(c *gin.Context) {
 	if !ok {
 		return
 	}
+	if !allowedStatusTransitions[order.Status][req.Status] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "illegal status transition"})
+		return
+	}
+	old := order.Status
 	if err := config.DB.Model(order).Update("status", req.Status).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
 		return
 	}
+	logOrderAction(order.ID, merchantID, "status", old, req.Status)
 	c.JSON(http.StatusOK, gin.H{"message": "updated"})
 }
 
@@ -278,6 +301,7 @@ func RedispatchOrder(c *gin.Context) {
 		c.JSON(http.StatusBadGateway, gin.H{"error": "重新派单失败，请稍后重试", "shansong_status": updated.ShansongStatus})
 		return
 	}
+	logOrderAction(order.ID, merchantID, "redispatch", order.Status, order.Status)
 	c.JSON(http.StatusOK, gin.H{
 		"message":         "redispatched",
 		"shansong_status": updated.ShansongStatus,

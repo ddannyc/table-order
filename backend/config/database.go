@@ -57,6 +57,7 @@ func MigrateDB() error {
 		&models.InviteRelation{},
 		&models.WalletLog{},
 		&models.RewardLog{},
+		&models.OrderActionLog{},
 	)
 }
 

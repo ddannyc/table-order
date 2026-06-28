@@ -35,6 +35,7 @@ func setupTestDB(t *testing.T) {
 	sqlDB, _ := db.DB()
 	sqlDB.Exec("DROP TABLE IF EXISTS reward_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS wallet_logs")
+	sqlDB.Exec("DROP TABLE IF EXISTS order_action_logs")
 	sqlDB.Exec("DROP TABLE IF EXISTS order_items")
 	sqlDB.Exec("DROP TABLE IF EXISTS order_deliveries")
 	sqlDB.Exec("DROP TABLE IF EXISTS orders")
@@ -56,7 +57,7 @@ func setupTestDB(t *testing.T) {
 
 	// Recreate tables — a migration failure must fail the suite, not silently
 	// leave a broken schema that later assertions misread.
-	if err := config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{}); err != nil {
+	if err := config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{}, &models.OrderActionLog{}); err != nil {
 		t.Fatalf("automigrate failed: %v", err)
 	}
 

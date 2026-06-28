@@ -16,7 +16,7 @@ TDD：先写/改测试再改源码；一任务一提交。
 - [x] **Checkpoint B** CI 在 PR 上真实跑后端(含并发)+前端；人工 review
 
 ## Phase 3 — 安全加固（中危跟进）
-- [ ] **T5** `UpdateMerchantOrderStatus` 转换白名单（拒 1→2/4→3 等）+ prepare/redispatch/status 审计日志（新模型）+ 测试 — M（依赖 T1）
+- [x] **T5** `UpdateMerchantOrderStatus` 转换白名单（拒 1→2/4→3 等）+ prepare/redispatch/status 审计日志（新模型）+ 测试 — M（依赖 T1）
 - [ ] **T6** 入参校验：`shop_id/status` strconv→400、`type` 枚举、检查 Count/Scan/Find `.Error`；+ `page_size>100` 钳制测试 — S
 - [ ] **T7** 限流中间件（登录/注册 + redispatch，429，阈值可配）+ 测试 — M
 - [ ] **Checkpoint Complete** CI 全绿；ship 再评审 GO；端到端走查（已取消不可重派/限流/审计）；Ready for review
