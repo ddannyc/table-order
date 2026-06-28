@@ -262,3 +262,66 @@ func TestPrepareOrder_NotFound(t *testing.T) {
 		t.Fatalf("expected 404 for missing order, got %d", w.Code)
 	}
 }
+
+// --- T4: 改状态 (UpdateMerchantOrderStatus) ---
+
+func TestUpdateOrderStatus_UpdatesValid(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9401)
+	shop := models.Shop{Name: "Status Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "ST_OK", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 3})
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.Status != 3 {
+		t.Errorf("expected status 3, got %d", got.Status)
+	}
+}
+
+func TestUpdateOrderStatus_RejectsInvalid(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9402)
+	shop := models.Shop{Name: "Status Shop 2", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "ST_BAD", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 9})
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid status, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.Status != 2 {
+		t.Errorf("status must stay 2 after rejected update, got %d", got.Status)
+	}
+}
+
+func TestUpdateOrderStatus_RejectsOtherMerchant(t *testing.T) {
+	setupTestDB(t)
+	owner := uint(9403)
+	other := uint(9404)
+	shop := models.Shop{Name: "Owner Status Shop", MerchantID: owner, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "ST_FORBID", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, other, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 4})
+	if w.Code != http.StatusForbidden && w.Code != http.StatusNotFound {
+		t.Fatalf("expected 403/404, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.Status != 2 {
+		t.Errorf("must not change another merchant's order status, got %d", got.Status)
+	}
+}

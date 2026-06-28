@@ -153,6 +153,34 @@ func PrepareOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "prepared"})
 }
 
+type UpdateOrderStatusRequest struct {
+	Status int `json:"status"`
+}
+
+// UpdateMerchantOrderStatus manually sets an order's Status (1=pending, 2=paid,
+// 3=completed, 4=cancelled). Pure status write — no reward/payment side effects.
+func UpdateMerchantOrderStatus(c *gin.Context) {
+	merchantID := c.GetUint("user_id")
+	var req UpdateOrderStatusRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
+	if req.Status < 1 || req.Status > 4 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+		return
+	}
+	order, ok := loadOwnedOrder(c, merchantID)
+	if !ok {
+		return
+	}
+	if err := config.DB.Model(order).Update("status", req.Status).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "update failed"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "updated"})
+}
+
 type CreateMerchantOrderRequest struct {
 	UserID   uint    `json:"user_id" binding:"required"`
 	ShopID   uint    `json:"shop_id" binding:"required"`
