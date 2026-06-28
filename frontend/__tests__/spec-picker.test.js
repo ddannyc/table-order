@@ -84,6 +84,8 @@ describe('规格弹层版式（对齐参考图 + JFW）', () => {
   })
   it('整宽加入按钮：weui-btn_primary + bindtap confirmAddSpec，无 type="primary"', () => {
     expect(wxml).toMatch(/class="[^"]*weui-btn_primary[^"]*spec-add[^"]*"[^>]*bindtap="confirmAddSpec"/)
+    // weui-btn 默认收缩居中，须显式整宽
+    expect(rule('.spec-add')).toMatch(/width:\s*100%/)
     expect(wxml).not.toMatch(/pickSpec/)
     // 规格弹层内不得出现原生 type="primary"
     const sheet = wxml.slice(wxml.indexOf('spec-sheet'))
@@ -117,5 +119,10 @@ describe('规格弹层头图（变体 A · 整宽封面图）', () => {
   })
   it('封面整宽铺满 sheet（负边距抵消 padding）', () => {
     expect(rule('.spec-cover')).toMatch(/margin/)
+  })
+  it('弹层盖在固定 tabbar(z-index:100) 之上，加入购物车按钮不被遮挡', () => {
+    const z = (sel) => Number((String(rule(sel)).match(/z-index:\s*(\d+)/) || [])[1])
+    expect(z('.spec-mask')).toBeGreaterThan(100)
+    expect(z('.spec-sheet')).toBeGreaterThan(100)
   })
 })

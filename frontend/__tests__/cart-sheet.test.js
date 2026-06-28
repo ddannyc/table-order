@@ -60,4 +60,9 @@ describe('购物车弹层版式（已选商品面板 + JFW）', () => {
     expect(rule('.cart-row-price')).toMatch(/font-family:\s*var\(--font-number\)/)
     expect(wxss).toMatch(/\.cart-sheet/)
   })
+  it('弹层盖在固定 tabbar(z-index:100) 之上，不被遮挡', () => {
+    const z = (sel) => Number((String(rule(sel)).match(/z-index:\s*(\d+)/) || [])[1])
+    expect(z('.cart-mask')).toBeGreaterThan(100)
+    expect(z('.cart-sheet')).toBeGreaterThan(100)
+  })
 })

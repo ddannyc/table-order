@@ -403,14 +403,14 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 30;
+  z-index: 110; /* 高于钉底 tabbar(z-index:100)，否则加入按钮被遮挡 */
 }
 .spec-sheet {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 31;
+  z-index: 111;
   background: #fff;
   border-radius: 28rpx 28rpx 0 0;
   padding: 16rpx var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom));
@@ -538,8 +538,11 @@
   gap: var(--space-sm);
 }
 
-.spec-add {
-  margin-top: var(--space-lg);
+/* 整宽：weui-btn 自带居中收缩(同优先级，靠后裁不动)，用后代选择器提优先级铺满 */
+.spec-sheet .spec-add {
+  width: 100%;
+  margin: var(--space-lg) 0 0;
+  box-sizing: border-box;
 }
 .spec-add[disabled] {
   opacity: 0.5;
@@ -550,14 +553,14 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 30;
+  z-index: 110; /* 高于钉底 tabbar(z-index:100) */
 }
 .cart-sheet {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 31;
+  z-index: 111;
   background: #fff;
   border-radius: 28rpx 28rpx 0 0;
   padding: var(--space-lg) var(--space-lg) calc(var(--space-md) + env(safe-area-inset-bottom));
