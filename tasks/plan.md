@@ -1,218 +1,155 @@
-# Implementation Plan: 订单运营台 — Ship 评审整改 第二轮 (Remediation R2)
-
-> 来源：`/ship` 第二轮评审（NO-GO）。第一轮阻断项已闭合并验证；本轮修复**新发现的 Critical**
-> （由 T4 改状态 × T5 重新派单 交互引入）+ 鲁棒性/CI/安全跟进。
-> 关联：`specs/merchant-admin.md` §5 缺口⑥、`tasks/plan.archived-ship-remediation.md`（第一轮）。
+# Implementation Plan: 订单运营台 — Ship Remediation R3
 
 ## Overview
-核心阻断：`RedispatchOrder` 缺 `order.Status` 守卫——商家用 改状态 把订单置为已取消(4)后，配送行仍是
-`shansong_status ∈ {-1,60}`，重新派单会对**已取消订单下一笔付费闪送单**。这是第一轮 T7（prepare 不信任
-前端门）在重新派单路径上的遗漏。修复 = 后端要求 `order.Status==2` + 前端 `canRedispatch` 同步要求
-`status===2`（顺带修桶互斥与测试桩）。再补：limbo 状态恢复、真正生效的 CI、状态机+审计、入参校验、限流。
+Round-3 ship review returned **NO-GO** on two findings, both introduced/exposed by the
+R2 work itself:
+- **HIGH (security):** the new rate limiter (T7-R2) is bypassable via `X-Forwarded-For`
+  spoofing — `main.go` uses bare `gin.Default()` with no `SetTrustedProxies`, so
+  `c.ClientIP()` honors a client-supplied header. The brute-force control is cosmetic.
+- **MEDIUM (security/financial):** the redispatch `order.Status==2` gate is a read-then-act,
+  not part of the atomic claim. A concurrent `2→4` cancel — a path **T5-R2 newly made
+  first-class** — during the `CalculatePrice` window lets a billable courier be placed on a
+  cancelled order.
+
+This round closes both blockers, hardens the limiter (eviction + observability), and fills
+the test gaps the test-engineer flagged (incl. a characterization test for the accepted
+limbo `status=0` risk so future changes can't silently reopen the dispatch race).
 
 ## Architecture Decisions
-
-- **重新派单严格要求 `order.Status == 2`（已支付）。** 失败重派(-1)与闪送侧取消(60)在订单仍已支付时合法；
-  商家自己取消(4)/未支付(1)/已完成(3) 一律不可重派。前端 `canRedispatch` 同步加 `status===2`，使
-  `needsAction`(待处理) 与 `done`(status 3/4) 桶恢复互斥，且已取消单不再显示重派按钮。
-- **limbo `status=0` 纳入可重派集（带 `order_no==''` 守卫）。** 认领把 `shansong_status` 先置 0 再派单；
-  崩溃会卡在 0。让重派认领匹配 `shansong_status IN (-1,0,60) AND shansong_order_no='' AND order.Status=2`，
-  使被卡订单可由商家自助重派。正常支付流首次派单近乎与支付同刻发生且前端不为 0 显示按钮，残余竞态可忽略（文档化）。
-- **CI 真正执行测试。** 新增 `.github/workflows/ci.yml`：起 Postgres、设 `REQUIRE_TEST_DB=1`、`CGO_ENABLED=1`
-  跑 `go test -race ./...` + admin `npm ci/test/build`。并在 `setupTestDB` 检查 `AutoMigrate` 错误。
-  （此前 plan/todo 写"已跑 -race"不准确：cgo 关闭，从未真正跑过。）
-- **状态机 + 审计为下一阶段安全加固**，非 GO 门槛；GO 仅取决于 Phase 1。
+- **Trusted proxies via config, default deny-all-proxies.** Add `TrustedProxies []string`
+  to `ServerConfig` (env `TRUSTED_PROXIES`, comma-separated, mirroring `AllowedOrigins`).
+  `main.go` calls `r.SetTrustedProxies(cfg.Server.TrustedProxies)`. Empty list ⇒ trust no
+  proxies (gin then derives the IP from the TCP peer, ignoring spoofed XFF). The exact
+  Railway edge CIDR is a deploy-time value (see Open Questions) — the mechanism ships now;
+  the value is set in the Railway env.
+- **Enforce the status invariant in the DB, not in Go.** Fold `order.Status=2` into the
+  redispatch atomic claim via a correlated subquery so the database — not a stale in-memory
+  read — rejects a mid-flight-cancelled order. `RowsAffected==0 → 409`.
+- **Keep audit-after-commit ordering.** Do NOT move `logOrderAction` into the action's
+  transaction — a failed audit insert must not roll back a legitimate 出餐/改状态. Only make
+  the failure observable (`log.Printf`).
+- **No behavior change to the limbo `status=0` path.** It stays a documented risk; this round
+  only adds a characterization test pinning the current 400 response so the claimable set
+  `{-1,60}` can't be widened by accident (that is what reopened the race in dropped T3).
 
 ## Dependency Graph
-
 ```
-T1 后端 redispatch 要求 order.Status==2 ★阻断
-T2 前端 canRedispatch 要求 status===2 + 修桶/测试桩 ★阻断
-        └── Checkpoint A（GO 门槛）
-T3 limbo: 可重派集纳入 0（带 order_no='' 守卫）   [依赖 T1 的 status 守卫]
-T4 CI 流水线（让 REQUIRE_TEST_DB 生效 + -race）+ AutoMigrate 错误检查
-        └── Checkpoint B
-T5 UpdateMerchantOrderStatus 状态机 + 订单操作审计日志
-T6 入参校验（shop_id/status→400、type 枚举、检查被忽略的 GORM error）+ page_size 上限测试
-T7 限流中间件（登录/注册 + redispatch）
-        └── Checkpoint Complete
+config.ServerConfig.TrustedProxies ── main.go SetTrustedProxies ── T1 (limiter not spoofable)
+ratelimit.go (eviction, now-seam) ──────────────────────────────── T3 (limiter hardening+tests)
+merchant_order.go RedispatchOrder claim ───────────────────────── T2 (status in atomic claim)
+logOrderAction ────────────────────────────────────────────────── T4 (observable audit failure)
+merchant_order_test.go / ratelimit_test.go ────────────────────── T5/T3 (coverage)
 ```
-
-实现顺序：T1 → T2 →（Checkpoint A / GO）→ T3 → T4 →（Checkpoint B）→ T5 → T6 → T7。
-
----
+T1–T4 are independent of each other; T5 depends on T2 (status-claim behavior) being in place.
 
 ## Task List
 
-### Phase 1 — GO 阻断（资金安全）
+### Phase 1 — GO blockers (security)
 
-## Task 1: RedispatchOrder 要求 order.Status==2 ★阻断
+- [ ] **T1 ★blocker (HIGH)** Trusted-proxy config so `ClientIP()` can't be spoofed — M
+  - **Description:** Add `TrustedProxies []string` to `ServerConfig` + `TRUSTED_PROXIES` env
+    parse (comma-split, trim, like `AllowedOrigins`). In `main.go`, after `gin.Default()`,
+    call `r.SetTrustedProxies(cfg.Server.TrustedProxies)` and log a warning if the list is
+    empty (so the deploy gap is visible). Document the Railway env var.
+  - **Acceptance criteria:**
+    - [ ] With trusted proxies = empty, a request carrying a spoofed `X-Forwarded-For` does
+      **not** change the limiter key (i.e. repeated spoofed-XFF requests from one peer hit the
+      same bucket and get 429).
+    - [ ] `TRUSTED_PROXIES` env populates `cfg.Server.TrustedProxies` (config test).
+  - **Verification:** `cd backend && go test ./middleware/ ./config/`; `go build ./...`;
+    manual: grep `main.go` for `SetTrustedProxies`.
+  - **Files:** `backend/config/config.go`, `backend/config/config_test.go`, `backend/main.go`,
+    `backend/middleware/ratelimit_test.go` (spoof test via an engine with no trusted proxies).
+  - **Dependencies:** None.
 
-**Description:** 在 `RedispatchOrder` 的 `loadOwnedOrder` 之后、询价之前，加 `order.Status==2` 守卫；
-非已支付（未支付1/已完成3/已取消4）返回 400，杜绝对已取消订单下付费闪送单。镜像第一轮 T7。
+- [ ] **T2 ★blocker (MED, financial)** Redispatch atomic claim enforces `order.Status=2` — M
+  - **Description:** Add a correlated condition to the claim UPDATE so it only matches while
+    the parent order is still status 2:
+    `Where("id = ? AND shansong_status IN ? AND order_id IN (?)", od.ID, []int{-1,60},
+    config.DB.Model(&models.Order{}).Select("id").Where("id = ? AND status = 2", order.ID))`.
+    `RowsAffected==0` already returns 409.
+  - **Acceptance criteria:**
+    - [ ] A redispatch whose order is cancelled (`status→4`) **after** the status read but
+      **before** the claim places **no** courier order (0 `orderPlace` calls) and returns
+      409/400. Proven with a `quoteDelay` race test that flips `status=4` mid-quote (mirrors
+      `ConcurrentDispatchesOnce`).
+    - [ ] The existing happy-path redispatch + `ConcurrentDispatchesOnce` still pass.
+  - **Verification:** `cd backend && go test ./api/handler/ -run 'Redispatch' -count=5`.
+  - **Files:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`.
+  - **Dependencies:** None.
 
-**Acceptance criteria:**
-- [ ] `order.Status != 2` → 400，且配送行未变动（`shansong_quote_no/order_no/status` 原值）。
-- [ ] 已支付(2)且 `shansong_status∈{-1,60}` 的合法重派仍成功（既有用例不回归）。
-- [ ] 新增测试：order.Status=4 且 shansong_status=-1 → 400（镜像 `TestPrepareOrder_RejectsCancelled`）。
+### Checkpoint A (GO gate)
+- [ ] `go test ./...` + `admin npm test && npm run build` all green.
+- [ ] Spoofed XFF cannot reset the rate limit; cancelled-mid-flight order cannot be dispatched.
+- [ ] Ship can flip both blockers to resolved.
 
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run Redispatch`
+### Phase 2 — Robustness (recommended code fixes)
 
-**Dependencies:** None（最高风险，先做）
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
+- [ ] **T3** Rate-limiter hardening: evict empty keys + cover the sliding window — S
+  - **Description:** In `allow()`, after trimming, `if len(kept)==0 { delete(rl.hits,key) }`
+    (and still return true/append for a live hit). No janitor needed once T1 stops
+    attacker-minted keys.
+  - **Acceptance criteria:**
+    - [ ] Window-reset test (inject `now`): over-limit → advance `now` past `window` →
+      allowed again. (Uses the existing unused `now` seam — zero sleeps.)
+    - [ ] After a key's hits all expire and it's checked, it is removed from the map.
+    - [ ] `ByUserID` keys two different users independently and falls back to IP when no
+      `user_id` is set.
+  - **Verification:** `cd backend && go test ./middleware/`.
+  - **Files:** `backend/middleware/ratelimit.go`, `backend/middleware/ratelimit_test.go`.
+  - **Dependencies:** None (complements T1).
 
----
+- [ ] **T4** Audit-log write failures are observable — S
+  - **Description:** In `logOrderAction`, capture `config.DB.Create(...).Error` and
+    `log.Printf` it (keep audit-after-commit, do not fail the action). Add a one-line comment
+    stating the deliberate fire-and-forget ordering.
+  - **Acceptance criteria:**
+    - [ ] A failing audit insert logs an error and the action still returns success
+      (verified by inspection; no behavior regression in existing audit tests).
+  - **Verification:** `cd backend && go build ./... && go test ./api/handler/ -run 'Audit|Prepare|UpdateOrderStatus'`.
+  - **Files:** `backend/api/handler/merchant_order.go`.
+  - **Dependencies:** None.
 
-## Task 2: 前端 canRedispatch 要求 status===2 + 修桶互斥与测试桩 ★阻断
+### Phase 3 — Test coverage
 
-**Description:** `canRedispatch` 增加 `order.status === 2`，使已取消(4)外卖单不再同时落入「待处理」与
-「已完成」两个桶、也不再显示重派按钮。修正 `orderBoard.test.js` 中名为 cancelledDelivery 实为 `status:2`
-的桩，改为真正的 `status:4`，并断言其只进 done 桶、不显示重派。
+- [ ] **T5** Handler coverage gaps — S/M (depends on T2)
+  - **Description:** Add the missing handler tests the review flagged.
+  - **Acceptance criteria:**
+    - [ ] **Limbo characterization:** a delivery order at `shansong_status=0` → redispatch →
+      400 "order not in a re-dispatchable state" (pins the accepted risk; guards the
+      claimable set `{-1,60}`).
+    - [ ] **Redispatch audit:** the success test asserts an `action="redispatch"` row was written.
+    - [ ] **Transition whitelist table test:** legal `1→4`, `2→3`, `2→4` succeed; illegal
+      `2→1`, `2→2`, `3→1`, `3→4`, `4→2`, `4→3` each return 400 with status unchanged.
+  - **Verification:** `cd backend && go test ./api/handler/`.
+  - **Files:** `backend/api/handler/merchant_order_test.go`.
+  - **Dependencies:** T2.
 
-**Acceptance criteria:**
-- [ ] `canRedispatch({status:4, delivery:{shansong_status:-1}})` → false；`{status:2, shansong:-1/60}` → true。
-- [ ] 测试桩 cancelledDelivery 改为 `status:4`，断言 `inBucket(...,'pending')===false` 且 `'done'===true`（桶互斥）。
-- [ ] `npm test` 全绿、`npm run build` 通过。
-
-**Verification:**
-- [ ] `cd admin && npm test -- orderBoard && npm run build`
-
-**Dependencies:** None（前端独立；与 T1 同属一个 GO 门槛）
-**Files likely touched:** `admin/src/utils/orderBoard.js`, `admin/src/utils/orderBoard.test.js`
-**Estimated scope:** S
-
-### Checkpoint A — GO 门槛
-- [ ] `go test ./...` 全绿、`admin npm test && npm run build` 全绿。
-- [ ] 新 Critical 闭合：已取消订单不可重派（后端 400 + 前端无按钮/桶互斥）。
-- [ ] Review with human → ship 可翻 GO。
-
----
-
-### Phase 2 — 鲁棒性 + CI
-
-## Task 3: 可恢复的 limbo（重派认领纳入 shansong_status=0）
-
-**Description:** 认领把状态先置 0 再同步派单；崩溃会卡在 0（不在 {-1,60}，无法再重派）。把重派认领的
-条件 UPDATE 改为匹配 `shansong_status IN (-1,0,60) AND shansong_order_no='' `（叠加 T1 的 `order.Status==2`），
-使卡住的已支付订单可被商家自助重派。文档化正常支付流首派的极小残余窗口。
-
-**Acceptance criteria:**
-- [ ] 构造 `order.Status=2, shansong_status=0, shansong_order_no=''` 的订单：重派成功（200，最终 20）。
-- [ ] 仍拒绝 `order_no!=''`（已派单）与 `order.Status!=2`。
-- [ ] 既有并发/成功/失败/非法用例不回归。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run Redispatch`
-
-**Dependencies:** Task 1
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
-
----
-
-## Task 4: CI 流水线让 REQUIRE_TEST_DB 真正生效 + AutoMigrate 错误检查
-
-**Description:** 新增 `.github/workflows/ci.yml`：Postgres service、`REQUIRE_TEST_DB=1`、`CGO_ENABLED=1`
-跑 `go test -race ./...`；admin `npm ci && npm test && npm run build`。在 `setupTestDB` 检查并 fail
-on `AutoMigrate` 错误（当前忽略）。消除"假性全绿"与不准确的 -race 声明。
-
-**Acceptance criteria:**
-- [ ] CI 工作流存在：起 Postgres、设 `REQUIRE_TEST_DB=1`、`CGO_ENABLED=1 go test -race ./...`、admin 测试+构建。
-- [ ] `setupTestDB` 对 `AutoMigrate` 返回错误 `t.Fatalf`（不再静默）。
-- [ ] 本地 `go test ./...`（无 env）仍可 skip；有库时正常通过。
-
-**Verification:**
-- [ ] 本地 `REQUIRE_TEST_DB=1 go test ./api/handler/`（有库则过）。
-- [ ] CI 配置语法自检（actionlint 或人工核对）。
-
-**Dependencies:** None
-**Files likely touched:** `.github/workflows/ci.yml`（新增）, `backend/api/handler/handler_test.go`
-**Estimated scope:** S
-
-### Checkpoint B — 鲁棒性/CI
-- [ ] CI 在 PR 上真实跑起后端（含并发测试）+ 前端。
-- [ ] Review with human。
-
----
-
-### Phase 3 — 安全加固（中危跟进）
-
-## Task 5: 订单状态转换状态机 + 操作审计日志
-
-**Description:** `UpdateMerchantOrderStatus` 加合法转换白名单（如仅 `2→3`、`2→4`、`1→4`；拒绝复活已取消/
-凭空标记已支付）。为 prepare/redispatch/status 三类商家操作写审计记录（actor merchant_id、order_id、
-old→new、时间）。消除「自助把未支付标记为已支付以虚增营业额」与无留痕问题。
-
-**Acceptance criteria:**
-- [ ] 非法转换（如 `1→2`、`4→3`、`3→1`）→ 400；合法转换通过。
-- [ ] 每次 prepare/redispatch/status 成功写一条审计记录（含 actor/old→new/时间）。
-- [ ] 新增模型/表的迁移与单测；`go test ./...` 全绿。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run 'Status|Audit'`
-
-**Dependencies:** Task 1（redispatch 守卫先就位）
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/models/`（新增审计模型）, `backend/api/handler/handler_test.go`, `*_test.go`
-**Estimated scope:** M
-
----
-
-## Task 6: 入参校验 + 被忽略的 DB 错误 + page_size 上限测试
-
-**Description:** `GetMerchantOrders` 用 `strconv.Atoi` 解析 `shop_id`/`status`（失败 400），校验 `type` 枚举；
-检查 `Count/Scan/Find` 的 `.Error`（记录或 500）。补 `page_size>100` 钳制到 100 的测试。
-
-**Acceptance criteria:**
-- [ ] `?status=abc`/`?shop_id=xx` → 400（非静默空结果）；`?type=bogus` → 400 或忽略（择一并测）。
-- [ ] `page_size=500` + >100 行：返回正好 100 条（上限分支被覆盖）。
-- [ ] 既有列表用例不回归。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run MerchantOrders`
-
-**Dependencies:** None
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
-
----
-
-## Task 7: 限流中间件（登录/注册 + redispatch）
-
-**Description:** 新增 per-IP + per-account 限流中间件，挂在 `/api/auth/login`、`/api/merchant/login`、
-`/api/merchant/register`（防爆破）与 `/api/merchant/orders/:id/redispatch`（防配额/费用滥用）。
-
-**Acceptance criteria:**
-- [ ] 超过阈值的连续请求返回 429。
-- [ ] 正常频率不受影响；单测覆盖放行/限流两路径。
-- [ ] 阈值可配置（config/env）。
-
-**Verification:**
-- [ ] `cd backend && go test ./middleware/`
-
-**Dependencies:** None
-**Files likely touched:** `backend/middleware/ratelimit.go`（新增）, `backend/api/router/router.go`, `backend/middleware/*_test.go`
-**Estimated scope:** M
-
-### Checkpoint: Complete
-- [ ] `go test ./... -race`（CI）+ `admin npm test && npm run build` 全绿。
-- [ ] ship 再评审可 GO；端到端走查（已取消单不可重派、限流生效、审计有记录）。
-- [ ] Ready for review / 合并。
-
----
+### Checkpoint Complete
+- [ ] `go test ./...` (incl. `-count=5` on Redispatch) + `admin npm test && npm run build` green.
+- [ ] Re-run `/ship` → expect GO with only acknowledged risks remaining.
+- [ ] End-to-end: spoofed XFF throttled; cancel-mid-redispatch blocked; audit rows written; limbo 400.
 
 ## Risks and Mitigations
-
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| limbo（crash 卡在 status=0 不可重派）| Low | **T3 已放弃**：把 0 纳入可重派集会重开并发双派竞态（实测 10 次中 1 次双派）；保留可重派集 = {-1,60}。limbo 留作已知风险，待基于时间的对账清扫（stranded 0 + updated_at 超时才可重派）单列任务 |
-| 状态机白名单与现有手动流冲突 | Med | 白名单先宽（仅禁危险转换），保留 prepare/redispatch 路径；充分单测 |
-| 限流误伤正常商家 | Med | 阈值保守可配；仅登录/注册/redispatch，不动读接口 |
-| CI 首次接入环境差异 | Low | 用官方 postgres service container；与本地 DSN 对齐 |
+| `TRUSTED_PROXIES` not set in Railway ⇒ `ClientIP` may be the edge IP (all clients share a bucket) | Med | Ship mechanism + warning log; set the env to Railway's edge CIDR at deploy (Open Question). Empty = deny-all-proxies, which is safe-but-coarse, never "trust all". |
+| Cancel-race test is timing-based and could flake | Low | Use the proven `quoteDelay` widening + `-count=5`, same pattern as `ConcurrentDispatchesOnce`. |
+| Correlated subquery in the claim behaves differently across SQLite/PG | Low | Tests run on the real Postgres test DB (CI `REQUIRE_TEST_DB=1`). |
+| Limiter still per-instance | Low | Documented; move to Redis before horizontal scale (not this round). |
 
-## Open Questions（待定/跟进，本轮可不做）
-- 服务端「待处理」计数（解决 100 行上限漏单）——量起来前是否需要？
-- `doRedispatch` 取消确认不调 API 的组件测试（前端 SFC 唯一有后果的逻辑）。
-- 列表 PII（recipient_*）的日志脱敏与前端缓存策略——合规确认。
-- 日期过滤的 DB/应用时区一致性（跨时区临界）。
+## Open Questions
+- **Railway edge proxy CIDR / hop count** for `TRUSTED_PROXIES` — operational value, set at
+  deploy. Until set, limiter keys on the deny-all-proxies result (TCP peer).
+- **Pre-existing `CreateMerchantOrder` creates `Status:2` with a client `amount`** (on `main`,
+  out of this branch's scope) — confirm whether merchant-created paid orders are an intended
+  trusted POS path; if not, constrain/audit `amount` separately.
+- **Limbo `status=0` reconciliation sweep** (time-based re-claim) — deferred; this round only
+  characterizes current behavior.
+
+## Constraints (carried from prior rounds — MUST hold)
+- Work on branch `feat/merchant-order-board`; **never** touch/stage `frontend/config.js`.
+- Git hygiene: stage only each task's files; no `git add -A`; never stage `.claude/`.
+- One commit per task, RED→GREEN→regression→build→commit; footer
+  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`.
+- `-race` unusable locally (cgo off); rely on `-count=N` locally and CI for real `-race`.

@@ -1,33 +1,22 @@
-# Todo：订单运营台 — Ship 评审整改 第二轮 (Remediation R2)
+# TODO — 订单运营台 Ship Remediation R3
 
-详见 `tasks/plan.md`。来源：`/ship` 第二轮 NO-GO（分支 `feat/merchant-order-board`）。
-新 Critical：`RedispatchOrder` 缺 `order.Status` 守卫 → 可对已取消订单下付费闪送单（T1/T2 修）。
-**git 卫生**：只 stage 该任务文件；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`。
-TDD：先写/改测试再改源码；一任务一提交。
+分支 `feat/merchant-order-board`；勿动/勿 stage `frontend/config.js`、`.claude/`；逐任务单独提交。
 
-## Phase 1 — GO 阻断（资金安全）
-- [x] **T1 ★阻断** `RedispatchOrder` 加 `order.Status==2` 守卫（非已支付→400，配送行不变）+ 测试（status=4&shansong=-1→400）— S
-- [x] **T2 ★阻断** 前端 `canRedispatch` 加 `status===2`；修 `orderBoard.test` 桩（cancelledDelivery→status:4）断言桶互斥/无重派按钮 — S
-- [x] **Checkpoint A（GO）** `go test ./...` + `admin npm test && npm run build` 全绿；已取消单不可重派；ship 可翻 GO
+## Phase 1 — GO 阻断（安全）
+- [ ] **T1 ★阻断(HIGH)** 可信代理配置：`ServerConfig.TrustedProxies` + `TRUSTED_PROXIES` 环境变量（仿 `AllowedOrigins`）；`main.go` 调 `r.SetTrustedProxies(...)`，空列表则告警；测：伪造 `X-Forwarded-For` 不能换桶（仍 429）+ config 解析 — M
+- [ ] **T2 ★阻断(MED/资金)** 重派原子认领纳入 `order.Status=2`（关联子查询 `order_id IN (SELECT id FROM orders WHERE id=? AND status=2)`），`RowsAffected==0→409`；测：报价窗口内并发改 `status=4` → 0 次 orderPlace（`quoteDelay` 竞态，仿 ConcurrentDispatchesOnce）— M
+- [ ] **Checkpoint A（GO）** `go test ./...` + admin `npm test`/`build` 全绿；伪造 XFF 不能重置限流；中途取消单不可派单；两个阻断可翻 resolved
 
-## Phase 2 — 鲁棒性 + CI
-- [~] **T3 已放弃** limbo 恢复：把 0 纳入可重派集会**重新打开并发竞态**（认领赢家把状态置 0，0 又在集内 → 并发输家命中 → 双派，10 次复跑实测 1 次双派）。crash 残留的 0 与刚认领的 0 仅能靠**时间**区分，超出 S 范围。→ 降级为「已知风险」，留待基于时间的对账清扫。保护并发不变量优先。
-- [x] **T4** 新增 `.github/workflows/ci.yml`（Postgres + `REQUIRE_TEST_DB=1` + `CGO_ENABLED=1 go test -race ./...` + admin test/build）+ `setupTestDB` 检查 AutoMigrate 错误 — S
-- [x] **Checkpoint B** CI 在 PR 上真实跑后端(含并发)+前端；人工 review
+## Phase 2 — 鲁棒性（建议修）
+- [ ] **T3** 限流器加固：`allow()` 清空键 `delete`；测窗口复位（注入 `now`，零 sleep）、键淘汰、`ByUserID` 分桶+无 user 回退 IP — S
+- [ ] **T4** 审计写失败可观测：`logOrderAction` 捕获并 `log.Printf`（保持提交后审计，不回滚动作）+ 注释说明 — S
 
-## Phase 3 — 安全加固（中危跟进）
-- [x] **T5** `UpdateMerchantOrderStatus` 转换白名单（拒 1→2/4→3 等）+ prepare/redispatch/status 审计日志（新模型）+ 测试 — M（依赖 T1）
-- [x] **T6** 入参校验：`shop_id/status` strconv→400、`type` 枚举、检查 Count/Scan/Find `.Error`；+ `page_size>100` 钳制测试 — S
-- [x] **T7** 限流中间件（登录/注册 + redispatch，429，阈值可配）+ 测试 — M
-- [x] **Checkpoint Complete** CI 全绿；ship 再评审 GO；端到端走查（已取消不可重派/限流/审计）；Ready for review
+## Phase 3 — 测试覆盖
+- [ ] **T5** handler 覆盖缺口（依赖 T2）：limbo `shansong_status=0`→重派→400 表征测；重派成功写 `action="redispatch"` 审计断言；状态机白名单表测（合法 1→4/2→3/2→4 通过；非法 2→1/2→2/3→1/3→4/4→2/4→3→400 且状态不变）— S/M
+- [ ] **Checkpoint Complete** `go test ./...`（Redispatch `-count=5`）+ admin 全绿；重跑 `/ship` 期望 GO（仅剩已知风险）；端到端走查
 
-## 守护测试映射
-- T1 → redispatch：order.Status=4&shansong=-1 → 400 且行不变；合法(status2)仍成功
-- T2 → orderBoard：canRedispatch(status4)=false；inBucket 桶互斥（cancelledDelivery status:4 只进 done）
-- T3 → redispatch：status=2&shansong=0&order_no='' → 可重派成功
-- T5 → status：非法转换 400 / 合法通过；审计记录写入
-- T6 → MerchantOrders：非法 shop_id/status → 400；page_size=500 → 100 条
-- T7 → middleware：超阈值 429 / 正常放行
-
-## 本轮不做（验收风险/跟进，见 plan Open Questions）
-- 服务端待处理计数（100 行上限漏单）、doRedispatch 取消组件测试、PII 日志脱敏、日期时区一致性
+## 已知风险 / 本轮不做
+- 限流器仅单实例（多 pod 需 Redis）— 文档化
+- limbo `status=0` 基于时间的对账清扫 — 仅表征当前 400，不改行为
+- 预存 `CreateMerchantOrder` 用客户端 `amount` 建 `Status:2` 单（在 main，超本支范围）— 另议
+- `TRUSTED_PROXIES` 具体 Railway 边缘 CIDR — 部署时设值（Open Question）
