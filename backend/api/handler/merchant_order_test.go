@@ -641,3 +641,20 @@ func TestGetMerchantOrders_DefaultPageSizeLimits(t *testing.T) {
 		t.Errorf("total should be 25 across full set, got %d", resp.Total)
 	}
 }
+
+// T5: re-dispatching a dine-in order (no OrderDelivery row) is a 400.
+func TestRedispatchOrder_NotADeliveryOrder(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9509)
+	withShansong(t, mockShansong(`{"status":200,"data":{"orderNumber":"RQ"}}`, `{"status":200,"data":{"orderNumber":"X"}}`))
+	shop := models.Shop{Name: "NoDeliv Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "RD_DINE", ShopID: shop.ID, OrderType: "dine_in", Amount: 10, Status: 2}
+	config.DB.Create(&order) // no OrderDelivery row
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for non-delivery order, got %d body: %s", w.Code, w.Body.String())
+	}
+}
