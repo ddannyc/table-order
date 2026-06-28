@@ -1,22 +1,35 @@
-# Todo：修复菜单「选规格」按钮三位数价格换行（方案 V3）
+# Todo：商家后台 · 订单运营台 (Order Action Board)
 
-详见 `tasks/plan.md`。范围：**仅 `frontend/`**（utils 价格函数 + menu WXML/WXSS + 测试），不改接口/业务逻辑/config.js。
-方案 V3（效果图 375px 真机比例验证）：瘦黄标 + 整数去 .00 + `选规格` 紧凑原子药丸 → `¥38/¥100/¥288/¥1288 起` 全档同行不断字；`flex-wrap` 仅兜底。
-TDD：先写测试再改；一任务一提交。
+详见 `tasks/plan.md`。Spec：`specs/merchant-admin.md` §5 缺口⑥ / §9。Idea：`docs/ideas/order-action-board.md`。
+范围：后端 `backend/`（PreparedAt + 列表扩展 + 出餐/改状态/重新派单 3 接口 + httptest）与前端 `admin/`（订单运营台）。
+**不在本期**：退款/refund、闪送自动重试自愈、派单失败推送告警、堂食/外卖拆视图、看板趋势图。
+TDD：后端先写 httptest 再实现；**契约优先**（先把列表 + 3 接口跑绿再做 UI）；一任务一提交。
 **git 卫生**：只 stage 该任务文件；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`。
-分支：建议 `feat/menu-price-btn-fit`（开工前切；注意当前在 feat/menu-skeleton，需先理清分支）。
 
-## 任务
-- [x] **T1** 价格格式化纯函数 `utils/price.js formatPrice`（整数去 .00 / 非整保两位）+ 接入 menu loadData（`priceText`/`specMinText`）+ 单测 — S ✅
-- [x] **T2** 价格标瘦身 + `选规格` 紧凑原子（`menu-spec-btn`：nowrap+flex-shrink:0）+ `.menu-action{flex:none;margin-left:auto}` + `.menu-card-bottom{flex-wrap:wrap}` + WXML 加类 + 守护测试 — S ✅
-- [ ] **Checkpoint A** `npm test` 全绿 + 真机多档价格手测（两/三/四位数 + ¥38.50 + 带徽章均同行不断字）+ git diff 仅 frontend + 部署停等用户
+## Phase 1 — 后端基础（契约）
+- [ ] **T1** `Order.PreparedAt *time.Time`（出餐时间，非破坏；已确认无处读 `Status==3` 当出餐）+ 迁移 — XS
+- [ ] **T2** 扩展 `GetMerchantOrders`：LEFT JOIN `order_deliveries` + 返回 `order_type/status/paid_at/prepared_at/delivery{...}` + `status/type` 筛选 + 分页（替换 50 上限）+ 含未支付 + `revenue/rewarded` 按筛选聚合 + httptest — M
+- [ ] **Checkpoint 1** `go test ./...` 全绿；列表 schema 冻结；人工确认字段/分页/未支付口径
+
+## Phase 2 — 后端动作接口（可并行）
+- [ ] **T3** `POST /merchant/orders/:id/prepare`（出餐，置 PreparedAt，校验归属，幂等）+ httptest — S
+- [ ] **T4** `PUT /merchant/orders/:id/status`（改状态，仅 {1,2,3,4}，校验归属，无副作用）+ httptest — S
+- [ ] **T5** ⚠️ `POST /merchant/orders/:id/redispatch`：仅 `shansong_status∈{-1,60}` → 重新询价(`CalculatePrice`) → 刷新 `ShansongQuoteNo`/清空 `ShansongOrderNo`/状态归 0 → `DispatchShansong` → 回读最新状态 + httptest(mock client) — M
+- [ ] **Checkpoint 2** `go test ./...` 全绿；4 接口 curl 验证；确认重新询价费用差异口径；人工 review
+
+## Phase 3 — 前端 SPA（契约稳定后）
+- [ ] **T6** `api/order.js` + `views/Orders.vue` 只读运营台（默认「待处理」+ tab 进行中/已完成/全部 + 店铺/日期/类型筛选 + 分页 + 支付/出餐/闪送徽标）+ 路由 + 侧边栏入口 + `npm run build` — M
+- [ ] **T7** 行内动作按钮：堂食【出餐】/ 外卖【重新派单】/【改状态】+ 二次确认 + loading 防重 + 成功刷新 — M
+- [ ] **Checkpoint 3（端到端）** `go test ./...` 与 `npm run build` 均绿；端到端走查出餐/重新派单/改状态/未支付可见/筛选分页；Ready for review
 
 ## 守护测试映射
-- T1 → `__tests__/price-format.test.js`（整数/非整/0/字符串容错）；`menu-page.test.js` 守护 loadData 不回归
-- T2 → `__tests__/menu-price-btn.test.js`（WXML 含 `menu-spec-btn`；WXSS `.menu-spec-btn` 含 nowrap+flex-shrink:0；`.menu-card-bottom` 含 flex-wrap:wrap）
+- T2 → `merchant_order_test.go`（JOIN delivery 字段、含未支付、status/type 筛选、分页、聚合合计）
+- T3 → prepare：成功/幂等/越权/不存在
+- T4 → status：合法值更新 / 非法值 400 / 越权
+- T5 → redispatch：询价成功→派单成功(20) / 派单失败(-1) / 状态非法(400) / 无 client(503) / 越权
 
-## 不在本期
-- 购物车/下单页/规格弹层价格格式统一、缩小缩略图（V4 备选）、改价格标色彩、组件测试栈。
-
-## 已定方向
-- 方案 V3（瘦黄标 + 整数去 .00 + 紧凑按钮），全价格档同行不断字；wrap 仅极端兜底。
+## 待确认（开工前）
+- 出餐是否回推小程序通知顾客？（默认仅后台，不动 `frontend/`）
+- 重新询价新费 > 原配送费 的差额承担 / 是否需二次确认金额？
+- `page_size` 默认/上限？单店日订单量级？
+- 外卖「卡太久」阈值（待取货 >? 分钟、闪送中 >? 分钟）

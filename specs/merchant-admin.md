@@ -16,11 +16,12 @@
 - 数据看板（累计 + 单日统计卡片）
 - 店铺信息编辑 + 返利配置
 - 桌台二维码生成与查看
+- **订单运营台**（待办队列：堂食已支付未出餐 →【出餐】，外卖派单失败/卡太久 →【重新派单】/【改状态】）。设计依据见 `docs/ideas/order-action-board.md`。
 
 ### 范围外 (明确不做)
-- **订单管理**（用户未勾选；`/merchant/orders` 接口虽存在，本期不建 UI）
 - 平台超管后台（`/api/admin/*`）
 - 会员/返利明细报表、提现
+- 订单退款/refund（涉及资金流动，单列范围）、闪送失败自动重试自愈、派单失败推送/短信告警（见 idea 文档 Not Doing）
 - 商家自助注册引导（注册接口存在，但 UI 仅做登录；如需可后补）
 
 ---
@@ -61,7 +62,8 @@ admin/
     │   ├── shop.js         # shops CRUD + 返利配置
     │   ├── product.js      # 菜品 CRUD + 上下架
     │   ├── stats.js        # dashboard + stats
-    │   └── qrcode.js       # 桌码 生成/列表
+    │   ├── qrcode.js       # 桌码 生成/列表
+    │   └── order.js        # 订单列表 + 出餐/重新派单/改状态
     ├── stores/
     │   └── auth.js         # token, merchant, currentShopId；localStorage 持久化
     ├── router/
@@ -73,7 +75,8 @@ admin/
     │   ├── Dashboard.vue   # 看板
     │   ├── Products.vue    # 菜品管理（表格 + 编辑弹窗）
     │   ├── ShopSettings.vue# 店铺信息 + 返利配置
-    │   └── QRCodes.vue     # 桌码
+    │   ├── QRCodes.vue     # 桌码
+    │   └── Orders.vue      # 订单运营台（默认"待处理"队列 + tab + 筛选 + 行内动作）
     └── components/         # 复用组件（按需）
 ```
 
@@ -97,6 +100,10 @@ admin/
 | 单日统计 | `GET /api/merchant/stats?date=YYYY-MM-DD&shop_id=` | query | `{new_users, orders, revenue, rewarded}` |
 | 桌码列表 | `GET /api/shops/:id/qrcodes` | — | `TableQRCode[]`（**公开**，见缺口③） |
 | 生成桌码 | `POST /api/shops/:id/qrcodes` | `{table_no}` | `{...qrcode 图片}`（**公开**，见缺口③） |
+| 订单列表 | `GET /api/merchant/orders?shop_id=&date=&status=&type=` | query | `{orders:[Order+delivery], total, revenue, rewarded}`（见缺口⑥，含 delivery 明细 + 分页） |
+| 出餐 | `POST /api/merchant/orders/:id/prepare` | — | `{message}`（置 `PreparedAt`，见缺口⑥） |
+| 重新派单 | `POST /api/merchant/orders/:id/redispatch` | — | `{message}`（调 `DispatchShansong`，见缺口⑥） |
+| 改状态 | `PUT /api/merchant/orders/:id/status` | `{status}` | `{message}`（见缺口⑥） |
 
 `Shop` 含返利字段：`reward_rate_self`(默认0.03)、`reward_rate_level1`(0.10)、`reward_rate_level2`(0.04)、`reward_ceiling`(0.50)、`reward_exclude_categories`(jsonb 数组)。
 `Product.status`：`1=上架, 0=下架, 2=售罄`。
@@ -122,6 +129,15 @@ admin/
 **⑤ 无图片上传接口** — `Product.Image` 是 URL 字符串。
 → **已定：本期做上传**。新增 `POST /api/merchant/upload`（multipart，校验商家登录、类型 jpg/png/webp、大小上限 5MB），返回 `{url}`，写回 `Product.Image`。
 → **已定：存储用 Cloudflare R2**（见 §10），起步即上 R2，不做本地磁盘过渡。
+
+**⑥ 订单运营台后端（新模块）** — `merchant_order.go` 现仅有 `GetMerchantOrders`（裸 `Order`，固定 50 条、无分页、不含配送明细）+ `CreateMerchantOrder`。需补：
+- **a) 出餐字段**：`Order` 加 `PreparedAt *time.Time`（出餐时间；`已出餐` = 非空）。**不**新增 `Status` 枚举值。→ **迁移前** grep 所有 `Status` 读取点，确认无处把 `Status==3` 当"已出餐"语义。
+- **b) 列表扩展**：`GetMerchantOrders` LEFT JOIN `order_deliveries`，返回 `order_type / status / paid_at / prepared_at` + `delivery{shansong_status,...}`；增加 `status`/`type` 筛选 + 分页（替换现固定 50 条上限）。**未支付(Status=1)也返回**（商家需知"是否已支付"，用支付状态徽标区分）。
+- **c) 出餐**：`POST /api/merchant/orders/:id/prepare` → 置 `PreparedAt`，校验 order 所属 shop 归当前 merchant。
+- **d) 重新派单**：`POST /api/merchant/orders/:id/redispatch` → 调 `services.DispatchShansong(orderID)`，仅限 `ShansongStatus ∈ {-1 派单失败, 60 已取消}`，校验归属。→ **开工前**读 `services/shansong_dispatch.go` 确认其重新派单时会**重新询价**（旧 `ShansongQuoteNo` 可能已失效）。
+- **e) 改状态**：`PUT /api/merchant/orders/:id/status` → 手动改 `Order.Status`，校验归属。
+→ 4 个新/改 handler 均补 Go `httptest`（沿用 §7 风格）。
+→ **产品风险（非技术）**：堂食出餐依赖厨房实时在后台点【出餐】，否则字段形同虚设——开工前向真实商家确认出餐履约流程。
 
 ---
 
@@ -165,17 +181,19 @@ admin/
 
 ## 9. 建议构建顺序（每步可验证）
 
-1. 后端补缺口 ①②③⑤ + 单测 → `go test ./...` 通过：
+1. 后端补缺口 ①②③⑤⑥ + 单测 → `go test ./...` 通过：
    - ① 店铺返利字段可写（指针/显式 map）
    - ② 菜品 status 可设 0（下架）
    - ③ 新增 `/api/merchant/shops/:id/qrcodes`（GET/POST，校验归属）
    - ⑤ 新增 `POST /api/merchant/upload`（multipart → `{url}`）
+   - ⑥ `Order.PreparedAt` 迁移 + 列表 JOIN/筛选/分页 + prepare/redispatch/status 三接口
 2. `admin/` Vite 脚手架 + axios 封装 + 登录页 → 能登录拿到 token、刷新保持。
 3. Layout + 店铺切换器 + 路由守卫 → 未登录跳登录。
 4. 菜品管理（列表/新增/编辑/上下架/删除 + 图片上传）→ CRUD 闭环。
 5. 店铺设置 + 返利配置 → 保存后刷新值正确。
 6. 看板卡片 + 日期选择 → 数字与后端一致。
 7. 桌码生成/列表 → 能出图、能看列表。
+8. 订单运营台 → 默认"待处理"队列（堂食已支付未出餐 + 外卖派单失败/卡太久）；堂食可【出餐】、外卖可【重新派单】/【改状态】；tab 切进行中/已完成/全部；按店铺/日期筛选；未支付订单带支付状态徽标。
 ```
 每步 verify：手动操作一遍 + 控制台无报错 + 刷新后状态正确。
 ```
