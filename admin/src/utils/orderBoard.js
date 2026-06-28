@@ -51,6 +51,9 @@ export const inBucket = (order, which) => {
 export const canPrepare = (order) =>
   order.order_type !== 'delivery' && isPaid(order) && !isPrepared(order)
 
+// Only a paid (status 2) delivery order is re-dispatchable — a merchant-cancelled
+// order must not show the button (mirrors the backend order.Status==2 guard).
 export const canRedispatch = (order) =>
   order.order_type === 'delivery' &&
+  order.status === 2 &&
   (order.delivery?.shansong_status === -1 || order.delivery?.shansong_status === 60)

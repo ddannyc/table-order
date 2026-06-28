@@ -7,8 +7,8 @@ TDD：先写/改测试再改源码；一任务一提交。
 
 ## Phase 1 — GO 阻断（资金安全）
 - [x] **T1 ★阻断** `RedispatchOrder` 加 `order.Status==2` 守卫（非已支付→400，配送行不变）+ 测试（status=4&shansong=-1→400）— S
-- [ ] **T2 ★阻断** 前端 `canRedispatch` 加 `status===2`；修 `orderBoard.test` 桩（cancelledDelivery→status:4）断言桶互斥/无重派按钮 — S
-- [ ] **Checkpoint A（GO）** `go test ./...` + `admin npm test && npm run build` 全绿；已取消单不可重派；ship 可翻 GO
+- [x] **T2 ★阻断** 前端 `canRedispatch` 加 `status===2`；修 `orderBoard.test` 桩（cancelledDelivery→status:4）断言桶互斥/无重派按钮 — S
+- [x] **Checkpoint A（GO）** `go test ./...` + `admin npm test && npm run build` 全绿；已取消单不可重派；ship 可翻 GO
 
 ## Phase 2 — 鲁棒性 + CI
 - [ ] **T3** limbo 恢复：重派认领纳入 `shansong_status IN (-1,0,60) AND order_no='' AND order.Status==2`；测卡住的 status=0 可重派 — S（依赖 T1）

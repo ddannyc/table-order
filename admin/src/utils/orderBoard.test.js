@@ -68,25 +68,32 @@ describe('needsAction (待处理 queue)', () => {
 
 describe('inBucket (tab partition)', () => {
   const pendingDelivery = { order_type: 'delivery', status: 2, delivery: { shansong_status: -1 } }
-  const cancelledDelivery = { order_type: 'delivery', status: 2, delivery: { shansong_status: 60 } }
+  const shansongCancelledPaid = { order_type: 'delivery', status: 2, delivery: { shansong_status: 60 } } // courier cancelled, order still paid → re-dispatchable
+  const cancelledOrderDelivery = { order_type: 'delivery', status: 4, delivery: { shansong_status: -1 } } // merchant cancelled the order
   const activeDineIn = { order_type: 'dine_in', status: 2, prepared_at: 'x' }
   const doneOrder = { order_type: 'dine_in', status: 3 }
   const cancelledOrder = { order_type: 'dine_in', status: 4 }
 
-  it('pending bucket = needsAction', () => {
+  it('pending bucket = needsAction (paid + actionable)', () => {
     expect(inBucket(pendingDelivery, 'pending')).toBe(true)
-    expect(inBucket(cancelledDelivery, 'pending')).toBe(true) // 60 is actionable, must surface here
+    expect(inBucket(shansongCancelledPaid, 'pending')).toBe(true) // paid, courier-cancelled → surface
+    expect(inBucket(cancelledOrderDelivery, 'pending')).toBe(false) // order cancelled → not actionable
     expect(inBucket(activeDineIn, 'pending')).toBe(false)
   })
   it('active bucket = paid and not pending', () => {
     expect(inBucket(activeDineIn, 'active')).toBe(true)
     expect(inBucket(pendingDelivery, 'active')).toBe(false)
-    expect(inBucket(cancelledDelivery, 'active')).toBe(false) // must NOT hide here
   })
   it('done bucket = completed or cancelled', () => {
     expect(inBucket(doneOrder, 'done')).toBe(true)
     expect(inBucket(cancelledOrder, 'done')).toBe(true)
+    expect(inBucket(cancelledOrderDelivery, 'done')).toBe(true)
     expect(inBucket(activeDineIn, 'done')).toBe(false)
+  })
+  it('buckets are mutually exclusive for a cancelled delivery (no overlap)', () => {
+    expect(inBucket(cancelledOrderDelivery, 'pending')).toBe(false)
+    expect(inBucket(cancelledOrderDelivery, 'active')).toBe(false)
+    expect(inBucket(cancelledOrderDelivery, 'done')).toBe(true)
   })
   it('all bucket matches everything', () => {
     expect(inBucket(pendingDelivery, 'all')).toBe(true)
@@ -100,10 +107,12 @@ describe('canPrepare / canRedispatch (action affordances)', () => {
     expect(canPrepare({ order_type: 'dine_in', status: 2, prepared_at: 'x' })).toBe(false)
     expect(canPrepare({ order_type: 'delivery', status: 2, prepared_at: null })).toBe(false)
   })
-  it('canRedispatch only for delivery in -1 or 60', () => {
-    expect(canRedispatch({ order_type: 'delivery', delivery: { shansong_status: -1 } })).toBe(true)
-    expect(canRedispatch({ order_type: 'delivery', delivery: { shansong_status: 60 } })).toBe(true)
-    expect(canRedispatch({ order_type: 'delivery', delivery: { shansong_status: 20 } })).toBe(false)
-    expect(canRedispatch({ order_type: 'dine_in' })).toBe(false)
+  it('canRedispatch only for a PAID delivery in -1 or 60', () => {
+    expect(canRedispatch({ order_type: 'delivery', status: 2, delivery: { shansong_status: -1 } })).toBe(true)
+    expect(canRedispatch({ order_type: 'delivery', status: 2, delivery: { shansong_status: 60 } })).toBe(true)
+    expect(canRedispatch({ order_type: 'delivery', status: 2, delivery: { shansong_status: 20 } })).toBe(false)
+    // a merchant-cancelled order (status 4) must NOT be re-dispatchable
+    expect(canRedispatch({ order_type: 'delivery', status: 4, delivery: { shansong_status: -1 } })).toBe(false)
+    expect(canRedispatch({ order_type: 'dine_in', status: 2 })).toBe(false)
   })
 })
