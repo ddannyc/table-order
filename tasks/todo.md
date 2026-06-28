@@ -1,36 +1,33 @@
-# Todo：订单运营台 — Ship 评审整改 (Remediation)
+# Todo：订单运营台 — Ship 评审整改 第二轮 (Remediation R2)
 
-详见 `tasks/plan.md`。来源：`/ship` 评审结论 NO-GO（分支 `feat/merchant-order-board`）。
-目标：闭合阻断项 + 两项建议修复 → 翻 GO；再补高价值测试与 CI 防护。
+详见 `tasks/plan.md`。来源：`/ship` 第二轮 NO-GO（分支 `feat/merchant-order-board`）。
+新 Critical：`RedispatchOrder` 缺 `order.Status` 守卫 → 可对已取消订单下付费闪送单（T1/T2 修）。
 **git 卫生**：只 stage 该任务文件；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`。
 TDD：先写/改测试再改源码；一任务一提交。
 
-## Phase 1 — 资金安全 + 金额正确性（GO 后端门槛）
-- [x] **T1 ★阻断** `RedispatchOrder` 原子认领：先 `CalculatePrice` → 条件 UPDATE `WHERE shansong_status IN (-1,60)`（`RowsAffected==1` 才派单，否则 409）→ `DispatchShansong`。并发测试(仅一单/orderPlace 一次) + 跨商家测试 + 询价失败不留脏数据 — M
-- [x] **T2** revenue/rewarded 聚合限定 `status IN (2,3)`（列表仍含未支付/已取消）+ 测试（混合状态断言金额排除 1/4）— S
-- [x] **Checkpoint A** `go test ./... -race` 全绿；阻断闭合；人工确认金额口径与 409 语义
+## Phase 1 — GO 阻断（资金安全）
+- [ ] **T1 ★阻断** `RedispatchOrder` 加 `order.Status==2` 守卫（非已支付→400，配送行不变）+ 测试（status=4&shansong=-1→400）— S
+- [ ] **T2 ★阻断** 前端 `canRedispatch` 加 `status===2`；修 `orderBoard.test` 桩（cancelledDelivery→status:4）断言桶互斥/无重派按钮 — S
+- [ ] **Checkpoint A（GO）** `go test ./...` + `admin npm test && npm run build` 全绿；已取消单不可重派；ship 可翻 GO
 
-## Phase 2 — 前端 triage 正确性（GO 门槛达成）
-- [x] **T3** `needsAction` 纳入闪送 `60`（与 `canRedispatch` 对齐）+ 抽 `inBucket` 至 `orderBoard.js` 并补测 + `Orders.vue` 改引用 — S
-- [x] **Checkpoint B（GO）** T1+T2+T3 完成、`npm test`/`npm run build` 绿；ship 可翻 GO
+## Phase 2 — 鲁棒性 + CI
+- [ ] **T3** limbo 恢复：重派认领纳入 `shansong_status IN (-1,0,60) AND order_no='' AND order.Status==2`；测卡住的 status=0 可重派 — S（依赖 T1）
+- [ ] **T4** 新增 `.github/workflows/ci.yml`（Postgres + `REQUIRE_TEST_DB=1` + `CGO_ENABLED=1 go test -race ./...` + admin test/build）+ `setupTestDB` 检查 AutoMigrate 错误 — S
+- [ ] **Checkpoint B** CI 在 PR 上真实跑后端(含并发)+前端；人工 review
 
-## Phase 3 — 测试加固（快速跟进）
-- [x] **T4** 补列表测试：`shop_id` 筛选(生产路径)/`date`+非法日期静默忽略/`page_size>100` 钳制/空店铺 200 空列表 — S
-- [x] **T5** 补 redispatch 测试：扩展 mock 支持询价错误 → 502 且不留脏数据；非外卖单 → 400（依赖 T1）— S
-
-## Phase 4 — CI 防护 + 安全加固
-- [x] **T6** `setupTestDB`：`REQUIRE_TEST_DB` 设置且无库时 `t.Fatal`（默认仍 skip，本地不变）；CI 设该变量并提供 `table_order_test` — S
-- [x] **T7** `PrepareOrder` 拒绝未支付(1)/已取消(4) → 400（仅 2/3 可出餐，保持幂等）+ 测试 — S
-- [x] **T8** JWT `ParseWithClaims` 加 `WithValidMethods(["HS256"])`（拒非 HS256/none）+ 不回归 — XS
-- [x] **Checkpoint Complete** `go test ./... -race` + `admin npm test && npm run build` 全绿；端到端走查（并发重派只出一单）；Ready for review/合并
+## Phase 3 — 安全加固（中危跟进）
+- [ ] **T5** `UpdateMerchantOrderStatus` 转换白名单（拒 1→2/4→3 等）+ prepare/redispatch/status 审计日志（新模型）+ 测试 — M（依赖 T1）
+- [ ] **T6** 入参校验：`shop_id/status` strconv→400、`type` 枚举、检查 Count/Scan/Find `.Error`；+ `page_size>100` 钳制测试 — S
+- [ ] **T7** 限流中间件（登录/注册 + redispatch，429，阈值可配）+ 测试 — M
+- [ ] **Checkpoint Complete** CI 全绿；ship 再评审 GO；端到端走查（已取消不可重派/限流/审计）；Ready for review
 
 ## 守护测试映射
-- T1 → redispatch：并发(goroutine+计数 mock)/跨商家/询价失败不留脏；强化既有 reject 用例断言状态未变
-- T2 → MerchantOrders：混合 1/2/3/4 断言 revenue 仅 2+3
-- T3 → orderBoard：needsAction(60)=true；inBucket 四桶；Orders.vue 引用
-- T4 → MerchantOrders：shop_id/date/非法 date/page_size 钳制/空店铺
-- T5 → redispatch：quote-fail 502 + 不留脏；dine-in 400
+- T1 → redispatch：order.Status=4&shansong=-1 → 400 且行不变；合法(status2)仍成功
+- T2 → orderBoard：canRedispatch(status4)=false；inBucket 桶互斥（cancelledDelivery status:4 只进 done）
+- T3 → redispatch：status=2&shansong=0&order_no='' → 可重派成功
+- T5 → status：非法转换 400 / 合法通过；审计记录写入
+- T6 → MerchantOrders：非法 shop_id/status → 400；page_size=500 → 100 条
+- T7 → middleware：超阈值 429 / 正常放行
 
-## 本次不做（验收风险/跟进，见 plan Open Questions）
-- 服务端待处理计数（100 行上限漏单）、限流、状态机+审计日志
-- （JWT 锁 HS256 → T8；prepare 后端不变量 → T7，已拉入本批）
+## 本轮不做（验收风险/跟进，见 plan Open Questions）
+- 服务端待处理计数（100 行上限漏单）、doRedispatch 取消组件测试、PII 日志脱敏、日期时区一致性

@@ -1,228 +1,203 @@
-# Implementation Plan: 订单运营台 — Ship 评审整改 (Remediation)
+# Implementation Plan: 订单运营台 — Ship 评审整改 第二轮 (Remediation R2)
 
-> 来源：`/ship` 三专家评审（代码审查 / 安全审计 / 测试工程）对分支 `feat/merchant-order-board` 的结论 **NO-GO**。
-> 本计划只做「让决策从 NO-GO → GO」所需的整改 + 高价值测试加固。被三方共同点名的阻断项优先。
-> 关联：`specs/merchant-admin.md` §5 缺口⑥、`docs/ideas/order-action-board.md`。
+> 来源：`/ship` 第二轮评审（NO-GO）。第一轮阻断项已闭合并验证；本轮修复**新发现的 Critical**
+> （由 T4 改状态 × T5 重新派单 交互引入）+ 鲁棒性/CI/安全跟进。
+> 关联：`specs/merchant-admin.md` §5 缺口⑥、`tasks/plan.archived-ship-remediation.md`（第一轮）。
 
 ## Overview
-修复 ship 评审发现：(1) **阻断项**——`RedispatchOrder` 的「检查-再执行」竞态会重复下闪送付费订单；
-(2) 营业额聚合错误地把未支付/已取消计入；(3) 前端「待处理」漏掉可重派的已取消单（闪送 60）。
-再补几项被点名的高价值测试缺口与 CI 假性全绿防护。后端 Go(Gin) + 前端 Vue3 SPA(`admin/`)。
+核心阻断：`RedispatchOrder` 缺 `order.Status` 守卫——商家用 改状态 把订单置为已取消(4)后，配送行仍是
+`shansong_status ∈ {-1,60}`，重新派单会对**已取消订单下一笔付费闪送单**。这是第一轮 T7（prepare 不信任
+前端门）在重新派单路径上的遗漏。修复 = 后端要求 `order.Status==2` + 前端 `canRedispatch` 同步要求
+`status===2`（顺带修桶互斥与测试桩）。再补：limbo 状态恢复、真正生效的 CI、状态机+审计、入参校验、限流。
 
 ## Architecture Decisions
 
-- **重新派单用「原子认领」消除竞态，而非加全局锁。** 先 `CalculatePrice` 询价（窗口外），再用条件
-  UPDATE `WHERE id=? AND shansong_status IN (-1,60)` 一次性写入新 quote/清空 order_no/状态归 0，
-  仅当 `RowsAffected==1` 才继续派单，否则 409。这样两个并发请求只有一个能认领、只会下一笔闪送单。
-  保留原 400 早守卫处理常见的非并发错状态；竞态失败者走 409。
-- **营业额口径 = `status IN (2,3)`（已支付/已完成）。** 列表仍展示未支付（产品决定不变），但**金额合计**
-  排除未支付(1)与已取消(4)。两者解耦：列表口径 ≠ 金额口径。
-- **前端 triage 规则单一可信源。** 把 `Orders.vue` 的 `inBucket` 抽进 `orderBoard.js` 与 `needsAction`
-  并列，并修正 `needsAction` 纳入闪送 `60`（与 `canRedispatch` 对齐），消除「有重派按钮却不在待处理」的矛盾。
-- **CI 不再容忍跳过。** 后端 handler 测试依赖本地 Postgres，缺库会 `t.Skip` 导致假性全绿；以环境变量
-  `REQUIRE_TEST_DB` 兜底：设置时缺库直接 `Fatal`，本地默认仍 skip。不改既有本地开发体验。
-- **本次不做（已记录为验收风险/跟进）：** 限流、状态机+审计日志、服务端「待处理」计数。见 Open Questions。
-  （JWT 锁算法、prepare 后端不变量已拉入本批：见 T7/T8。）
+- **重新派单严格要求 `order.Status == 2`（已支付）。** 失败重派(-1)与闪送侧取消(60)在订单仍已支付时合法；
+  商家自己取消(4)/未支付(1)/已完成(3) 一律不可重派。前端 `canRedispatch` 同步加 `status===2`，使
+  `needsAction`(待处理) 与 `done`(status 3/4) 桶恢复互斥，且已取消单不再显示重派按钮。
+- **limbo `status=0` 纳入可重派集（带 `order_no==''` 守卫）。** 认领把 `shansong_status` 先置 0 再派单；
+  崩溃会卡在 0。让重派认领匹配 `shansong_status IN (-1,0,60) AND shansong_order_no='' AND order.Status=2`，
+  使被卡订单可由商家自助重派。正常支付流首次派单近乎与支付同刻发生且前端不为 0 显示按钮，残余竞态可忽略（文档化）。
+- **CI 真正执行测试。** 新增 `.github/workflows/ci.yml`：起 Postgres、设 `REQUIRE_TEST_DB=1`、`CGO_ENABLED=1`
+  跑 `go test -race ./...` + admin `npm ci/test/build`。并在 `setupTestDB` 检查 `AutoMigrate` 错误。
+  （此前 plan/todo 写"已跑 -race"不准确：cgo 关闭，从未真正跑过。）
+- **状态机 + 审计为下一阶段安全加固**，非 GO 门槛；GO 仅取决于 Phase 1。
 
 ## Dependency Graph
 
 ```
-独立可并行，但按风险排序（先 fail-fast 修资金安全）：
-
-T1 RedispatchOrder 原子认领（资金安全）★阻断
-T2 营业额聚合限定 status IN (2,3)
-        └── 后端契约稳定 → Checkpoint A（GO 的后端门槛）
-T3 needsAction 纳入 60 + 抽出 inBucket（前端 triage 修正）
-        └── Checkpoint B（GO 门槛达成）
-T4 列表测试缺口：shop_id / date / page_size 上限（纯补测）
-T5 redispatch 测试缺口：询价失败 502 / 非外卖单 400（需 mock 支持错误）
-T6 CI：缺 Postgres 时 handler 测试判失败（REQUIRE_TEST_DB）
+T1 后端 redispatch 要求 order.Status==2 ★阻断
+T2 前端 canRedispatch 要求 status===2 + 修桶/测试桩 ★阻断
+        └── Checkpoint A（GO 门槛）
+T3 limbo: 可重派集纳入 0（带 order_no='' 守卫）   [依赖 T1 的 status 守卫]
+T4 CI 流水线（让 REQUIRE_TEST_DB 生效 + -race）+ AutoMigrate 错误检查
+        └── Checkpoint B
+T5 UpdateMerchantOrderStatus 状态机 + 订单操作审计日志
+T6 入参校验（shop_id/status→400、type 枚举、检查被忽略的 GORM error）+ page_size 上限测试
+T7 限流中间件（登录/注册 + redispatch）
+        └── Checkpoint Complete
 ```
 
-实现顺序：T1 → T2 →（Checkpoint A）→ T3 →（Checkpoint B / GO）→ T4 → T5 → T6。
+实现顺序：T1 → T2 →（Checkpoint A / GO）→ T3 → T4 →（Checkpoint B）→ T5 → T6 → T7。
 
 ---
 
 ## Task List
 
-### Phase 1 — 资金安全 + 金额正确性（GO 的后端门槛）
+### Phase 1 — GO 阻断（资金安全）
 
-## Task 1: RedispatchOrder 原子认领，消除重复派单竞态 ★阻断
+## Task 1: RedispatchOrder 要求 order.Status==2 ★阻断
 
-**Description:** 重排 `RedispatchOrder`：先询价（`CalculatePrice`），再以条件 UPDATE 认领该配送行
-（`WHERE id=? AND shansong_status IN (-1,60)` 写入新 `shansong_quote_no`、清空 `shansong_order_no`、
-`shansong_status=0`、更新 `delivery_fee`），仅当 `RowsAffected==1` 继续调用 `DispatchShansong`，
-否则返回 409。保留早期 400 守卫处理非并发错状态。
+**Description:** 在 `RedispatchOrder` 的 `loadOwnedOrder` 之后、询价之前，加 `order.Status==2` 守卫；
+非已支付（未支付1/已完成3/已取消4）返回 400，杜绝对已取消订单下付费闪送单。镜像第一轮 T7。
 
 **Acceptance criteria:**
-- [ ] 并发两个 redispatch（goroutine + 计数 mock）：仅 1 个 200、其余 409/400；`orderPlace` 仅被调用一次。
-- [ ] 询价在认领之前：`CalculatePrice` 失败时返回 502 且**配送行未被改动**（quote/order_no 保持原值）。
-- [ ] 单次成功路径仍：刷新 quote、清空旧 order_no、派单成功后 `shansong_status=20` 并返回最新状态。
-- [ ] 新增 redispatch 的跨商家归属测试（403/404）。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run Redispatch -race`
-- [ ] 手测（联调）：对一条 -1 单连点两次，闪送侧只出现一笔新运单。
-
-**Dependencies:** None（最高风险，先做）
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** M
-
----
-
-## Task 2: 营业额/返利聚合限定为 status IN (2,3)
-
-**Description:** `GetMerchantOrders` 的 revenue/rewarded 聚合加状态过滤，仅统计已支付(2)/已完成(3)；
-列表本身仍返回含未支付/已取消的全集（不变）。
-
-**Acceptance criteria:**
-- [ ] 含 1 笔未支付(1) + 1 笔已取消(4) + 2 笔已支付(2) 时，`revenue` 只累计已支付/已完成。
-- [ ] `total`（列表条数）仍包含未支付/已取消（列表口径不变）。
-- [ ] 既有分页/聚合测试不回归。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run MerchantOrders`
-
-**Dependencies:** None
-**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
-
-### Checkpoint A — 后端门槛
-- [ ] `go test ./... -race` 全绿；阻断项闭合。
-- [ ] Review with human：确认营业额口径（2,3）与 409 语义符合预期。
-
----
-
-### Phase 2 — 前端 triage 正确性（GO 门槛达成）
-
-## Task 3: needsAction 纳入闪送 60 + 抽出 inBucket 至 orderBoard.js
-
-**Description:** 修正 `needsAction`：外卖单 `shansong_status ∈ {-1,60}` 均为待处理（与 `canRedispatch`
-对齐），消除「显示重派按钮却不在待处理队列」的矛盾。把 `Orders.vue` 的 `inBucket` 分桶逻辑抽到
-`orderBoard.js` 成纯函数并补测；`Orders.vue` 改为引用它。
-
-**Acceptance criteria:**
-- [ ] `needsAction` 对 `{order_type:'delivery', delivery:{shansong_status:60}}` 返回 true；既有用例不回归。
-- [ ] `inBucket(order,'pending'|'active'|'done'|'all')` 抽为导出纯函数并有单测覆盖四个桶。
-- [ ] 已取消外卖(60)单出现在「待处理」桶，不再落入「进行中」。
-- [ ] `npm test` 全绿、`npm run build` 通过。
-
-**Verification:**
-- [ ] `cd admin && npm test -- orderBoard && npm run build`
-- [ ] 手测：一条 shansong=60 的外卖单出现在「待处理」并可重新派单。
-
-**Dependencies:** None（前端独立）
-**Files likely touched:** `admin/src/utils/orderBoard.js`, `admin/src/utils/orderBoard.test.js`, `admin/src/views/Orders.vue`
-**Estimated scope:** S
-
-### Checkpoint B — GO 门槛达成
-- [ ] 阻断项(T1) + 两项建议修复(T2,T3) 均完成、测试绿、build 绿。
-- [ ] 可将 ship 决策翻为 GO（剩余为加固项，可作快速跟进）。
-- [ ] Review with human。
-
----
-
-### Phase 3 — 测试加固（提高信心，可快速跟进）
-
-## Task 4: 补列表端点测试缺口（shop_id / date / page_size 上限）
-
-**Description:** 纯补测，不改源码：覆盖真实生产路径 `?shop_id=`（多店商家筛单）、`?date=` 过滤与非法
-日期被静默忽略的行为、`page_size>100` 被钳制到 100、空店铺商家返回 200+空列表。
-
-**Acceptance criteria:**
-- [ ] `?shop_id=` 只返回该店订单；跨店不泄漏。
-- [ ] `?date=YYYY-MM-DD` 命中当日；非法 `?date=foo` 退化为不过滤（与现实现一致）。
-- [ ] `?page_size=999` 实际返回 ≤100；空店铺商家 → 200 且 `orders:[]`。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run MerchantOrders`
-
-**Dependencies:** None
-**Files likely touched:** `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
-
----
-
-## Task 5: 补 redispatch 测试缺口（询价失败 502 / 非外卖单 400）
-
-**Description:** 扩展 `shansongMock` 支持「询价返回错误信封/非200」，覆盖 `CalculatePrice` 失败 → 502
-且配送行未改动；以及对无 `OrderDelivery` 的堂食单调用 redispatch → 400。
-
-**Acceptance criteria:**
-- [ ] 询价失败 → 502，且 `shansong_quote_no/order_no` 保持原值（验证「先询价后认领」不留脏数据）。
-- [ ] 堂食单（无配送行）→ 400 "not a delivery order"。
+- [ ] `order.Status != 2` → 400，且配送行未变动（`shansong_quote_no/order_no/status` 原值）。
+- [ ] 已支付(2)且 `shansong_status∈{-1,60}` 的合法重派仍成功（既有用例不回归）。
+- [ ] 新增测试：order.Status=4 且 shansong_status=-1 → 400（镜像 `TestPrepareOrder_RejectsCancelled`）。
 
 **Verification:**
 - [ ] `cd backend && go test ./api/handler/ -run Redispatch`
 
-**Dependencies:** Task 1（认领顺序确定后再补这些断言）
-**Files likely touched:** `backend/api/handler/merchant_order_test.go`
-**Estimated scope:** S
-
----
-
-### Phase 4 — CI 防护
-
-## Task 6: CI 缺 Postgres 时 handler 测试判失败（不再假性全绿）
-
-**Description:** `setupTestDB` 当前在连不上库时 `t.Skip`，导致 CI 无库时 `go test` 假绿。以环境变量
-`REQUIRE_TEST_DB` 兜底：设置该变量且连库失败时 `t.Fatal`；未设置时维持 `t.Skip`（本地不受影响）。
-CI 配置设 `REQUIRE_TEST_DB=1` 并提供 `table_order_test`。
-
-**Acceptance criteria:**
-- [ ] 未设 `REQUIRE_TEST_DB`：无库时仍 skip（本地行为不变）。
-- [ ] 设 `REQUIRE_TEST_DB=1` 且无库：测试 Fatal（CI 会失败）。
-- [ ] 有库时两种情况都正常跑过。
-
-**Verification:**
-- [ ] 本地：`go test ./api/handler/`（skip 或过）；`REQUIRE_TEST_DB=1 go test ./api/handler/`（有库则过）。
-- [ ] CI 配置项随附说明（若有 CI 配置文件则一并更新）。
-
-**Dependencies:** None
-**Files likely touched:** `backend/api/handler/handler_test.go`（+ 可能的 CI 配置）
-**Estimated scope:** S
-
-## Task 7: PrepareOrder 拒绝非已支付单（后端不变量）
-
-**Description:** 后端不再依赖前端守卫：`PrepareOrder` 对未支付(1)或已取消(4)的订单返回 400，
-仅允许已支付(2)/已完成(3)标记出餐。保持已支付单的幂等行为。
-
-**Acceptance criteria:**
-- [ ] 未支付(1)单 prepare → 400 且 `prepared_at` 仍为空；已取消(4)单 → 400。
-- [ ] 已支付(2)单 prepare → 200 且置 `prepared_at`；重复仍幂等。
-- [ ] 既有 prepare 用例不回归。
-
-**Verification:**
-- [ ] `cd backend && go test ./api/handler/ -run Prepare`
-
-**Dependencies:** None（与 T1/T2 同属后端，建议紧随）
+**Dependencies:** None（最高风险，先做）
 **Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
 **Estimated scope:** S
 
 ---
 
-## Task 8: JWT 锁定签名算法 HS256（防御加固）
+## Task 2: 前端 canRedispatch 要求 status===2 + 修桶互斥与测试桩 ★阻断
 
-**Description:** `ParseWithClaims` 增加 `jwt.WithValidMethods([]string{"HS256"})`，杜绝算法混淆/`alg:none`
-的未来风险。全仓库鉴权（含本批新接口）依赖此中间件。
+**Description:** `canRedispatch` 增加 `order.status === 2`，使已取消(4)外卖单不再同时落入「待处理」与
+「已完成」两个桶、也不再显示重派按钮。修正 `orderBoard.test.js` 中名为 cancelledDelivery 实为 `status:2`
+的桩，改为真正的 `status:4`，并断言其只进 done 桶、不显示重派。
 
 **Acceptance criteria:**
-- [ ] 解析仅接受 HS256；非 HS256/`none` 签名的 token 被拒（401）。
-- [ ] 既有鉴权相关测试与 `go test ./...` 不回归。
+- [ ] `canRedispatch({status:4, delivery:{shansong_status:-1}})` → false；`{status:2, shansong:-1/60}` → true。
+- [ ] 测试桩 cancelledDelivery 改为 `status:4`，断言 `inBucket(...,'pending')===false` 且 `'done'===true`（桶互斥）。
+- [ ] `npm test` 全绿、`npm run build` 通过。
 
 **Verification:**
-- [ ] `cd backend && go test ./...`
-- [ ] 若有 middleware 测试：`go test ./middleware/`
+- [ ] `cd admin && npm test -- orderBoard && npm run build`
 
-**Dependencies:** None（独立，放最后做）
-**Files likely touched:** `backend/middleware/auth.go`（+ 可能的 `middleware/*_test.go`）
-**Estimated scope:** XS
+**Dependencies:** None（前端独立；与 T1 同属一个 GO 门槛）
+**Files likely touched:** `admin/src/utils/orderBoard.js`, `admin/src/utils/orderBoard.test.js`
+**Estimated scope:** S
+
+### Checkpoint A — GO 门槛
+- [ ] `go test ./...` 全绿、`admin npm test && npm run build` 全绿。
+- [ ] 新 Critical 闭合：已取消订单不可重派（后端 400 + 前端无按钮/桶互斥）。
+- [ ] Review with human → ship 可翻 GO。
 
 ---
 
+### Phase 2 — 鲁棒性 + CI
+
+## Task 3: 可恢复的 limbo（重派认领纳入 shansong_status=0）
+
+**Description:** 认领把状态先置 0 再同步派单；崩溃会卡在 0（不在 {-1,60}，无法再重派）。把重派认领的
+条件 UPDATE 改为匹配 `shansong_status IN (-1,0,60) AND shansong_order_no='' `（叠加 T1 的 `order.Status==2`），
+使卡住的已支付订单可被商家自助重派。文档化正常支付流首派的极小残余窗口。
+
+**Acceptance criteria:**
+- [ ] 构造 `order.Status=2, shansong_status=0, shansong_order_no=''` 的订单：重派成功（200，最终 20）。
+- [ ] 仍拒绝 `order_no!=''`（已派单）与 `order.Status!=2`。
+- [ ] 既有并发/成功/失败/非法用例不回归。
+
+**Verification:**
+- [ ] `cd backend && go test ./api/handler/ -run Redispatch`
+
+**Dependencies:** Task 1
+**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
+**Estimated scope:** S
+
+---
+
+## Task 4: CI 流水线让 REQUIRE_TEST_DB 真正生效 + AutoMigrate 错误检查
+
+**Description:** 新增 `.github/workflows/ci.yml`：Postgres service、`REQUIRE_TEST_DB=1`、`CGO_ENABLED=1`
+跑 `go test -race ./...`；admin `npm ci && npm test && npm run build`。在 `setupTestDB` 检查并 fail
+on `AutoMigrate` 错误（当前忽略）。消除"假性全绿"与不准确的 -race 声明。
+
+**Acceptance criteria:**
+- [ ] CI 工作流存在：起 Postgres、设 `REQUIRE_TEST_DB=1`、`CGO_ENABLED=1 go test -race ./...`、admin 测试+构建。
+- [ ] `setupTestDB` 对 `AutoMigrate` 返回错误 `t.Fatalf`（不再静默）。
+- [ ] 本地 `go test ./...`（无 env）仍可 skip；有库时正常通过。
+
+**Verification:**
+- [ ] 本地 `REQUIRE_TEST_DB=1 go test ./api/handler/`（有库则过）。
+- [ ] CI 配置语法自检（actionlint 或人工核对）。
+
+**Dependencies:** None
+**Files likely touched:** `.github/workflows/ci.yml`（新增）, `backend/api/handler/handler_test.go`
+**Estimated scope:** S
+
+### Checkpoint B — 鲁棒性/CI
+- [ ] CI 在 PR 上真实跑起后端（含并发测试）+ 前端。
+- [ ] Review with human。
+
+---
+
+### Phase 3 — 安全加固（中危跟进）
+
+## Task 5: 订单状态转换状态机 + 操作审计日志
+
+**Description:** `UpdateMerchantOrderStatus` 加合法转换白名单（如仅 `2→3`、`2→4`、`1→4`；拒绝复活已取消/
+凭空标记已支付）。为 prepare/redispatch/status 三类商家操作写审计记录（actor merchant_id、order_id、
+old→new、时间）。消除「自助把未支付标记为已支付以虚增营业额」与无留痕问题。
+
+**Acceptance criteria:**
+- [ ] 非法转换（如 `1→2`、`4→3`、`3→1`）→ 400；合法转换通过。
+- [ ] 每次 prepare/redispatch/status 成功写一条审计记录（含 actor/old→new/时间）。
+- [ ] 新增模型/表的迁移与单测；`go test ./...` 全绿。
+
+**Verification:**
+- [ ] `cd backend && go test ./api/handler/ -run 'Status|Audit'`
+
+**Dependencies:** Task 1（redispatch 守卫先就位）
+**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/models/`（新增审计模型）, `backend/api/handler/handler_test.go`, `*_test.go`
+**Estimated scope:** M
+
+---
+
+## Task 6: 入参校验 + 被忽略的 DB 错误 + page_size 上限测试
+
+**Description:** `GetMerchantOrders` 用 `strconv.Atoi` 解析 `shop_id`/`status`（失败 400），校验 `type` 枚举；
+检查 `Count/Scan/Find` 的 `.Error`（记录或 500）。补 `page_size>100` 钳制到 100 的测试。
+
+**Acceptance criteria:**
+- [ ] `?status=abc`/`?shop_id=xx` → 400（非静默空结果）；`?type=bogus` → 400 或忽略（择一并测）。
+- [ ] `page_size=500` + >100 行：返回正好 100 条（上限分支被覆盖）。
+- [ ] 既有列表用例不回归。
+
+**Verification:**
+- [ ] `cd backend && go test ./api/handler/ -run MerchantOrders`
+
+**Dependencies:** None
+**Files likely touched:** `backend/api/handler/merchant_order.go`, `backend/api/handler/merchant_order_test.go`
+**Estimated scope:** S
+
+---
+
+## Task 7: 限流中间件（登录/注册 + redispatch）
+
+**Description:** 新增 per-IP + per-account 限流中间件，挂在 `/api/auth/login`、`/api/merchant/login`、
+`/api/merchant/register`（防爆破）与 `/api/merchant/orders/:id/redispatch`（防配额/费用滥用）。
+
+**Acceptance criteria:**
+- [ ] 超过阈值的连续请求返回 429。
+- [ ] 正常频率不受影响；单测覆盖放行/限流两路径。
+- [ ] 阈值可配置（config/env）。
+
+**Verification:**
+- [ ] `cd backend && go test ./middleware/`
+
+**Dependencies:** None
+**Files likely touched:** `backend/middleware/ratelimit.go`（新增）, `backend/api/router/router.go`, `backend/middleware/*_test.go`
+**Estimated scope:** M
+
 ### Checkpoint: Complete
-- [ ] `go test ./... -race` 与 `cd admin && npm test && npm run build` 全绿。
-- [ ] ship 决策可翻 GO；端到端联调走查（含并发重派只出一单）。
+- [ ] `go test ./... -race`（CI）+ `admin npm test && npm run build` 全绿。
+- [ ] ship 再评审可 GO；端到端走查（已取消单不可重派、限流生效、审计有记录）。
 - [ ] Ready for review / 合并。
 
 ---
@@ -231,15 +206,13 @@ CI 配置设 `REQUIRE_TEST_DB=1` 并提供 `table_order_test`。
 
 | Risk | Impact | Mitigation |
 |------|--------|------------|
-| 并发测试 flaky | Med | 用条件 UPDATE 使结果确定（认领唯一）；计数 mock 加锁；`-race` 跑 |
-| 改 revenue 口径影响看板既有展示 | Med | 仅动 orders 列表聚合；看板 dashboard/stats 是另接口不动；补测锁数值 |
-| 抽 inBucket 改动 Orders.vue 触发回归 | Low | 纯逻辑搬迁 + 单测覆盖；build + 手测 |
-| 改 handler_test skip 行为影响本地 | Low | 默认仍 skip，仅 `REQUIRE_TEST_DB` 时 Fatal |
+| limbo 纳入 0 与正常支付流首派竞态 | Low | 叠加 `order_no=''` + `order.Status==2`；前端不为 0 显按钮；窗口极小且文档化 |
+| 状态机白名单与现有手动流冲突 | Med | 白名单先宽（仅禁危险转换），保留 prepare/redispatch 路径；充分单测 |
+| 限流误伤正常商家 | Med | 阈值保守可配；仅登录/注册/redispatch，不动读接口 |
+| CI 首次接入环境差异 | Low | 用官方 postgres service container；与本地 DSN 对齐 |
 
-## Open Questions（本次不做，待定/跟进）
-- 服务端「待处理」计数/筛选（解决 100 行上限漏单）——量起来前是否需要？
-- `redispatch` 与登录接口限流（安全中危）——单独加固任务？
-- `UpdateMerchantOrderStatus` 状态机 + 审计日志——是否下一批纳入？
-- 重新询价新费 > 原费 是否需前端展示差额/二次确认？（当前仅记录不补收，已定）
-
-> 已拉入本批：JWT 锁 HS256（T8）、PrepareOrder 拒绝非已支付（T7）。
+## Open Questions（待定/跟进，本轮可不做）
+- 服务端「待处理」计数（解决 100 行上限漏单）——量起来前是否需要？
+- `doRedispatch` 取消确认不调 API 的组件测试（前端 SFC 唯一有后果的逻辑）。
+- 列表 PII（recipient_*）的日志脱敏与前端缓存策略——合规确认。
+- 日期过滤的 DB/应用时区一致性（跨时区临界）。
