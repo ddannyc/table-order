@@ -5,10 +5,10 @@
 ## Phase 1 — GO 阻断（安全）
 - [x] **T1 ★阻断(HIGH)** 可信代理配置：`ServerConfig.TrustedProxies` + `TRUSTED_PROXIES` 环境变量（仿 `AllowedOrigins`）；`main.go` 调 `r.SetTrustedProxies(...)`，空列表则告警；测：伪造 `X-Forwarded-For` 不能换桶（仍 429）+ config 解析 — M
 - [x] **T2 ★阻断(MED/资金)** 重派原子认领纳入 `order.Status=2`（关联子查询 `order_id IN (SELECT id FROM orders WHERE id=? AND status=2)`），`RowsAffected==0→409`；测：报价窗口内并发改 `status=4` → 0 次 orderPlace（`quoteDelay` 竞态，仿 ConcurrentDispatchesOnce）— M
-- [ ] **Checkpoint A（GO）** `go test ./...` + admin `npm test`/`build` 全绿；伪造 XFF 不能重置限流；中途取消单不可派单；两个阻断可翻 resolved
+- [x] **Checkpoint A（GO）** `go test ./...` + admin `npm test`/`build` 全绿；伪造 XFF 不能重置限流；中途取消单不可派单；两个阻断可翻 resolved
 
 ## Phase 2 — 鲁棒性（建议修）
-- [ ] **T3** 限流器加固：`allow()` 清空键 `delete`；测窗口复位（注入 `now`，零 sleep）、键淘汰、`ByUserID` 分桶+无 user 回退 IP — S
+- [x] **T3** 限流器加固：`allow()` 清空键 `delete`；测窗口复位（注入 `now`，零 sleep）、键淘汰、`ByUserID` 分桶+无 user 回退 IP — S
 - [ ] **T4** 审计写失败可观测：`logOrderAction` 捕获并 `log.Printf`（保持提交后审计，不回滚动作）+ 注释说明 — S
 
 ## Phase 3 — 测试覆盖

@@ -13,17 +13,34 @@ import (
 // string (IP or user id). Adequate for a single instance; a multi-instance
 // deployment would move this to a shared store (e.g. Redis).
 type rateLimiter struct {
-	mu     sync.Mutex
-	hits   map[string][]time.Time
-	limit  int
-	window time.Duration
-	now    func() time.Time
+	mu        sync.Mutex
+	hits      map[string][]time.Time
+	limit     int
+	window    time.Duration
+	now       func() time.Time
+	lastSweep time.Time
+}
+
+// sweep evicts keys whose newest hit is older than the window, so abandoned keys
+// don't grow the map without bound. Throttled to once per window. Caller holds mu.
+func (rl *rateLimiter) sweep(now time.Time) {
+	if now.Sub(rl.lastSweep) < rl.window {
+		return
+	}
+	rl.lastSweep = now
+	cutoff := now.Add(-rl.window)
+	for k, ts := range rl.hits {
+		if len(ts) == 0 || !ts[len(ts)-1].After(cutoff) {
+			delete(rl.hits, k)
+		}
+	}
 }
 
 func (rl *rateLimiter) allow(key string) bool {
 	rl.mu.Lock()
 	defer rl.mu.Unlock()
 	now := rl.now()
+	rl.sweep(now)
 	cutoff := now.Add(-rl.window)
 	kept := rl.hits[key][:0]
 	for _, t := range rl.hits[key] {
