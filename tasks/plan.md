@@ -1,94 +1,92 @@
-# 实施计划：规格选择弹层重构 + 购物车弹层
+# 实施计划：商家后台「编辑菜品」内联规格(SKU)设置
 
-视觉/交互真源：`~/Downloads/mp-cart.png`（左屏=规格弹层，右屏=已选商品弹层）。
-**配色用已上线的鸡福旺(JFW)粉/黄令牌，不用参考图的墨绿/陶土橙。**
-（上一轮 JFW reskin 计划已归档至 `tasks/plan.archived-jfw-reskin.md`。）
+## 目标
+把现有**独立的「规格管理」弹层**合并进**新增/编辑菜品弹层**，让商家在一个界面里同时设置菜品信息 + 规格(SKU)。**复用已有接口，不改后端、不改小程序、不改规格数据模型。**
 
-## Overview
-菜单页两个前端功能（不动后端、不动数据库）：
-1. **规格选择弹层重构** — 改成参考图版式：商品信息头 + 规格单选药丸 + 数量步进 + 整宽「加入购物车」。取代现有“每个规格一行各带『加入』按钮”的列表。
-2. **购物车弹层** — 点购物车摘要区弹出「已选商品」底部面板，对已加入的菜品改数量/清空；「去结算」仍跳 order-confirm。
+## 现状（已确认，勿改）
+- 模型 `ProductSpec` = 扁平单维 `{id, name, price, status}`（1=上架/0=下架/2=售罄），`Product.Specs` 一对多。**本期不动。**
+- 后端规格 CRUD 已就绪并复用：
+  - `POST /merchant/products/:id/specs`（建规格，需已存在的 product id）
+  - `PUT /merchant/specs/:id`、`DELETE /merchant/specs/:id`
+  - api 封装：`admin/src/api/product.js` 的 `createProductSpec/updateProductSpec/deleteProductSpec`（**本期不改签名**）。
+- 后台 `admin/src/views/Products.vue`：
+  - 表格「规格(N)」列 → 点开**独立弹层** `specDialogVisible`，逐行即时调接口增改删。
+  - 「编辑菜品」弹层 `dialogVisible`：名称/价格/分类/描述/图片/状态，保存走 `create/updateProduct`。
+- 测试栈：Vitest + happy-dom，**无 @vue/test-utils**（不做组件挂载测试）。既有测试守护**纯函数/接口映射**（`utils/reward.test.js`、`api/product.test.js`、`api/client.test.js`）。
 
-## 架构决策（已与用户确认）
-- **扁平单维规格**（后端 `ProductSpec` 一个规格=一个价，无温度×糖度 SKU 矩阵）→ 弹层只有一个“规格”药丸组；多属性定制不在本期（需另起后端 SKU epic）。
-- **复用客户端购物车 API**（`addToCart`/`updateCartQuantity`/`clearCart`/`getCart`，`utils/storage.js`）原样不动 → `cart-sku.test.js` 等 API 行为测试保持绿；改动只在菜单页交互层（`menu/index.js` + wxml/wxss）。
-- **JFW 令牌**：粉 `--weui-BRAND`、黄 `--accent`、深蓝 `--jf-title-blue`、深粉 `--green-2`、`--font-number`。主按钮用 `weui-btn weui-btn_primary` 类（**不带 `type="primary"`**，原生绿盖不掉，见 [[weui-primary-button-green]]）。
-- **去结算**：弹层/底栏的去结算仍 `goCart()` 跳 `order-confirm`（带 shop_id/table_no/order_type）。
-- **分支**：`feat/spec-cart-sheet`（从 main 切；main 是已上线 reskin）。
-- 两个弹层复用同一套“底部上滑 sheet + 遮罩”样式，风格统一。
+## 架构决策
+1. **交互模型：本地草稿 + 保存时一次性落库（new 与 existing 统一）。**
+   编辑弹层里规格改为本地可编辑列表（草稿），增删改不即时发请求；点「保存」时：
+   先 `create/updateProduct` 拿到 product id → 再按草稿与原始规格的差异，调既有规格接口落库 → 刷新。
+   - 这样**新菜品**也能在同一弹层里先填规格：保存时先建菜品、再用返回的 id 建规格（天然解决「建规格需 product id」）。
+   - 取消则草稿丢弃，零副作用。
+2. **差异计算抽成纯函数**（沿用小程序 `utils/spec.js` 的模式），用 Vitest 守护；组件只做薄装配（无组件测试栈）。
+3. **移除独立规格弹层**，避免两处设置规格的入口重复/冲突；表格「规格」列降级为只读数量展示。
+4. 失败处理：保存时规格接口按序 `await`，任一失败 → 提示 + `load()` 回读真实状态（管理后台可接受的最简策略；不引入事务/回滚）。
 
 ## 依赖图
 ```
-客户端购物车 API（已存在，不改）
-  └── updateCartInfo()  [扩展：同时构建 cartItems[] 供弹层渲染]
-        ├── 规格弹层    (T1 逻辑 → T2 版式)
-        └── 购物车弹层  (T3 逻辑 → T4 版式)
-JFW 令牌（已存在） ── 两个弹层的样式
+T1 纯函数 diffSpecs/validateSpecs (admin/src/utils/specSync.js)
+        │
+        ▼
+T2 编辑弹层内联「规格」草稿编辑区（展示+本地增删改，旧弹层暂留）
+        │
+        ▼
+T3 保存时落库（菜品→规格 diff 落库，复用既有接口）+ 删除旧独立弹层 + 列降级
 ```
-两功能相互独立；先做规格弹层（主加购路径），再做购物车弹层（编辑规格弹层加进来的东西）。
 
-## 任务（纵切，按依赖顺序）
+## 任务（垂直切片）
 
-### Phase 1 — 规格选择弹层重构
-- **T1 规格弹层交互逻辑（`menu/index.js` + `utils/spec.js`）— S/M**
-  - `openSpecPicker`：默认选中首个在售规格(`status===1`)，`specQty=1`。
-  - `selectSpec(specId)`：切换选中（售罄不可选）；`specDec/specInc`：`specQty ±1`，下限 1。
-  - `confirmAddSpec`：`addToCart(product, selectedSpec, specQty)` → `updateCartInfo` → toast → 关闭。删除按行 `pickSpec`。
-  - 抽纯函数 `pickDefaultSpec(specs)`、`clampQty(n)` 到 `utils/spec.js` 单测。
-  - **验收**：默认选首个在售+数量1 / 切换规格更新选中态与显示价 / 步进不低于1 / 加入按所选规格×数量入车 / 全售罄时禁用加入。
-  - **验证**：`npx jest cart-sku spec-picker` 绿；纯函数单测绿。
-  - 文件：`menu/index.js`、`utils/spec.js`(新)、`__tests__/spec-picker.test.js`(新)
+### T1 — 规格差异/校验纯函数 + 单测  〔S〕
+**描述**：新增 `admin/src/utils/specSync.js`，把「草稿 vs 原始」的落库意图算成纯数据，供保存时驱动既有接口。
+- `diffSpecs(original, draft)` → `{ creates:[{name,price,status}], updates:[{id,name,price,status}], deletes:[id] }`
+  - draft 无 id 行 → creates；有 id 且 name/price/status 任一变化 → updates；original 有而 draft 缺的 id → deletes；未变化不产出。
+- `validateSpecs(draft)` → `{ ok, message }`：每行 name 非空、price>0；空 draft 合法（= 无规格按菜品价售卖）。
+**验收**：
+- [ ] 新增行进 creates、改价进 updates、删除行进 deletes、未变不产出。
+- [ ] 校验拦截空名/非正价，空列表判定合法。
+**验证**：`cd admin && npm test`（新增 `specSync.test.js` 全绿，既有测试不回归）。
+**依赖**：无。**文件**：`admin/src/utils/specSync.js`、`admin/src/utils/specSync.test.js`。
 
-- **T2 规格弹层版式 + JFW 样式（`menu/index.wxml` + `index.wxss`）— M**
-  - 头部：商品名(900) + 描述。规格组：单选药丸（选中=粉填充/白字，售罄置灰）。价格随选中规格。数量步进（复用 `.menu-step-btn` 粉边圆）。整宽「加入购物车」=`weui-btn weui-btn_primary`。底部上滑 sheet + 遮罩点击关闭。
-  - **验收**：结构=头/单选药丸组/价+步进/整宽按钮，与参考图左屏一致；全 JFW 令牌；无 `type="primary"`。
-  - **验证**：结构测试绿（绑定 `selectSpec/specInc/specDec/confirmAddSpec`、`weui-btn_primary`、JFW 令牌、无 `type="primary"`）；真机 `element_getStyles`/截图对照参考图。
-  - 文件：`menu/index.wxml`、`menu/index.wxss`、`__tests__/spec-picker.test.js`
+### T2 — 编辑弹层内联规格草稿编辑区  〔M〕
+**描述**：在「新增/编辑菜品」弹层加「规格(SKU)」区：可编辑表（名称/价格/状态）+「添加一行」+「删除行」，全部操作**本地草稿** `form.specs`，暂不发请求。打开编辑时把 `row.specs` 深拷进草稿；新增时草稿为空。**旧独立弹层与「规格(N)」按钮本任务保持可用**（保证每步系统可用）。
+**验收**：
+- [ ] 打开「编辑」→ 规格区列出该菜品现有规格；改动只影响本地草稿，不发网络。
+- [ ] 可加行/删行/改名改价改状态；空规格区显示「不设置则按菜品价售卖」。
+- [ ] 「取消」后重开，草稿恢复为服务端数据（无脏留存）。
+**验证**：`cd admin && npm run build` 通过；`npm run dev` 手测：编辑弹层规格区增删改纯本地，控制台无报错，Network 无规格请求。
+**依赖**：T1（保存阶段用，本任务先备好草稿结构）。**文件**：`admin/src/views/Products.vue`。
 
-- **Checkpoint A**：`npx jest` 全绿 + 真机规格弹层符合参考图、加购金额/规格正确。
+### T3 — 保存落库 + 收口  〔M〕
+**描述**：`save()` 改为：① `create/updateProduct`（新建取返回 id）；② `validateSpecs` 不过则中止提示；③ `diffSpecs(original, draft)` → 依次 `createProductSpec(pid,...)`/`updateProductSpec(id,...)`/`deleteProductSpec(id)`；④ `load()` 刷新并关弹层。随后**删除独立规格弹层**相关状态/模板/方法（`specDialogVisible`、`openSpecs`、`addSpec`、`saveSpec`、`removeSpec`、`reloadSpecProduct`、`newSpec`），表格「规格」列改为只读 `规格({{row.specs?.length||0}})`。
+**验收**：
+- [ ] 新建菜品 + 2 条规格 → 落库后列表显示该菜品且规格数=2，小程序读到一致价格。
+- [ ] 编辑：改一条规格价、删一条、加一条 → 保存后服务端与界面一致。
+- [ ] 规格接口失败 → 提示且 `load()` 回读真实状态，不留半保存的界面假象。
+- [ ] 旧独立规格弹层入口与代码已移除；`npm run build` 无未用变量/导入告警。
+**验证**：`cd admin && npm test`（T1 守护不回归）+ `npm run build`；`npm run dev` 走查新建/编辑两条链路（含一次故意失败：如把某规格价改成 0 被校验拦下）。
+**依赖**：T1、T2。**文件**：`admin/src/views/Products.vue`。
 
-### Phase 2 — 购物车弹层
-- **T3 购物车弹层逻辑（`menu/index.js`）— M**
-  - `updateCartInfo` 扩展：构建 `cartItems[]`（`key/name/specName/price/image/quantity`）。
-  - `openCartSheet/closeCartSheet`（`cartSheetVisible`）；空车自动关闭。
-  - `.menu-cart-left` 的 tap 从 `goCart` 改为 `openCartSheet`；`.menu-cart-go` 仍 `goCart`。
-  - `cartDec/cartInc(key)`：`updateCartQuantity` → `updateCartInfo`（减到 0 删行，删空关闭）。`clearCartAll`：`clearCart` → 关闭。
-  - **验收**：点摘要区弹面板 / 步进改量底栏总价件数实时同步 / 某行减到0移除、车空关面板 / 清空移除全部并关 / 去结算仍跳 order-confirm。
-  - **验证**：`cart-sku`/`cart-isolation` 绿；`cartItems` 构建纯函数单测绿。
-  - 文件：`menu/index.js`、`__tests__/cart-sheet.test.js`(新)
-
-- **T4 购物车弹层版式 + JFW 样式（`menu/index.wxml` + `index.wxss`）— M**
-  - 标题「已选商品」+「清空」(右上链接)；列表项：缩略图 + 名称/规格 + 价(`--font-number`) + 粉边步进。底部沿用现有浮动粉车条(¥总价 + 黄底去结算)。上滑 sheet + 遮罩。
-  - **验收**：结构与参考图右屏一致；JFW 令牌；空态/滚动正常。
-  - **验证**：结构测试绿（`cartInc/cartDec/clearCartAll` 绑定、清空链接、JFW）；真机对照。
-  - 文件：`menu/index.wxml`、`menu/index.wxss`、`__tests__/cart-sheet.test.js`
-
-- **Checkpoint B**：`npx jest` 全绿（含既有 cart 行为不变）+ 真机两弹层符合参考图，改量/清空/结算闭环。
-
-### Phase 3 — 收尾
-- **T5 回归 + 真机闭环 + 合并 — S**
-  - 全量 jest 绿；加购→规格弹层→购物车弹层改量→去结算→order-confirm 全链路真机走查（`element_getStyles` 计算值兜底，截图工具偶超时）。
-  - 合并 `feat/spec-cart-sheet` → main；按需 DevTools CLI 重新上传小程序（见 [[deploy-topology]]）。
-
-## 风险与缓解
-| 风险 | 缓解 |
-|---|---|
-| 真机 `mp_screenshot` 本会话超时 | 用 `element_getStyles` 计算值 + 必要时人工截图核对（同 reskin 几轮） |
-| 弹层与 tabbar/车条 z-index、safe-area 适配 | sheet 设高 z-index + `env(safe-area-inset-bottom)`，复用车条定位经验 |
-| 规格弹层与“无规格直接加购”冲突 | 无规格仍走卡片 `+`/步进（`onAdd/onInc/onDec`），弹层只用于有规格商品 |
-| 页面 Page 方法难单测 | 把判定/计算抽成 `utils/spec.js` 纯函数单测；交互行为靠结构测试 + 复用已测 cart API + 真机走查 |
+### Checkpoint A（收尾）
+- [ ] `cd admin && npm test` 全绿、`npm run build` 干净（无新告警）。
+- [ ] 手测四条：新建带规格 / 编辑改规格 / 删规格 / 取消零副作用。
+- [ ] 后端、小程序、规格模型与接口签名**零改动**（git diff 仅含 `admin/`）。
+- [ ] 人工 review 后再决定是否构建上传后台（部署见 deploy 记忆）。
 
 ## 守护测试映射
-- T1 → `spec-picker.test.js`（+ `utils/spec` 纯函数）；`cart-sku` 保持绿
-- T2 → `spec-picker.test.js`（结构）
-- T3 → `cart-sheet.test.js`；`cart-isolation`/`cart-sku` 保持绿
-- T4 → `cart-sheet.test.js`（结构）
-
-## 已定（用户确认 2026-06-28）
-- 规格模型 = **扁平，重做交互**（多属性 SKU 不在本期）
-- 去结算 = **弹层内跳 order-confirm**
-- 分支 = **feat/spec-cart-sheet**
+- T1 → `admin/src/utils/specSync.test.js`（纯函数）。
+- T2/T3 → 无组件测试栈，靠 `npm run build` + 手测；落库意图由 T1 的 diff 守护，接口映射由既有 `api/product.test.js` 守护。
 
 ## 不在本期
-- 温度×糖度多属性 SKU（需后端属性组/SKU/定价 + 商家后台 + 迁移）
-- 真实菜品摄影、优惠圈（既有 deferred）
+- 后端模型/接口改动、库存(stock)、多属性 SKU 组合矩阵（杯型×温度×糖度）、小程序改动。
+- 引入 @vue/test-utils 做组件测试（如需再单列）。
+
+## 风险
+| 风险 | 级别 | 缓解 |
+|---|---|---|
+| 保存中途规格接口失败留下半保存状态 | 中 | 按序 await + 失败即 `load()` 回读；管理后台可重试 |
+| 无组件测试，UI 回归靠手测 | 中 | 把落库意图收敛到 T1 纯函数守护；保存路径薄装配 |
+| 移除旧弹层牵连未清干净的状态/方法 | 低 | T3 验收含 build 无未用告警 |
+
+## 开放问题
+- 失败策略是否需要「全有或全无」（前端模拟事务）？默认按序+回读，足够管理后台场景；如需更强一致再提。
