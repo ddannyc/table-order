@@ -45,38 +45,73 @@ func GetMerchantOrders(c *gin.Context) {
 		return
 	}
 
+	// Validate filter params up front: a bad value is a 400, not a silently-empty
+	// result. (A malformed date keeps the existing silent-ignore behavior.)
+	var shopIDFilter, statusFilter *int
+	if s := c.Query("shop_id"); s != "" {
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid shop_id"})
+			return
+		}
+		shopIDFilter = &v
+	}
+	if s := c.Query("status"); s != "" {
+		v, err := strconv.Atoi(s)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid status"})
+			return
+		}
+		statusFilter = &v
+	}
+	typeFilter := c.Query("type")
+	if typeFilter != "" && typeFilter != "dine_in" && typeFilter != "delivery" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid type"})
+		return
+	}
+	var dateFilter *time.Time
+	if d := c.Query("date"); d != "" {
+		if t, err := time.Parse("2006-01-02", d); err == nil {
+			dateFilter = &t
+		}
+	}
+
 	// filtered returns a fresh query with all filters applied, so Count/aggregate/
 	// list can each run independently without leaking statement state into each other.
 	filtered := func() *gorm.DB {
 		q := config.DB.Model(&models.Order{}).Where("shop_id IN ?", shopIDs)
-		if shopID := c.Query("shop_id"); shopID != "" {
-			q = q.Where("shop_id = ?", shopID)
+		if shopIDFilter != nil {
+			q = q.Where("shop_id = ?", *shopIDFilter)
 		}
-		if date := c.Query("date"); date != "" {
-			if t, err := time.Parse("2006-01-02", date); err == nil {
-				q = q.Where("DATE(created_at) = ?", t)
-			}
+		if dateFilter != nil {
+			q = q.Where("DATE(created_at) = ?", *dateFilter)
 		}
-		if status := c.Query("status"); status != "" {
-			q = q.Where("status = ?", status)
+		if statusFilter != nil {
+			q = q.Where("status = ?", *statusFilter)
 		}
-		if typ := c.Query("type"); typ != "" {
-			q = q.Where("order_type = ?", typ)
+		if typeFilter != "" {
+			q = q.Where("order_type = ?", typeFilter)
 		}
 		return q
 	}
 
 	// Totals reflect the full filtered set, not just the current page.
 	var total int64
-	filtered().Count(&total)
+	if err := filtered().Count(&total).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "query failed"})
+		return
+	}
 	// Money totals count only settled orders (paid/completed); the list itself
 	// still includes unpaid/cancelled, so revenue must not.
 	var agg struct {
 		Revenue  float64
 		Rewarded float64
 	}
-	filtered().Where("status IN ?", []int{2, 3}).
-		Select("COALESCE(SUM(amount),0) AS revenue, COALESCE(SUM(reward_amount),0) AS rewarded").Scan(&agg)
+	if err := filtered().Where("status IN ?", []int{2, 3}).
+		Select("COALESCE(SUM(amount),0) AS revenue, COALESCE(SUM(reward_amount),0) AS rewarded").Scan(&agg).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "query failed"})
+		return
+	}
 
 	// Pagination
 	page, _ := strconv.Atoi(c.Query("page"))
@@ -92,7 +127,10 @@ func GetMerchantOrders(c *gin.Context) {
 	}
 
 	var orders []models.Order
-	filtered().Order("created_at desc").Limit(pageSize).Offset((page - 1) * pageSize).Find(&orders)
+	if err := filtered().Order("created_at desc").Limit(pageSize).Offset((page - 1) * pageSize).Find(&orders).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "query failed"})
+		return
+	}
 
 	// Embed delivery detail for the page (batch-loaded, nil for dine-in).
 	items := make([]MerchantOrderItem, len(orders))

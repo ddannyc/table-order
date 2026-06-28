@@ -791,3 +791,44 @@ func TestPrepareOrder_WritesAuditLog(t *testing.T) {
 		t.Errorf("expected 1 prepare audit log, got %d", n)
 	}
 }
+
+// T6(R2): non-numeric / invalid filter params are rejected with 400 instead of
+// silently degrading to empty results.
+func TestGetMerchantOrders_RejectsBadParams(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9540)
+	shop := models.Shop{Name: "Param Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+
+	cases := []string{"?shop_id=abc", "?status=abc", "?type=bogus"}
+	for _, q := range cases {
+		r := setupRouter()
+		setAuthContext(r, "GET", "/api/merchant/orders", GetMerchantOrders, merchantID)
+		req, _ := http.NewRequest("GET", "/api/merchant/orders"+q, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("%s: expected 400, got %d", q, w.Code)
+		}
+	}
+}
+
+// T6(R2): page_size is clamped to the 100 max even when the client asks for more.
+func TestGetMerchantOrders_PageSizeCappedAt100(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9541)
+	shop := models.Shop{Name: "Cap Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	for i := 0; i < 101; i++ {
+		config.DB.Create(&models.Order{
+			OrderNo: "CAP_" + itoa(uint(i)), ShopID: shop.ID, OrderType: "dine_in", Amount: 1, Status: 2,
+		})
+	}
+	resp := getMerchantOrders(t, merchantID, "?page_size=500")
+	if len(resp.Orders) != 100 {
+		t.Errorf("page_size should cap at 100, got %d", len(resp.Orders))
+	}
+	if resp.Total != 101 {
+		t.Errorf("total should be 101, got %d", resp.Total)
+	}
+}
