@@ -24,13 +24,28 @@ export const isPrepared = (order) => !!order.prepared_at
 
 // 待处理 queue: an order waiting on the merchant.
 //  - dine_in: paid but not yet 出餐
-//  - delivery: 闪送 dispatch failed (-1)
+//  - delivery: 闪送 dispatch failed (-1) or cancelled (60) — i.e. re-dispatchable
 // (NOTE: 卡太久 time-based stuck detection deferred — thresholds unconfirmed.)
 export const needsAction = (order) => {
   if (order.order_type === 'delivery') {
-    return order.delivery?.shansong_status === -1
+    return canRedispatch(order)
   }
   return isPaid(order) && !isPrepared(order)
+}
+
+// Tab partition for the board. Kept here (not in the SFC) so it is unit-tested
+// and stays consistent with needsAction.
+export const inBucket = (order, which) => {
+  switch (which) {
+    case 'pending':
+      return needsAction(order)
+    case 'active':
+      return order.status === 2 && !needsAction(order)
+    case 'done':
+      return order.status === 3 || order.status === 4
+    default:
+      return true
+  }
 }
 
 export const canPrepare = (order) =>

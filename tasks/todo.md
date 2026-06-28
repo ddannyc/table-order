@@ -11,8 +11,8 @@ TDD：先写/改测试再改源码；一任务一提交。
 - [x] **Checkpoint A** `go test ./... -race` 全绿；阻断闭合；人工确认金额口径与 409 语义
 
 ## Phase 2 — 前端 triage 正确性（GO 门槛达成）
-- [ ] **T3** `needsAction` 纳入闪送 `60`（与 `canRedispatch` 对齐）+ 抽 `inBucket` 至 `orderBoard.js` 并补测 + `Orders.vue` 改引用 — S
-- [ ] **Checkpoint B（GO）** T1+T2+T3 完成、`npm test`/`npm run build` 绿；ship 可翻 GO
+- [x] **T3** `needsAction` 纳入闪送 `60`（与 `canRedispatch` 对齐）+ 抽 `inBucket` 至 `orderBoard.js` 并补测 + `Orders.vue` 改引用 — S
+- [x] **Checkpoint B（GO）** T1+T2+T3 完成、`npm test`/`npm run build` 绿；ship 可翻 GO
 
 ## Phase 3 — 测试加固（快速跟进）
 - [ ] **T4** 补列表测试：`shop_id` 筛选(生产路径)/`date`+非法日期静默忽略/`page_size>100` 钳制/空店铺 200 空列表 — S

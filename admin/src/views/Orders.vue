@@ -8,9 +8,9 @@ import {
   shansongStatusLabel,
   isPaid,
   isPrepared,
-  needsAction,
   canPrepare,
   canRedispatch,
+  inBucket,
 } from '../utils/orderBoard'
 
 const auth = useAuthStore()
@@ -49,19 +49,6 @@ async function load() {
     // surfaced by axios interceptor
   } finally {
     loading.value = false
-  }
-}
-
-function inBucket(o, which) {
-  switch (which) {
-    case 'pending':
-      return needsAction(o)
-    case 'active':
-      return o.status === 2 && !needsAction(o)
-    case 'done':
-      return o.status === 3 || o.status === 4
-    default:
-      return true
   }
 }
 

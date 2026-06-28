@@ -7,6 +7,7 @@ import {
   needsAction,
   canPrepare,
   canRedispatch,
+  inBucket,
 } from './orderBoard'
 
 describe('orderStatusLabel', () => {
@@ -59,6 +60,37 @@ describe('needsAction (待处理 queue)', () => {
   })
   it('delivery dispatching fine does not', () => {
     expect(needsAction({ order_type: 'delivery', status: 2, delivery: { shansong_status: 20 } })).toBe(false)
+  })
+  it('delivery that was cancelled (60) needs action — it is re-dispatchable', () => {
+    expect(needsAction({ order_type: 'delivery', status: 2, delivery: { shansong_status: 60 } })).toBe(true)
+  })
+})
+
+describe('inBucket (tab partition)', () => {
+  const pendingDelivery = { order_type: 'delivery', status: 2, delivery: { shansong_status: -1 } }
+  const cancelledDelivery = { order_type: 'delivery', status: 2, delivery: { shansong_status: 60 } }
+  const activeDineIn = { order_type: 'dine_in', status: 2, prepared_at: 'x' }
+  const doneOrder = { order_type: 'dine_in', status: 3 }
+  const cancelledOrder = { order_type: 'dine_in', status: 4 }
+
+  it('pending bucket = needsAction', () => {
+    expect(inBucket(pendingDelivery, 'pending')).toBe(true)
+    expect(inBucket(cancelledDelivery, 'pending')).toBe(true) // 60 is actionable, must surface here
+    expect(inBucket(activeDineIn, 'pending')).toBe(false)
+  })
+  it('active bucket = paid and not pending', () => {
+    expect(inBucket(activeDineIn, 'active')).toBe(true)
+    expect(inBucket(pendingDelivery, 'active')).toBe(false)
+    expect(inBucket(cancelledDelivery, 'active')).toBe(false) // must NOT hide here
+  })
+  it('done bucket = completed or cancelled', () => {
+    expect(inBucket(doneOrder, 'done')).toBe(true)
+    expect(inBucket(cancelledOrder, 'done')).toBe(true)
+    expect(inBucket(activeDineIn, 'done')).toBe(false)
+  })
+  it('all bucket matches everything', () => {
+    expect(inBucket(pendingDelivery, 'all')).toBe(true)
+    expect(inBucket(doneOrder, 'all')).toBe(true)
   })
 })
 
