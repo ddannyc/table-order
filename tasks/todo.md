@@ -11,7 +11,7 @@ TDD：先写/改测试再改源码；一任务一提交。
 - [x] **Checkpoint A（GO）** `go test ./...` + `admin npm test && npm run build` 全绿；已取消单不可重派；ship 可翻 GO
 
 ## Phase 2 — 鲁棒性 + CI
-- [ ] **T3** limbo 恢复：重派认领纳入 `shansong_status IN (-1,0,60) AND order_no='' AND order.Status==2`；测卡住的 status=0 可重派 — S（依赖 T1）
+- [~] **T3 已放弃** limbo 恢复：把 0 纳入可重派集会**重新打开并发竞态**（认领赢家把状态置 0，0 又在集内 → 并发输家命中 → 双派，10 次复跑实测 1 次双派）。crash 残留的 0 与刚认领的 0 仅能靠**时间**区分，超出 S 范围。→ 降级为「已知风险」，留待基于时间的对账清扫。保护并发不变量优先。
 - [ ] **T4** 新增 `.github/workflows/ci.yml`（Postgres + `REQUIRE_TEST_DB=1` + `CGO_ENABLED=1 go test -race ./...` + admin test/build）+ `setupTestDB` 检查 AutoMigrate 错误 — S
 - [ ] **Checkpoint B** CI 在 PR 上真实跑后端(含并发)+前端；人工 review
 
