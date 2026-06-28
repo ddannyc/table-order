@@ -1,19 +1,20 @@
-# Todo：商家后台「编辑菜品」内联规格(SKU)设置
+# Todo：优化「外卖」入口白屏/加载体验
 
-详见 `tasks/plan.md`。范围：**仅 `admin/`**，复用既有规格接口，不改后端/小程序/规格模型。
-TDD（纯函数先行）、一任务一提交；改代码同提交内同步守护测试。
+详见 `tasks/plan.md`。范围：**仅 `frontend/`**，不改后端/接口/模型。
+根因：外卖比堂食多一段「导航前静默 `resolveDeliveryShop` 请求」+ 冗余 `getShop`。
+方案：解析下沉菜单页（点按即跳转）+ DTO 透传跳过 `getShop`（3 请求 → 2）。
+TDD：先改测试再改实现，一任务一提交。
 **git 卫生**：只 stage 该任务文件；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`。
-分支：建议 `feat/admin-inline-spec`（开工前切）。
+分支：建议 `feat/delivery-fast-entry`（开工前切）。
 
 ## 任务
-- [x] **T1** 规格差异/校验纯函数 `admin/src/utils/specSync.js`（`diffSpecs`/`validateSpecs`）+ `specSync.test.js` — S ✅
-- [x] **T2** 编辑弹层内联「规格」草稿编辑区（展示+本地增删改，旧弹层暂留）— M ✅
-- [x] **T3** 保存落库（菜品→规格 diff 复用既有接口）+ 删除旧独立规格弹层 + 「规格」列降级只读 — M ✅
-- [~] **Checkpoint A** `npm test` 全绿 ✅ + `npm run build` 干净 ✅ + git diff 仅含 `admin/`+`tasks/` ✅ + 手测四条链路 ⏳(需起 admin dev + 后端登录，留人工) + 部署 ⏳(停等用户)
+- [ ] **T1** 菜单页承接外卖冷启动（`onLoad` 无 shop_id 分支 + `loadDeliveryShop` + `loadData(prefetchedShop)` 跳过 `getShop` + `onRetry` 分流）— M
+- [ ] **T2** 首页「外卖」即时跳转（`chooseDelivery` 直接 `reLaunch?order_type=delivery`，移除未用导入；无门店提示迁至菜单）— S
+- [ ] **Checkpoint A** `cd frontend && npm test` 全绿 + 手测三条（外卖即时/无门店 error/堂食不回归）+ git diff 仅 `frontend/` + 部署停等用户
 
 ## 守护测试映射
-- T1 → `admin/src/utils/specSync.test.js`
-- T2/T3 → 无组件测试栈：`npm run build` + 手测；落库意图由 T1 守护，接口映射由既有 `api/product.test.js` 守护
+- T1 → `__tests__/menu-page.test.js` 或新增 `__tests__/delivery-cold-start.test.js`
+- T2 → `__tests__/home-launcher.test.js`（改写为即时导航；删「首页无门店提示」用例，意图迁 T1）
 
 ## 不在本期
-- 后端/模型/接口改动、库存、多属性 SKU 组合矩阵、小程序改动、引入 @vue/test-utils
+- 后端合并端点、骨架屏、`navigateTo` 转场、预拉取/缓存；任何后端/模型/接口改动。
