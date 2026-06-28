@@ -169,6 +169,41 @@
     </view>
   </view>
 
+  <!-- 购物车弹层（已选商品面板：逐行改量 / 清空 / 去结算） -->
+  <view wx:if="{{cartSheetVisible}}">
+    <view class="cart-mask" bindtap="closeCartSheet"></view>
+    <view class="cart-sheet">
+      <view class="cart-hd">
+        <view class="cart-hd-t">已选商品</view>
+        <view class="cart-clear" bindtap="clearCartAll">🗑 清空</view>
+      </view>
+
+      <scroll-view scroll-y class="cart-rows">
+        <view class="cart-row" wx:for="{{cartItems}}" wx:key="key">
+          <view class="cart-row-thumb">
+            <image wx:if="{{item.image}}" class="cart-row-img" src="{{item.image}}" mode="aspectFill" />
+            <view wx:else class="cart-row-ph">{{item.name[0]}}</view>
+          </view>
+          <view class="cart-row-bd">
+            <view class="cart-row-name">{{item.name}}</view>
+            <view wx:if="{{item.specName}}" class="cart-row-spec">{{item.specName}}</view>
+          </view>
+          <view class="cart-row-price">¥{{item.lineTotalText}}</view>
+          <view class="menu-stepper">
+            <view class="menu-step-btn" bindtap="cartDec" data-key="{{item.key}}">−</view>
+            <text class="menu-qty">{{item.quantity}}</text>
+            <view class="menu-step-btn" bindtap="cartInc" data-key="{{item.key}}">＋</view>
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="cart-foot">
+        <view class="cart-foot-sum">合计 <text class="cart-foot-total">¥{{cartTotal}}</text></view>
+        <view class="cart-foot-go" bindtap="goCart">去结算</view>
+      </view>
+    </view>
+  </view>
+
   <!-- 底部 tabbar -->
   <view class="tabbar-fixed">
     <tabbar current="{{tabbarCurrent}}" bindchange="tabChange" />

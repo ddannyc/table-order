@@ -36,3 +36,28 @@ describe('buildCartItems — 购物车行展示态', () => {
     expect(buildCartItems(undefined)).toEqual([])
   })
 })
+
+describe('购物车弹层版式（已选商品面板 + JFW）', () => {
+  it('遮罩 + 底部 sheet，遮罩点击关层', () => {
+    expect(wxml).toMatch(/class="cart-mask"[^>]*bindtap="closeCartSheet"/)
+    expect(wxml).toMatch(/class="cart-sheet"/)
+  })
+  it('头部「已选商品」+ 清空（clearCartAll）', () => {
+    expect(wxml).toMatch(/已选商品/)
+    expect(wxml).toMatch(/清空/)
+    expect(wxml).toMatch(/bindtap="clearCartAll"/)
+  })
+  it('行循环 cartItems，每行带 −/＋ 步进（cartDec/cartInc + data-key）', () => {
+    expect(wxml).toMatch(/wx:for="\{\{cartItems\}\}"/)
+    expect(wxml).toMatch(/bindtap="cartDec"\s+data-key/)
+    expect(wxml).toMatch(/bindtap="cartInc"\s+data-key/)
+  })
+  it('弹层内可去结算（goCart）', () => {
+    const sheet = wxml.slice(wxml.indexOf('cart-sheet'))
+    expect(sheet).toMatch(/bindtap="goCart"/)
+  })
+  it('行价用圆体数字令牌、步进沿用粉边圆钮', () => {
+    expect(rule('.cart-row-price')).toMatch(/font-family:\s*var\(--font-number\)/)
+    expect(wxss).toMatch(/\.cart-sheet/)
+  })
+})

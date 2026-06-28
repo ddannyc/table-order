@@ -523,3 +523,113 @@
 .spec-add[disabled] {
   opacity: 0.5;
 }
+
+/* ===== 购物车弹层（已选商品面板：逐行改量 / 清空 / 去结算） ===== */
+.cart-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 30;
+}
+.cart-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 31;
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: var(--space-lg) var(--space-lg) calc(var(--space-md) + env(safe-area-inset-bottom));
+  box-shadow: 0 -8rpx 28rpx rgba(0, 0, 0, 0.12);
+}
+.cart-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+}
+.cart-hd-t {
+  font-size: var(--font-h2);
+  font-weight: 800;
+  color: var(--jf-title-blue);
+}
+.cart-clear {
+  font-size: var(--font-caption);
+  color: var(--weui-FG-2);
+}
+.cart-rows {
+  max-height: 52vh;
+}
+.cart-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) 0;
+  border-bottom: 2rpx solid var(--weui-FG-4, #f0f0f0);
+}
+.cart-row-thumb {
+  flex: none;
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 16rpx;
+  overflow: hidden;
+  background: var(--accent);
+}
+.cart-row-img {
+  width: 100%;
+  height: 100%;
+}
+.cart-row-ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  color: var(--jf-title-blue);
+}
+.cart-row-bd {
+  flex: 1;
+  min-width: 0;
+}
+.cart-row-name {
+  font-size: var(--font-body);
+  color: var(--weui-FG-0);
+}
+.cart-row-spec {
+  margin-top: 4rpx;
+  font-size: var(--font-caption);
+  color: var(--weui-FG-2);
+}
+.cart-row-price {
+  flex: none;
+  margin-right: var(--space-sm);
+  font-family: var(--font-number);
+  font-weight: 800;
+  color: var(--weui-BRAND);
+}
+.cart-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-lg);
+}
+.cart-foot-sum {
+  font-size: var(--font-body);
+  color: var(--weui-FG-1);
+}
+.cart-foot-total {
+  font-family: var(--font-number);
+  font-size: var(--font-price);
+  font-weight: 800;
+  color: var(--weui-BRAND);
+}
+.cart-foot-go {
+  flex: none;
+  background: var(--weui-BRAND);
+  color: #fff;
+  font-weight: 900;
+  font-size: var(--font-body);
+  padding: 18rpx 56rpx;
+  border-radius: 44rpx;
+}
