@@ -54,8 +54,11 @@ func setupTestDB(t *testing.T) {
 	}
 	config.AppConfig.JWT.Secret = "test-quote-secret"
 
-	// Recreate tables
-	config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{})
+	// Recreate tables — a migration failure must fail the suite, not silently
+	// leave a broken schema that later assertions misread.
+	if err := config.DB.AutoMigrate(&models.User{}, &models.Shop{}, &models.Product{}, &models.ProductSpec{}, &models.Order{}, &models.OrderItem{}, &models.OrderDelivery{}, &models.WalletLog{}, &models.TableQRCode{}, &models.Merchant{}, &models.InviteRelation{}, &models.RewardLog{}); err != nil {
+		t.Fatalf("automigrate failed: %v", err)
+	}
 
 	// Wait for any lingering goroutines from previous tests to finish
 	time.Sleep(300 * time.Millisecond)
