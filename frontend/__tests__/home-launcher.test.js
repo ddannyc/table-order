@@ -2,7 +2,8 @@
  * Tests for the home launcher page (Task 4).
  * Home is now a 堂食/外卖 entry launcher, not the menu.
  *   - 堂食: scan a table QR, store the binding, route to the menu page.
- *   - 外卖: resolve the delivery shop, route to the menu in delivery mode.
+ *   - 外卖: navigate straight to the menu in delivery mode; the menu resolves
+ *     the delivery shop under its own loading state (no pre-nav silent request).
  */
 global.wx = {
   getAccountInfoSync: jest.fn(() => ({ miniProgram: { envVersion: 'develop' } })),
@@ -31,25 +32,14 @@ beforeEach(() => {
   jest.clearAllMocks()
 })
 
-describe('home launcher — 外卖 entry (enabled)', () => {
-  it('resolves the delivery shop and routes to the menu in delivery mode', async () => {
-    wx.request.mockImplementation(({ success }) =>
-      success({ statusCode: 200, data: { id: 7, name: 'Shop' } })
-    )
-    await pageConfig.chooseDelivery.call({ setData: jest.fn() })
+describe('home launcher — 外卖 entry (immediate navigation)', () => {
+  it('navigates straight to the menu in delivery mode without a pre-nav resolve', () => {
+    pageConfig.chooseDelivery.call({ setData: jest.fn() })
     expect(wx.reLaunch).toHaveBeenCalledWith({
-      url: '/pages/menu/index?order_type=delivery&shop_id=7',
+      url: '/pages/menu/index?order_type=delivery',
     })
-  })
-
-  it('shows a hint and does not navigate when no delivery shop is available', async () => {
-    wx.request.mockImplementation(({ success }) =>
-      success({ statusCode: 404, data: { error: 'no available shop' } })
-    )
-    await pageConfig.chooseDelivery.call({ setData: jest.fn() })
-    expect(wx.reLaunch).not.toHaveBeenCalled()
-    const notified = wx.showModal.mock.calls.length + wx.showToast.mock.calls.length
-    expect(notified).toBeGreaterThan(0)
+    // shop resolution is deferred to the menu page; no silent request before navigating
+    expect(wx.request).not.toHaveBeenCalled()
   })
 })
 

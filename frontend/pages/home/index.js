@@ -1,5 +1,5 @@
 // pages/home/index.js — 选餐入口启动页（堂食 / 外卖；v6 设计稿）
-const { setTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
+const { setTableBinding, bindInviteCode } = require('../../api/index.js')
 
 Page({
   data: {
@@ -45,16 +45,10 @@ Page({
     })
   },
 
-  // 外卖：分段「外卖」即解析配送门店 → 进入菜单的外卖模式（无桌号）
+  // 外卖：点按即跳转菜单外卖模式（无桌号）；门店解析下沉到菜单页，
+  // 由菜单的「加载中」态盖住等待，避免导航前的静默请求造成白屏卡顿。
   chooseDelivery() {
-    this.setData({ mode: 'delivery' })
-    return resolveDeliveryShop()
-      .then(shop => {
-        wx.reLaunch({ url: `/pages/menu/index?order_type=delivery&shop_id=${shop.id}` })
-      })
-      .catch(() => {
-        wx.showToast({ title: '暂无可配送门店', icon: 'none' })
-      })
+    wx.reLaunch({ url: '/pages/menu/index?order_type=delivery' })
   },
 
   tabChange(e) {
