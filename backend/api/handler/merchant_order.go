@@ -147,6 +147,12 @@ func PrepareOrder(c *gin.Context) {
 	if !ok {
 		return
 	}
+	// Only paid (2) / completed (3) orders can be marked 出餐 — don't depend on the
+	// client to gate unpaid/cancelled.
+	if order.Status != 2 && order.Status != 3 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "只有已支付订单可标记出餐"})
+		return
+	}
 	if order.PreparedAt == nil {
 		now := time.Now()
 		if err := config.DB.Model(order).Update("prepared_at", now).Error; err != nil {

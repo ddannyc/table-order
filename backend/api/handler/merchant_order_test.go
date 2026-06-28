@@ -658,3 +658,40 @@ func TestRedispatchOrder_NotADeliveryOrder(t *testing.T) {
 		t.Fatalf("expected 400 for non-delivery order, got %d body: %s", w.Code, w.Body.String())
 	}
 }
+
+// T7: prepare (出餐) is rejected for unpaid / cancelled orders — the backend no
+// longer trusts the client to gate this.
+func TestPrepareOrder_RejectsUnpaid(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9310)
+	shop := models.Shop{Name: "Prep Guard Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_UNPAID", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 1}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 preparing an unpaid order, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.PreparedAt != nil {
+		t.Errorf("unpaid order must not be marked prepared")
+	}
+}
+
+func TestPrepareOrder_RejectsCancelled(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9311)
+	shop := models.Shop{Name: "Prep Guard Shop 2", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_CANCELLED", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 4}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 preparing a cancelled order, got %d", w.Code)
+	}
+}

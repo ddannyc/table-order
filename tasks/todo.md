@@ -20,7 +20,7 @@ TDD：先写/改测试再改源码；一任务一提交。
 
 ## Phase 4 — CI 防护 + 安全加固
 - [x] **T6** `setupTestDB`：`REQUIRE_TEST_DB` 设置且无库时 `t.Fatal`（默认仍 skip，本地不变）；CI 设该变量并提供 `table_order_test` — S
-- [ ] **T7** `PrepareOrder` 拒绝未支付(1)/已取消(4) → 400（仅 2/3 可出餐，保持幂等）+ 测试 — S
+- [x] **T7** `PrepareOrder` 拒绝未支付(1)/已取消(4) → 400（仅 2/3 可出餐，保持幂等）+ 测试 — S
 - [ ] **T8** JWT `ParseWithClaims` 加 `WithValidMethods(["HS256"])`（拒非 HS256/none）+ 不回归 — XS
 - [ ] **Checkpoint Complete** `go test ./... -race` + `admin npm test && npm run build` 全绿；端到端走查（并发重派只出一单）；Ready for review/合并
 
