@@ -2,7 +2,16 @@
  * 规格弹层纯逻辑（utils/spec.js）。Page 方法难直接单测，故把判定/计算抽成纯函数在这里守护；
  * 加购行为由 cart-sku.test.js 守护（addToCart 不变），弹层版式由本文件后续结构断言守护。
  */
+const fs = require('fs')
+const path = require('path')
 const { pickDefaultSpec, clampQty, specPickerState } = require('../utils/spec.js')
+
+const wxml = fs.readFileSync(path.join(__dirname, '../pages/menu/index.wxml'), 'utf8')
+const wxss = fs.readFileSync(path.join(__dirname, '../pages/menu/index.wxss'), 'utf8')
+const rule = (sel) => {
+  const m = wxss.match(new RegExp('\\' + sel + '\\s*\\{([^}]*)\\}'))
+  return m ? m[1] : null
+}
 
 const specs = [
   { id: 5, name: '小份', price: 18, status: 1 },
@@ -60,5 +69,32 @@ describe('specPickerState — 弹层展示态', () => {
   it('无选中（null/不存在）：不可加入', () => {
     expect(specPickerState(specs, null, 1).canAdd).toBe(false)
     expect(specPickerState(specs, 999, 1).canAdd).toBe(false)
+  })
+})
+
+describe('规格弹层版式（对齐参考图 + JFW）', () => {
+  it('单选药丸组：绑定 selectSpec，按选中/售罄切类', () => {
+    expect(wxml).toMatch(/class="spec-pill[^"]*spec-pill_on/)
+    expect(wxml).toMatch(/spec-pill_off/)
+    expect(wxml).toMatch(/bindtap="selectSpec"\s+data-spec-id/)
+  })
+  it('数量步进绑定 specDec/specInc', () => {
+    expect(wxml).toMatch(/bindtap="specDec"/)
+    expect(wxml).toMatch(/bindtap="specInc"/)
+  })
+  it('整宽加入按钮：weui-btn_primary + bindtap confirmAddSpec，无 type="primary"', () => {
+    expect(wxml).toMatch(/class="[^"]*weui-btn_primary[^"]*spec-add[^"]*"[^>]*bindtap="confirmAddSpec"/)
+    expect(wxml).not.toMatch(/pickSpec/)
+    // 规格弹层内不得出现原生 type="primary"
+    const sheet = wxml.slice(wxml.indexOf('spec-sheet'))
+    expect(sheet).not.toMatch(/type="primary"/)
+  })
+  it('选中药丸品牌粉、价格用圆体数字令牌', () => {
+    expect(rule('.spec-pill_on')).toMatch(/background:\s*var\(--weui-BRAND\)/)
+    expect(rule('.spec-price')).toMatch(/font-family:\s*var\(--font-number\)/)
+  })
+  it('板块标题深蓝 + 粉 #（与菜单一致）', () => {
+    expect(rule('.spec-group-t')).toMatch(/color:\s*var\(--jf-title-blue\)/)
+    expect(wxss).toMatch(/\.spec-group-t::before\s*\{[^}]*content:\s*"#"/)
   })
 })

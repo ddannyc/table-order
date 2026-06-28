@@ -398,10 +398,128 @@
   border-radius: 44rpx;
 }
 
-/* 规格弹层价格/按钮 */
-.menu-spec-price {
-  color: var(--weui-FG-0);
+/* ===== 规格选择弹层（底部 sheet：商品头 + 单选药丸 + 价/步进 + 整宽加入） ===== */
+.spec-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 30;
 }
-.menu-spec-add {
-  margin-left: var(--space-md);
+.spec-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 31;
+  background: #fff;
+  border-radius: 28rpx 28rpx 0 0;
+  padding: 16rpx var(--space-lg) calc(var(--space-lg) + env(safe-area-inset-bottom));
+  box-shadow: 0 -8rpx 28rpx rgba(0, 0, 0, 0.12);
+}
+.spec-grab {
+  width: 72rpx;
+  height: 8rpx;
+  border-radius: 8rpx;
+  background: var(--weui-FG-3);
+  margin: 0 auto var(--space-md);
+}
+.spec-hd {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+}
+.spec-name {
+  font-size: var(--font-h2);
+  font-weight: 800;
+  color: var(--jf-title-blue);
+}
+.spec-desc {
+  margin-top: 6rpx;
+  font-size: var(--font-caption);
+  color: var(--weui-FG-2);
+}
+.spec-x {
+  flex: none;
+  width: 56rpx;
+  height: 56rpx;
+  line-height: 56rpx;
+  text-align: center;
+  font-size: 30rpx;
+  color: var(--weui-FG-2);
+}
+
+.spec-group {
+  margin-top: var(--space-lg);
+}
+.spec-group-t {
+  font-size: var(--font-body);
+  font-weight: 700;
+  color: var(--jf-title-blue);
+}
+.spec-group-t::before {
+  content: "#";
+  color: var(--weui-BRAND);
+  font-weight: 900;
+  margin-right: 6rpx;
+}
+.spec-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+/* 规格药丸：默认浅灰描边；选中=品牌粉实心；售罄=禁用灰 */
+.spec-pill {
+  padding: 14rpx 28rpx;
+  border-radius: 40rpx;
+  border: 2rpx solid var(--weui-FG-3);
+  background: #fff;
+  color: var(--weui-FG-0);
+  font-size: var(--font-body);
+}
+.spec-pill-p {
+  margin-left: 8rpx;
+  font-family: var(--font-number);
+  font-size: var(--font-caption);
+  opacity: 0.85;
+}
+.spec-pill_on {
+  background: var(--weui-BRAND);
+  border-color: var(--weui-BRAND);
+  color: #fff;
+}
+.spec-pill_off {
+  color: var(--weui-FG-3);
+  border-style: dashed;
+  text-decoration: line-through;
+}
+
+.spec-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--space-lg);
+}
+.spec-price {
+  font-family: var(--font-number);
+  font-size: var(--font-price);
+  font-weight: 800;
+  color: var(--weui-BRAND);
+}
+.spec-price-cur {
+  font-size: var(--font-body);
+  margin-right: 2rpx;
+}
+.spec-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.spec-add {
+  margin-top: var(--space-lg);
+}
+.spec-add[disabled] {
+  opacity: 0.5;
 }

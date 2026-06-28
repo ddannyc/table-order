@@ -132,30 +132,40 @@
     </view>
   </view>
 
-  <!-- 规格选择（weui half-screen-dialog） -->
+  <!-- 规格选择弹层（商品头 + 规格药丸单选 + 数量步进 + 整宽加入，对齐参考图） -->
   <view wx:if="{{specPickerVisible}}">
-    <view class="weui-mask" bindtap="closeSpecPicker"></view>
-    <view class="weui-half-screen-dialog">
-      <view class="weui-half-screen-dialog__hd">
-        <view class="weui-half-screen-dialog__hd__side">
-          <view class="weui-btn_icon" bindtap="closeSpecPicker"><i class="weui-icon-close-thin"></i></view>
+    <view class="spec-mask" bindtap="closeSpecPicker"></view>
+    <view class="spec-sheet">
+      <view class="spec-grab"></view>
+      <view class="spec-hd">
+        <view class="spec-hd-bd">
+          <view class="spec-name">{{specPickerProduct.name}}</view>
+          <view class="spec-desc">{{specPickerProduct.description || '美味菜品'}}</view>
         </view>
-        <view class="weui-half-screen-dialog__hd__main">
-          <strong class="weui-half-screen-dialog__title">{{specPickerProduct.name}} · 选规格</strong>
+        <view class="spec-x" bindtap="closeSpecPicker">✕</view>
+      </view>
+
+      <view class="spec-group">
+        <view class="spec-group-t">规格</view>
+        <view class="spec-pills">
+          <view
+            wx:for="{{specPickerProduct.specs}}" wx:key="id"
+            class="spec-pill {{selectedSpecId === item.id ? 'spec-pill_on' : ''}} {{item.status === 2 ? 'spec-pill_off' : ''}}"
+            bindtap="selectSpec" data-spec-id="{{item.id}}"
+          >{{item.name}} <text class="spec-pill-p">¥{{item.priceText}}</text></view>
         </view>
       </view>
-      <view class="weui-half-screen-dialog__bd">
-        <view class="weui-cells">
-          <view class="weui-cell" wx:for="{{specPickerProduct.specs}}" wx:key="id">
-            <view class="weui-cell__bd">{{item.name}}</view>
-            <view class="weui-cell__ft menu-spec-price">¥{{item.priceText}}</view>
-            <view class="weui-cell__ft menu-spec-add">
-              <view wx:if="{{item.status === 2}}" class="menu-soldout">售罄</view>
-              <view wx:else class="weui-btn weui-btn_mini weui-btn_primary" catchtap="pickSpec" data-spec-id="{{item.id}}">加入</view>
-            </view>
-          </view>
+
+      <view class="spec-bottom">
+        <view class="spec-price"><text class="spec-price-cur">¥</text>{{specUnitText}}</view>
+        <view class="spec-stepper">
+          <view class="menu-step-btn" bindtap="specDec">−</view>
+          <text class="menu-qty">{{specQty}}</text>
+          <view class="menu-step-btn" bindtap="specInc">＋</view>
         </view>
       </view>
+
+      <button class="weui-btn weui-btn_primary spec-add" disabled="{{!specCanAdd}}" bindtap="confirmAddSpec">加入购物车 · ¥{{specTotalText}}</button>
     </view>
   </view>
 
