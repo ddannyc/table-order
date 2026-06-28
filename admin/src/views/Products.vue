@@ -12,6 +12,7 @@ import {
   deleteProductSpec,
 } from '../api/product'
 import { uploadImage } from '../api/upload'
+import { toDraftSpecs } from '../utils/specSync'
 
 const auth = useAuthStore()
 
@@ -46,13 +47,13 @@ onMounted(load)
 const dialogVisible = ref(false)
 const saving = ref(false)
 const editingId = ref(null)
-const form = ref({ name: '', price: 0, category: '', description: '', image: '', status: 1 })
+const form = ref({ name: '', price: 0, category: '', description: '', image: '', status: 1, specs: [] })
 
 const dialogTitle = computed(() => (editingId.value ? '编辑菜品' : '新增菜品'))
 
 function openAdd() {
   editingId.value = null
-  form.value = { name: '', price: 0, category: '', description: '', image: '', status: 1 }
+  form.value = { name: '', price: 0, category: '', description: '', image: '', status: 1, specs: [] }
   dialogVisible.value = true
 }
 
@@ -65,8 +66,18 @@ function openEdit(row) {
     description: row.description,
     image: row.image,
     status: row.status,
+    specs: toDraftSpecs(row.specs), // 深拷贝草稿，编辑不污染表格行
   }
   dialogVisible.value = true
+}
+
+// 规格草稿本地增删（落库在保存时统一进行）
+function addDraftSpec() {
+  form.value.specs.push({ name: '', price: 0, status: 1 })
+}
+
+function removeDraftSpec(index) {
+  form.value.specs.splice(index, 1)
 }
 
 async function save() {
@@ -314,6 +325,38 @@ async function customUpload(option) {
             <el-option :value="2" label="售罄" />
           </el-select>
         </el-form-item>
+        <el-form-item label="规格">
+          <div class="spec-block">
+            <el-table v-if="form.specs.length" :data="form.specs" size="small">
+              <el-table-column label="名称">
+                <template #default="{ row }">
+                  <el-input v-model="row.name" size="small" placeholder="如 600ml" />
+                </template>
+              </el-table-column>
+              <el-table-column label="价格" width="140">
+                <template #default="{ row }">
+                  <el-input-number v-model="row.price" :min="0" :precision="2" size="small" />
+                </template>
+              </el-table-column>
+              <el-table-column label="状态" width="100">
+                <template #default="{ row }">
+                  <el-select v-model="row.status" size="small">
+                    <el-option :value="1" label="上架" />
+                    <el-option :value="0" label="下架" />
+                    <el-option :value="2" label="售罄" />
+                  </el-select>
+                </template>
+              </el-table-column>
+              <el-table-column width="60">
+                <template #default="{ $index }">
+                  <el-button link type="danger" @click="removeDraftSpec($index)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div v-else class="spec-empty">不设置则按菜品价格售卖</div>
+            <el-button class="spec-add-btn" size="small" @click="addDraftSpec">+ 添加规格</el-button>
+          </div>
+        </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -389,5 +432,16 @@ async function customUpload(option) {
   align-items: center;
   gap: 8px;
   margin-top: 12px;
+}
+.spec-block {
+  width: 100%;
+}
+.spec-empty {
+  color: #999;
+  font-size: 13px;
+  padding: 4px 0;
+}
+.spec-add-btn {
+  margin-top: 8px;
 }
 </style>

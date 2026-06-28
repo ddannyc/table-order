@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { diffSpecs, validateSpecs } from './specSync'
+import { diffSpecs, validateSpecs, toDraftSpecs } from './specSync'
 
 const orig = [
   { id: 1, name: '小份', price: 18, status: 1 },
@@ -101,5 +101,26 @@ describe('validateSpecs — 落库前校验', () => {
 
   it('不通过时带可读 message', () => {
     expect(typeof validateSpecs([{ name: '', price: 1, status: 1 }]).message).toBe('string')
+  })
+})
+
+describe('toDraftSpecs — 服务端规格 → 可编辑草稿', () => {
+  it('只保留 id/name/price/status，price/status 归一为数字', () => {
+    const server = [{ id: 5, name: '中份', price: '25.00', status: 1, created_at: 'x', product_id: 9 }]
+    expect(toDraftSpecs(server)).toEqual([{ id: 5, name: '中份', price: 25, status: 1 }])
+  })
+
+  it('深拷贝：改草稿不影响源对象（保护表格与 diff 基线）', () => {
+    const server = [{ id: 1, name: '小份', price: 18, status: 1 }]
+    const draft = toDraftSpecs(server)
+    draft[0].price = 99
+    draft[0].name = '改了'
+    expect(server[0].price).toBe(18)
+    expect(server[0].name).toBe('小份')
+  })
+
+  it('空/未定义 → []', () => {
+    expect(toDraftSpecs([])).toEqual([])
+    expect(toDraftSpecs(undefined)).toEqual([])
   })
 })

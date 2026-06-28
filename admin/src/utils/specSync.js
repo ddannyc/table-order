@@ -13,6 +13,18 @@ function specChanged(a, b) {
   )
 }
 
+// 服务端规格 → 编辑弹层可编辑草稿：独立对象（深拷贝），只留 id/name/price/status，
+// price/status 归一为数字。深拷贝避免编辑草稿时改到已加载的表格行/diff 基线。
+export function toDraftSpecs(specs) {
+  const rows = Array.isArray(specs) ? specs : []
+  return rows.map((s) => ({
+    id: s.id,
+    name: s.name,
+    price: Number(s.price),
+    status: Number(s.status),
+  }))
+}
+
 // 草稿 vs 原始 → { creates, updates, deletes }
 //  creates: 无 id 的草稿行（仅 name/price/status）
 //  updates: 有 id 且相对原始有变化的行（id + name/price/status）
