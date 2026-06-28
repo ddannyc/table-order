@@ -2,6 +2,7 @@
 const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity } = require('../../api/product.js')
 const { resolveProductImage } = require('../../utils/menu-image.js')
+const { pickDefaultSpec, clampQty, specPickerState } = require('../../utils/spec.js')
 
 Page({
   data: {
@@ -20,6 +21,11 @@ Page({
     cartQtyByProduct: {},  // productId -> total qty (for spec products)
     specPickerVisible: false,
     specPickerProduct: null,
+    selectedSpecId: 0,    // 弹层当前选中规格
+    specQty: 1,           // 弹层数量
+    specUnitText: '0.00', // 选中规格单价
+    specTotalText: '0.00',// 单价 × 数量
+    specCanAdd: false,    // 选中在售才可加入
     loading: true,
     error: false,
     tabbarCurrent: 0
@@ -166,28 +172,70 @@ Page({
     this.updateCartInfo()
   },
 
-  // 有规格商品：打开规格选择层
+  // 有规格商品：打开规格选择层（默认选首个在售规格，数量 1）
   openSpecPicker(e) {
     const productId = e.currentTarget.dataset.id
     const product = this.data.products.find(p => String(p.id) === String(productId))
     if (!product) return
     const specs = (product.specs || []).map(s => ({ ...s, priceText: s.price.toFixed(2) }))
-    this.setData({ specPickerVisible: true, specPickerProduct: { ...product, specs } })
+    const def = pickDefaultSpec(specs)
+    this.setData({
+      specPickerVisible: true,
+      specPickerProduct: { ...product, specs },
+      selectedSpecId: def ? def.id : 0,
+      specQty: 1
+    })
+    this.refreshSpecState()
   },
 
   closeSpecPicker() {
     this.setData({ specPickerVisible: false })
   },
 
-  pickSpec(e) {
+  // 切换选中规格（售罄不可选）
+  selectSpec(e) {
     const specId = e.currentTarget.dataset.specId
     const product = this.data.specPickerProduct
     if (!product) return
     const spec = product.specs.find(s => String(s.id) === String(specId))
-    if (!spec) return
-    addToCart(this.data.boundShopId, product, spec, 1, this.data.orderType)
+    if (!spec || spec.status !== 1) return
+    this.setData({ selectedSpecId: spec.id })
+    this.refreshSpecState()
+  },
+
+  specDec() {
+    this.setData({ specQty: clampQty(this.data.specQty - 1) })
+    this.refreshSpecState()
+  },
+
+  specInc() {
+    this.setData({ specQty: clampQty(this.data.specQty + 1) })
+    this.refreshSpecState()
+  },
+
+  // 同步选中态：单价 / 合计 / 能否加入
+  refreshSpecState() {
+    const product = this.data.specPickerProduct
+    const specs = product ? product.specs : []
+    const st = specPickerState(specs, this.data.selectedSpecId, this.data.specQty)
+    this.setData({
+      selectedSpecId: st.selectedSpecId || 0,
+      specUnitText: st.unitText,
+      specTotalText: st.totalText,
+      specCanAdd: st.canAdd
+    })
+  },
+
+  // 按所选规格 × 数量加入购物车
+  confirmAddSpec() {
+    const product = this.data.specPickerProduct
+    if (!product || !this.data.specCanAdd) return
+    const spec = product.specs.find(s => String(s.id) === String(this.data.selectedSpecId))
+    if (!spec || spec.status !== 1) return
+    addToCart(this.data.boundShopId, product, spec, clampQty(this.data.specQty), this.data.orderType)
     this.updateCartInfo()
     wx.showToast({ title: '已加入', icon: 'success' })
+    this.setData({ specPickerVisible: false })
   },
 
   noop() {},
