@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -170,11 +171,16 @@ var allowedStatusTransitions = map[int]map[int]bool{
 }
 
 // logOrderAction records a merchant action on an order for audit/forensics.
+// Deliberately fire-and-forget AFTER the action commits: a failed audit insert
+// must not roll back a legitimate 出餐/改状态/重新派单. We log the failure so a
+// broken audit table is detectable rather than a silent gap.
 func logOrderAction(orderID, merchantID uint, action string, oldStatus, newStatus int) {
-	config.DB.Create(&models.OrderActionLog{
+	if err := config.DB.Create(&models.OrderActionLog{
 		OrderID: orderID, MerchantID: merchantID, Action: action,
 		OldStatus: oldStatus, NewStatus: newStatus,
-	})
+	}).Error; err != nil {
+		log.Printf("audit log write failed: action=%s order=%d merchant=%d err=%v", action, orderID, merchantID, err)
+	}
 }
 
 // loadOwnedOrder loads the order at :id and verifies it belongs to one of the

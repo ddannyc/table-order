@@ -9,7 +9,7 @@
 
 ## Phase 2 — 鲁棒性（建议修）
 - [x] **T3** 限流器加固：`allow()` 清空键 `delete`；测窗口复位（注入 `now`，零 sleep）、键淘汰、`ByUserID` 分桶+无 user 回退 IP — S
-- [ ] **T4** 审计写失败可观测：`logOrderAction` 捕获并 `log.Printf`（保持提交后审计，不回滚动作）+ 注释说明 — S
+- [x] **T4** 审计写失败可观测：`logOrderAction` 捕获并 `log.Printf`（保持提交后审计，不回滚动作）+ 注释说明 — S
 
 ## Phase 3 — 测试覆盖
 - [ ] **T5** handler 覆盖缺口（依赖 T2）：limbo `shansong_status=0`→重派→400 表征测；重派成功写 `action="redispatch"` 审计断言；状态机白名单表测（合法 1→4/2→3/2→4 通过；非法 2→1/2→2/3→1/3→4/4→2/4→3→400 且状态不变）— S/M
