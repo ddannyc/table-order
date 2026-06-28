@@ -1,15 +1,36 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
 )
+
+// doMerchantReq runs a single authenticated merchant request through a router
+// that maps routePath → handler. body is JSON-encoded when non-nil.
+func doMerchantReq(t *testing.T, merchantID uint, method, routePath, url string, handler gin.HandlerFunc, body any) *httptest.ResponseRecorder {
+	t.Helper()
+	r := setupRouter()
+	setAuthContext(r, method, routePath, handler, merchantID)
+	var reader io.Reader
+	if body != nil {
+		b, _ := json.Marshal(body)
+		reader = bytes.NewReader(b)
+	}
+	req, _ := http.NewRequest(method, url, reader)
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+	return w
+}
 
 // merchantOrdersResp is the decoded shape the order board relies on.
 type merchantOrdersResp struct {
@@ -161,5 +182,83 @@ func TestGetMerchantOrders_PaginatesAndAggregatesOverFullSet(t *testing.T) {
 	}
 	if resp.Rewarded != 30 {
 		t.Errorf("expected rewarded 30 over full set, got %v", resp.Rewarded)
+	}
+}
+
+// --- T3: 出餐 (PrepareOrder) ---
+
+func TestPrepareOrder_SetsPreparedAt(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9301)
+	shop := models.Shop{Name: "Prep Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_OK", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d body: %s", w.Code, w.Body.String())
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.PreparedAt == nil {
+		t.Fatalf("expected PreparedAt set after prepare")
+	}
+}
+
+func TestPrepareOrder_Idempotent(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9302)
+	shop := models.Shop{Name: "Prep Shop 2", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_IDEM", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	var first models.Order
+	config.DB.First(&first, order.ID)
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 on repeat, got %d", w.Code)
+	}
+	var second models.Order
+	config.DB.First(&second, order.ID)
+	if !first.PreparedAt.Equal(*second.PreparedAt) {
+		t.Errorf("prepare must be idempotent (time unchanged): %v vs %v", first.PreparedAt, second.PreparedAt)
+	}
+}
+
+func TestPrepareOrder_RejectsOtherMerchant(t *testing.T) {
+	setupTestDB(t)
+	owner := uint(9303)
+	other := uint(9304)
+	shop := models.Shop{Name: "Owner Shop", MerchantID: owner, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "PR_FORBID", ShopID: shop.ID, OrderType: "dine_in", Amount: 30, Status: 2}
+	config.DB.Create(&order)
+
+	w := doMerchantReq(t, other, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/"+itoa(order.ID)+"/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusForbidden && w.Code != http.StatusNotFound {
+		t.Fatalf("expected 403/404 for other merchant, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.PreparedAt != nil {
+		t.Errorf("must not prepare another merchant's order")
+	}
+}
+
+func TestPrepareOrder_NotFound(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9305)
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/prepare",
+		"/api/merchant/orders/999999/prepare", PrepareOrder, nil)
+	if w.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 for missing order, got %d", w.Code)
 	}
 }

@@ -119,6 +119,40 @@ func GetMerchantOrders(c *gin.Context) {
 	})
 }
 
+// loadOwnedOrder loads the order at :id and verifies it belongs to one of the
+// merchant's shops. On failure it writes the response (404/403) and returns ok=false.
+func loadOwnedOrder(c *gin.Context, merchantID uint) (*models.Order, bool) {
+	var order models.Order
+	if err := config.DB.First(&order, c.Param("id")).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "order not found"})
+		return nil, false
+	}
+	var shop models.Shop
+	if err := config.DB.Where("id = ? AND merchant_id = ?", order.ShopID, merchantID).First(&shop).Error; err != nil {
+		c.JSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+		return nil, false
+	}
+	return &order, true
+}
+
+// PrepareOrder marks an order as 出餐 (food ready) by setting PreparedAt.
+// Idempotent: re-calling on an already-prepared order succeeds without moving the time.
+func PrepareOrder(c *gin.Context) {
+	merchantID := c.GetUint("user_id")
+	order, ok := loadOwnedOrder(c, merchantID)
+	if !ok {
+		return
+	}
+	if order.PreparedAt == nil {
+		now := time.Now()
+		if err := config.DB.Model(order).Update("prepared_at", now).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "prepare failed"})
+			return
+		}
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "prepared"})
+}
+
 type CreateMerchantOrderRequest struct {
 	UserID   uint    `json:"user_id" binding:"required"`
 	ShopID   uint    `json:"shop_id" binding:"required"`
