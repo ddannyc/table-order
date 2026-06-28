@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { getMerchantOrders } from '../api/order'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { getMerchantOrders, prepareOrder, updateOrderStatus, redispatchOrder } from '../api/order'
 import { useAuthStore } from '../stores/auth'
 import {
   orderStatusLabel,
@@ -8,6 +9,8 @@ import {
   isPaid,
   isPrepared,
   needsAction,
+  canPrepare,
+  canRedispatch,
 } from '../utils/orderBoard'
 
 const auth = useAuthStore()
@@ -73,6 +76,64 @@ function fmtTime(s) {
   return s ? s.replace('T', ' ').slice(0, 16) : ''
 }
 
+// --- actions ---
+const acting = ref(0)
+const STATUS_OPTS = [
+  { value: 1, label: '未支付' },
+  { value: 2, label: '已支付' },
+  { value: 3, label: '已完成' },
+  { value: 4, label: '已取消' },
+]
+
+async function doPrepare(row) {
+  acting.value = row.id
+  try {
+    await prepareOrder(row.id)
+    ElMessage.success('已标记出餐')
+    await load()
+  } catch {
+    // surfaced by interceptor
+  } finally {
+    acting.value = 0
+  }
+}
+
+async function doRedispatch(row) {
+  try {
+    await ElMessageBox.confirm('确认重新发起闪送派单？将按最新报价重新询价。', '重新派单', { type: 'warning' })
+  } catch {
+    return // cancelled
+  }
+  acting.value = row.id
+  try {
+    await redispatchOrder(row.id)
+    ElMessage.success('已重新派单')
+    await load()
+  } catch {
+    // surfaced by interceptor
+  } finally {
+    acting.value = 0
+  }
+}
+
+async function doChangeStatus(row, status) {
+  try {
+    await ElMessageBox.confirm(`确认将订单状态改为「${orderStatusLabel(status)}」？`, '改状态', { type: 'warning' })
+  } catch {
+    return
+  }
+  acting.value = row.id
+  try {
+    await updateOrderStatus(row.id, status)
+    ElMessage.success('状态已更新')
+    await load()
+  } catch {
+    // surfaced by interceptor
+  } finally {
+    acting.value = 0
+  }
+}
+
 onMounted(load)
 watch([() => auth.currentShopId, date, type], load)
 </script>
@@ -136,6 +197,36 @@ watch([() => auth.currentShopId, date, type], load)
       </el-table-column>
       <el-table-column label="下单时间" width="150">
         <template #default="{ row }">{{ fmtTime(row.created_at) }}</template>
+      </el-table-column>
+      <el-table-column label="操作" width="220" fixed="right">
+        <template #default="{ row }">
+          <el-button
+            v-if="canPrepare(row)"
+            type="primary"
+            size="small"
+            :loading="acting === row.id"
+            @click="doPrepare(row)"
+          >出餐</el-button>
+          <el-button
+            v-if="canRedispatch(row)"
+            type="warning"
+            size="small"
+            :loading="acting === row.id"
+            @click="doRedispatch(row)"
+          >重新派单</el-button>
+          <el-dropdown trigger="click" @command="(s) => doChangeStatus(row, s)">
+            <el-button size="small" :disabled="acting === row.id">
+              改状态<el-icon class="el-icon--right"><ArrowDown /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item v-for="opt in STATUS_OPTS" :key="opt.value" :command="opt.value">
+                  {{ opt.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </template>
       </el-table-column>
     </el-table>
   </div>
