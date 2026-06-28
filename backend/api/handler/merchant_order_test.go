@@ -28,6 +28,11 @@ type shansongMock struct {
 	createDelay time.Duration
 	mu          sync.Mutex
 	createCalls int
+	// Deterministic barrier (preferred over quoteDelay for race tests): when set,
+	// the quote path signals quoteEntered once it's inside CalculatePrice and blocks
+	// until releaseQuote is closed — so a test can act *provably* mid-quote.
+	quoteEntered chan struct{}
+	releaseQuote chan struct{}
 }
 
 func (m *shansongMock) Do(req *http.Request) (*http.Response, error) {
@@ -40,6 +45,9 @@ func (m *shansongMock) Do(req *http.Request) (*http.Response, error) {
 		m.mu.Lock()
 		m.createCalls++
 		m.mu.Unlock()
+	} else if m.quoteEntered != nil {
+		m.quoteEntered <- struct{}{}
+		<-m.releaseQuote
 	} else if m.quoteDelay > 0 {
 		time.Sleep(m.quoteDelay)
 	}
@@ -514,9 +522,10 @@ func TestRedispatchOrder_CancelledDuringQuoteNotDispatched(t *testing.T) {
 	setupTestDB(t)
 	const merchantID = uint(9550)
 	mock := &shansongMock{
-		quoteResp:  `{"status":200,"data":{"orderNumber":"RQ-X","totalFeeAfterSave":900}}`,
-		createResp: `{"status":200,"data":{"orderNumber":"SS-X"}}`,
-		quoteDelay: 60 * time.Millisecond, // hold the handler in CalculatePrice while we cancel
+		quoteResp:    `{"status":200,"data":{"orderNumber":"RQ-X","totalFeeAfterSave":900}}`,
+		createResp:   `{"status":200,"data":{"orderNumber":"SS-X"}}`,
+		quoteEntered: make(chan struct{}),
+		releaseQuote: make(chan struct{}),
 	}
 	withShansong(t, &services.ShansongClient{ClientID: "c", AppSecret: "s", BaseURL: "http://stub", HTTP: mock})
 	order := newRedispatchOrder(t, merchantID, "RD_CANCELRACE", -1) // Status:2, shansong -1
@@ -535,9 +544,11 @@ func TestRedispatchOrder_CancelledDuringQuoteNotDispatched(t *testing.T) {
 		r.ServeHTTP(w, req)
 		code = w.Code
 	}()
-	// Cancel mid-quote: the handler is past the Status==2 read but not yet at the claim.
-	time.Sleep(20 * time.Millisecond)
+	// Cancel happens-before the claim: wait until the handler is provably inside the
+	// quote (past the Status==2 read), commit the cancel, then let the quote return.
+	<-mock.quoteEntered
 	config.DB.Model(&models.Order{}).Where("id = ?", order.ID).Update("status", 4)
+	close(mock.releaseQuote)
 	wg.Wait()
 
 	if code == http.StatusOK {
