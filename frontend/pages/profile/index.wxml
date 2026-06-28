@@ -88,7 +88,7 @@
       <view class="rule-item">直推奖励：一级下线消费的 10%</view>
       <view class="rule-item">间推奖励：二级下线消费的 4%</view>
       <view class="rule-item">有效期：180 天</view>
-      <view class="rule-item">抵扣上限：单笔订单 50%</view>
+      <view class="rule-item">抵扣上限：以下单时显示为准</view>
     </view>
     <view wx:if="{{needLogin}}" class="login-tip-inline">
       <text class="login-tip-text">登录后可查看</text>

@@ -68,7 +68,7 @@
       </view>
       <view class="rule-item">
         <view class="rule-num">抵</view>
-        <view class="rule-text">金币可抵扣订单金额最高50%，有效期180天</view>
+        <view class="rule-text">金币可抵扣部分订单金额，有效期180天</view>
       </view>
     </view>
   </view>
