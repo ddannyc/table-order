@@ -8,13 +8,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/example/table-order/config"
 	"github.com/example/table-order/models"
+	"gorm.io/gorm"
 )
 
+const (
+	defaultOrderPageSize = 20
+	maxOrderPageSize     = 100
+)
+
+// MerchantOrderItem is an order plus its delivery detail (nil for dine-in).
+type MerchantOrderItem struct {
+	models.Order
+	Delivery *models.OrderDelivery `json:"delivery"`
+}
+
 type MerchantOrdersResponse struct {
-	Orders   []models.Order `json:"orders"`
-	Total    int64          `json:"total"`
-	Revenue  float64        `json:"revenue"`
-	Rewarded float64        `json:"rewarded"`
+	Orders   []MerchantOrderItem `json:"orders"`
+	Total    int64               `json:"total"`
+	Revenue  float64             `json:"revenue"`
+	Rewarded float64             `json:"rewarded"`
 }
 
 func GetMerchantOrders(c *gin.Context) {
@@ -27,39 +39,83 @@ func GetMerchantOrders(c *gin.Context) {
 	for _, s := range shops {
 		shopIDs = append(shopIDs, s.ID)
 	}
-
-	// Filters
-	shopID := c.Query("shop_id")
-	date := c.Query("date")
-
-	query := config.DB.Model(&models.Order{}).Where("shop_id IN ?", shopIDs)
-
-	if shopID != "" {
-		query = query.Where("shop_id = ?", shopID)
-	}
-	if date != "" {
-		t, _ := time.Parse("2006-01-02", date)
-		query = query.Where("DATE(created_at) = ?", t)
+	if len(shopIDs) == 0 {
+		c.JSON(http.StatusOK, MerchantOrdersResponse{Orders: []MerchantOrderItem{}})
+		return
 	}
 
+	// filtered returns a fresh query with all filters applied, so Count/aggregate/
+	// list can each run independently without leaking statement state into each other.
+	filtered := func() *gorm.DB {
+		q := config.DB.Model(&models.Order{}).Where("shop_id IN ?", shopIDs)
+		if shopID := c.Query("shop_id"); shopID != "" {
+			q = q.Where("shop_id = ?", shopID)
+		}
+		if date := c.Query("date"); date != "" {
+			if t, err := time.Parse("2006-01-02", date); err == nil {
+				q = q.Where("DATE(created_at) = ?", t)
+			}
+		}
+		if status := c.Query("status"); status != "" {
+			q = q.Where("status = ?", status)
+		}
+		if typ := c.Query("type"); typ != "" {
+			q = q.Where("order_type = ?", typ)
+		}
+		return q
+	}
+
+	// Totals reflect the full filtered set, not just the current page.
 	var total int64
-	query.Count(&total)
+	filtered().Count(&total)
+	var agg struct {
+		Revenue  float64
+		Rewarded float64
+	}
+	filtered().Select("COALESCE(SUM(amount),0) AS revenue, COALESCE(SUM(reward_amount),0) AS rewarded").Scan(&agg)
+
+	// Pagination
+	page, _ := strconv.Atoi(c.Query("page"))
+	if page < 1 {
+		page = 1
+	}
+	pageSize, _ := strconv.Atoi(c.Query("page_size"))
+	if pageSize < 1 {
+		pageSize = defaultOrderPageSize
+	}
+	if pageSize > maxOrderPageSize {
+		pageSize = maxOrderPageSize
+	}
 
 	var orders []models.Order
-	query.Order("created_at desc").Limit(50).Find(&orders)
+	filtered().Order("created_at desc").Limit(pageSize).Offset((page - 1) * pageSize).Find(&orders)
 
-	// Calculate totals
-	var revenue, rewarded float64
-	for _, o := range orders {
-		revenue += o.Amount
-		rewarded += o.RewardAmount
+	// Embed delivery detail for the page (batch-loaded, nil for dine-in).
+	items := make([]MerchantOrderItem, len(orders))
+	orderIDs := make([]uint, len(orders))
+	for i, o := range orders {
+		items[i] = MerchantOrderItem{Order: o}
+		orderIDs[i] = o.ID
+	}
+	if len(orderIDs) > 0 {
+		var deliveries []models.OrderDelivery
+		config.DB.Where("order_id IN ?", orderIDs).Find(&deliveries)
+		byOrderID := make(map[uint]*models.OrderDelivery, len(deliveries))
+		for i := range deliveries {
+			byOrderID[deliveries[i].OrderID] = &deliveries[i]
+		}
+		for i := range items {
+			if d, ok := byOrderID[items[i].Order.ID]; ok {
+				items[i].Delivery = d
+			}
+		}
 	}
 
 	c.JSON(http.StatusOK, MerchantOrdersResponse{
-		Orders:   orders,
+		Orders:   items,
 		Total:    total,
-		Revenue:  revenue,
-		Rewarded: rewarded,
+		Revenue:  agg.Revenue,
+		Rewarded: agg.Rewarded,
 	})
 }
 
