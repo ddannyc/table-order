@@ -1,20 +1,22 @@
-# Todo：优化「外卖」入口白屏/加载体验
+# Todo：修复菜单「选规格」按钮三位数价格换行（方案 V3）
 
-详见 `tasks/plan.md`。范围：**仅 `frontend/`**，不改后端/接口/模型。
-根因：外卖比堂食多一段「导航前静默 `resolveDeliveryShop` 请求」+ 冗余 `getShop`。
-方案：解析下沉菜单页（点按即跳转）+ DTO 透传跳过 `getShop`（3 请求 → 2）。
-TDD：先改测试再改实现，一任务一提交。
+详见 `tasks/plan.md`。范围：**仅 `frontend/`**（utils 价格函数 + menu WXML/WXSS + 测试），不改接口/业务逻辑/config.js。
+方案 V3（效果图 375px 真机比例验证）：瘦黄标 + 整数去 .00 + `选规格` 紧凑原子药丸 → `¥38/¥100/¥288/¥1288 起` 全档同行不断字；`flex-wrap` 仅兜底。
+TDD：先写测试再改；一任务一提交。
 **git 卫生**：只 stage 该任务文件；禁止 `git add -A`；绝不 stage `frontend/config.js`/`.claude/`。
-分支：建议 `feat/delivery-fast-entry`（开工前切）。
+分支：建议 `feat/menu-price-btn-fit`（开工前切；注意当前在 feat/menu-skeleton，需先理清分支）。
 
 ## 任务
-- [x] **T1** 菜单页承接外卖冷启动（`onLoad` 无 shop_id 分支 + `loadDeliveryShop` + `loadData(prefetchedShop)` 跳过 `getShop` + `onRetry` 分流）— M ✅
-- [x] **T2** 首页「外卖」即时跳转（`chooseDelivery` 直接 `reLaunch?order_type=delivery`，移除未用导入；无门店提示迁至菜单）— S ✅
-- [ ] **Checkpoint A** `cd frontend && npm test` 全绿 + 手测三条（外卖即时/无门店 error/堂食不回归）+ git diff 仅 `frontend/` + 部署停等用户
+- [ ] **T1** 价格格式化纯函数 `utils/price.js formatPrice`（整数去 .00 / 非整保两位）+ 接入 menu loadData（`priceText`/`specMinText`）+ 单测 — S
+- [ ] **T2** 价格标瘦身 + `选规格` 紧凑原子（`menu-spec-btn`：nowrap+flex-shrink:0）+ `.menu-action{flex:none;margin-left:auto}` + `.menu-card-bottom{flex-wrap:wrap}` + WXML 加类 + 守护测试 — S
+- [ ] **Checkpoint A** `npm test` 全绿 + 真机多档价格手测（两/三/四位数 + ¥38.50 + 带徽章均同行不断字）+ git diff 仅 frontend + 部署停等用户
 
 ## 守护测试映射
-- T1 → `__tests__/menu-page.test.js` 或新增 `__tests__/delivery-cold-start.test.js`
-- T2 → `__tests__/home-launcher.test.js`（改写为即时导航；删「首页无门店提示」用例，意图迁 T1）
+- T1 → `__tests__/price-format.test.js`（整数/非整/0/字符串容错）；`menu-page.test.js` 守护 loadData 不回归
+- T2 → `__tests__/menu-price-btn.test.js`（WXML 含 `menu-spec-btn`；WXSS `.menu-spec-btn` 含 nowrap+flex-shrink:0；`.menu-card-bottom` 含 flex-wrap:wrap）
 
 ## 不在本期
-- 后端合并端点、骨架屏、`navigateTo` 转场、预拉取/缓存；任何后端/模型/接口改动。
+- 购物车/下单页/规格弹层价格格式统一、缩小缩略图（V4 备选）、改价格标色彩、组件测试栈。
+
+## 已定方向
+- 方案 V3（瘦黄标 + 整数去 .00 + 紧凑按钮），全价格档同行不断字；wrap 仅极端兜底。

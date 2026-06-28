@@ -1,89 +1,79 @@
-# 实施计划：优化「外卖」入口的白屏/加载体验
+# 实施计划：修复菜单卡片「选规格」按钮在三位数价格下换行（方案 V3）
 
 ## 问题诊断（事实来源）
-点「外卖」比点「堂食」明显多一段「白屏加载中」，根因是外卖比堂食多了**一整段导航前的静默网络请求**：
+菜单卡片底部 `.menu-card-bottom`（`flex; justify-content:space-between`）放着**黄底大价格标** `.menu-price` 和 `选规格` 按钮。价格恒 `toFixed(2)`，三位数 → `¥100.00起`（"100.00" 6 字符）把价格标撑宽；真机卡片正文仅 ~145px（左轨 90 + 缩略图 80 吃掉大半），价格 + 默认 `weui-btn_mini` 按钮放不下一行，按钮被压窄 → `选规格` 三字**断成两行**。
 
-- **堂食** `scanDineIn()`：扫码 → **立即** `wx.reLaunch` 进菜单 → 菜单显示「加载中…」转圈 → 拉数据。一段等待。
-- **外卖** `chooseDelivery()`：点按 → 先发 `resolveDeliveryShop()`（`GET /delivery/shop`），**这期间无任何反馈**（人停在首页）→ 回来后才 `wx.reLaunch`（重建页面闪一帧）→ 菜单再 `Promise.all([getShop, getShopProducts])` → 「加载中…」。两段等待，第一段零反馈。
+## 已定方案（4 套效果图、375px 真机比例验证后）
+**V3 — 瘦黄标 + 整数去 .00 + 紧凑按钮**：保留大食物图与黄色价格身份；把价格标做小一档、整数价不显小数（`¥100`，非整价如 `¥38.50` 仍保留小数），并把 `选规格` 做成紧凑原子药丸。实测此组合下 `¥38 / ¥100 / ¥288 / ¥1288 起` **全部价格档价格 + 按钮同一行**。保留 `flex-wrap` 仅作极端兜底（永不破词）。
 
-附带浪费：`ResolveDeliveryShop` 后端返回的就是 `toPublicShopDTO(shop)`，与 `GetShop` **完全同一个 DTO**；菜单又 `getShop(shopId)` 拉了一遍 —— 外卖路径实际发了 **3 个请求**（`/delivery/shop` → `getShop` ∥ `getShopProducts`），其中 `getShop` 冗余。
+效果图对照：V1（大黄标+.00，按钮总掉次行，已否决）/ V2（去黄框纯文字，仍换行，否决）/ V3（选定）/ V4（缩小缩略图，备选）。
 
-**已排除项**：`app.json` 的 `window.backgroundColor` 已是 `#FBEFF3`，菜单页未覆盖、继承生效，故 reLaunch 那一帧本就是品牌浅粉而非纯白 → **无需改 backgroundColor**（原 Fix 3 作废）。菜单初始 `data.loading:true` 且首屏即命中 `wx:elif="{{loading}}"` 转圈分支，无空白内容帧。
-
-## 目标
-让「外卖」与「堂食」一样**点按即跳转**：去掉导航前的静默请求，把门店解析挪进菜单页，由菜单已有的「加载中…」转圈盖住整段等待；并复用 `/delivery/shop` 已返回的门店 DTO，跳过冗余的 `getShop`，把外卖路径从 3 个请求降到 2 个。
-
-范围：**仅 `frontend/`**，不改后端、不改接口签名、不改数据模型。
+## 现状（已确认，勿改逻辑）
+- 价格来源：`menu/index.js` `loadData` 里 `priceText = p.price.toFixed(2)`、`specMinText = Math.min(...specs.map(s=>s.price)).toFixed(2)`；卡片显示 `p.hasSpecs ? p.specMinText : p.priceText`。规格弹层等其它价格**本期不动**。
+- `.menu-action` 三分支：`售罄` / `选规格`（唯一 weui-btn，会断行）/ `+`·加减器（定宽，不受影响）。
+- 价格标 `.menu-price`：黄底红字 + `--font-price(34rpx)` + 立体影。V3 仅**瘦身**，不改色彩身份。
 
 ## 架构决策
-1. **解析下沉到菜单页**：菜单 `onLoad` 在 `order_type=delivery` 且**无 `shop_id`** 时，自己 `resolveDeliveryShop()` → `loadData(shop)`。首页点按只负责立即 `reLaunch`，无网络。
-2. **DTO 透传跳过冗余请求**：`loadData(prefetchedShop?)` —— 传入门店则 `Promise.resolve(shop)`，不再 `getShop`；不传（堂食/重试）维持原行为。`/delivery/shop` 与 `getShop` 同为 `toPublicShopDTO`，字段一致，安全。
-3. **菜单兼容两条外卖入口**：保留既有 `delivery && shop_id` 分支（向后兼容/可能的深链），新增 `delivery && !shop_id` 解析分支。T1 加完后系统对新旧 URL 都可用。
-4. **错误与重试归位菜单**：无可配送门店时，由菜单 `setData({loading:false, error:true})` + toast「暂无可配送门店」，`onRetry` 在「外卖且未绑定门店」时重走解析。无门店提示从首页迁到菜单。
-5. **测试策略**：小程序页面无组件挂载测试栈；沿用仓库既有 jest 模式（mock `wx`/api 模块后直接 `pageConfig.method.call(ctx, ...)` 断言）。`home-launcher.test.js` / `menu-page.test.js` 已覆盖这两页的导航装配，按 TDD 先改测试（RED）再改实现（GREEN）。
+1. **价格格式化抽成纯函数** `formatPrice(n)`：整数→无小数（`100`），非整数→保留两位（`38.50`）。供菜单卡片价格用，Vitest/jest 守护。仅作用于**菜单卡片**的 `priceText`/`specMinText`，不波及购物车/下单页（各自语境保留精度）。
+2. **价格标瘦身**：缩小 `.menu-price` 字号/内边距（仍黄底红字，去重立体影或减弱），降低占宽。
+3. **按钮紧凑原子化**：`选规格` 加专属类 `menu-spec-btn`（保留 `weui-btn weui-btn_primary` 粉底白字，接管尺寸）：更小字号 + 紧 padding + `white-space:nowrap` + `flex-shrink:0`；`.menu-action { flex:none; margin-left:auto }`。
+4. **兜底不破词**：`.menu-card-bottom { flex-wrap:wrap; row-gap:var(--space-xs) }`，万一某极端组合仍超宽，整颗按钮掉次行右对齐，绝不把 `选规格` 拆字。
+5. **可访问性**：按钮高度 ≥ ~56rpx 触控目标；纯展示层改动。
+6. **测试**：纯函数 `formatPrice` 单测守护；UI 用源码字符串守护类名/样式键；视觉适配真机多档价格手测。
 
 ## 依赖图
 ```
-T1 菜单页承接外卖冷启动（解析门店 + DTO 透传跳过 getShop + 错误/重试）  [additive, 向后兼容]
+T1 价格格式化纯函数 formatPrice（utils/price.js）+ 接入 menu loadData
         │
         ▼
-T2 首页「外卖」即时跳转（去掉导航前静默请求；无门店提示迁至菜单）       [行为切换]
+T2 价格标瘦身 + 选规格 紧凑原子按钮 + 行兜底（menu wxml 加类 + wxss 样式）
 ```
 
 ## 任务（垂直切片）
 
-### T1 — 菜单页承接外卖冷启动  〔M〕
-**描述**：菜单页新增「无 shop_id 的外卖冷启动」能力，并复用 `/delivery/shop` 的门店 DTO 跳过冗余 `getShop`。保留既有 `delivery && shop_id` 分支不动（向后兼容）。
-- `menu/index.js`：`require` 增加 `resolveDeliveryShop`（来自 `../../api/index.js`）。
-- `onLoad`：新增分支 —— `options.order_type === 'delivery' && !options.shop_id` → `this.setData({ orderType:'delivery' })` 后 `this.loadDeliveryShop()`。
-- 新增 `loadDeliveryShop()`：`setData({loading:true, error:false})` → `resolveDeliveryShop()`：成功 `setData({ boundShopId: shop.id, boundTableNo:'', orderType:'delivery' })` 并 `this.loadData(shop)`；失败 `setData({loading:false, error:true})` + `wx.showToast({title:'暂无可配送门店', icon:'none'})`。
-- `loadData(prefetchedShop)`：`const shopP = prefetchedShop ? Promise.resolve(prefetchedShop) : getShop(boundShopId)`；其余不变。
-- `onRetry()`：`if (this.data.orderType === 'delivery' && !this.data.boundShopId) this.loadDeliveryShop(); else this.loadData()`。
-
+### T1 — 价格格式化纯函数 + 接入菜单  〔S〕
+**描述**：新增 `frontend/utils/price.js` 的 `formatPrice(n)`：整数去掉 `.00`，非整数保留两位；在 `menu/index.js` `loadData` 用它生成卡片的 `priceText`/`specMinText`。
+- `formatPrice(100)→"100"`、`formatPrice(38.5)→"38.50"`、`formatPrice(38)→"38"`、`formatPrice(0)→"0"`、容错字符串数字。
+- `menu/index.js`：`priceText: formatPrice(p.price)`、`specMinText: formatPrice(Math.min(...specs.map(s=>s.price)))`。规格行内 `s.price.toFixed(2)` 等**不动**（本期仅卡片主价）。
 **验收**：
-- [ ] `onLoad({order_type:'delivery'})`（无 shop_id）→ 调用 `loadDeliveryShop`，不直接 `loadData`。
-- [ ] `loadDeliveryShop` 成功 → `loadData` 收到门店对象，且**不**调用 `getShop`（只 `getShopProducts`）。
-- [ ] `loadDeliveryShop` 失败 → `loading:false, error:true` 且弹出「暂无可配送门店」。
-- [ ] 既有 `onLoad({order_type:'delivery', shop_id:'7'})` 行为不变（`menu-page.test.js` 不回归）。
-- [ ] `onRetry` 在外卖未绑定门店时走 `loadDeliveryShop`，否则走 `loadData`。
+- [ ] 整数价显示无小数（`¥100起` / `¥38起`），非整价保留两位（`¥38.50`）。
+- [ ] 既有菜单测试不回归；新增 `formatPrice` 单测全绿。
+**验证**：`cd frontend && npm test`。**文件**：`frontend/utils/price.js`、`frontend/__tests__/price-format.test.js`、`frontend/pages/menu/index.js`。
 
-**验证**：`cd frontend && npm test`（新增/扩展菜单测试全绿，既有不回归）。无 build 步骤。
-**依赖**：无。**文件**：`frontend/pages/menu/index.js`、`frontend/__tests__/menu-page.test.js`（或新增 `frontend/__tests__/delivery-cold-start.test.js`）。
-
-### T2 — 首页「外卖」即时跳转  〔S〕
-**描述**：首页点「外卖」改为**立即** `reLaunch` 进菜单的外卖模式，不再导航前解析门店；无门店提示由菜单承担（T1 已实现）。
-- `home/index.js`：`chooseDelivery()` → 直接 `wx.reLaunch({ url: '/pages/menu/index?order_type=delivery' })`。
-- 移除 `home/index.js` 中现已未用的 `resolveDeliveryShop` 导入。
-
-**验收**：
-- [ ] 点「外卖」→ 同步 `reLaunch` 到 `/pages/menu/index?order_type=delivery`，URL 不含 `shop_id`。
-- [ ] `chooseDelivery` 不再调用 `resolveDeliveryShop`（导航前零网络）。
-- [ ] 堂食路径（`scanDineIn`/`tabChange`）不受影响。
-
-**验证**：`cd frontend && npm test`（先改 `home-launcher.test.js` 为新行为=RED，再改实现=GREEN；删除「首页无门店提示」用例，其意图已由 T1 菜单测试覆盖）。
-**依赖**：T1（菜单须先能处理无 shop_id 的外卖入口）。**文件**：`frontend/pages/home/index.js`、`frontend/__tests__/home-launcher.test.js`。
+### T2 — 价格标瘦身 + `选规格` 紧凑原子化 + 行兜底  〔S〕
+**描述**：缩小价格标、把 `选规格` 做成紧凑不换行药丸、操作区不收缩靠右、底行可兜底换行。
+- `menu/index.wxml`：`选规格` 按钮 `class` 加 `menu-spec-btn`（移除 `weui-btn_mini`，尺寸由新类接管；保留 `weui-btn weui-btn_primary`）。
+- `menu/index.wxss`：
+  - `.menu-price` 瘦身（字号降一档、padding 收紧、立体影减弱/去除）。
+  - `.menu-spec-btn { white-space:nowrap; flex-shrink:0; font-size:小; padding:紧; min-height≈56rpx; }`。
+  - `.menu-action { flex:none; margin-left:auto; }`。
+  - `.menu-card-bottom { flex-wrap:wrap; row-gap:var(--space-xs); }`。
+**验收**（核心：`选规格` **永远单行不断字**）：
+- [ ] `¥38 / ¥100 / ¥288 / ¥1288 起`：价格与 `选规格` **同一行**，按钮单行不断字。
+- [ ] 叠加菜量徽章时仍同行不断字；极端超宽时整颗按钮掉次行右对齐（兜底）。
+- [ ] 非 spec 菜（`+`/加减器）、`售罄`、购物车条不回归；按钮可点。
+**验证**：`cd frontend && npm test`（守护测试全绿）；真机/DevTools 多档价格手测（重点 `¥100起`）。**文件**：`frontend/pages/menu/index.wxml`、`frontend/pages/menu/index.wxss`、`frontend/__tests__/menu-price-btn.test.js`。
 
 ### Checkpoint A（收尾）
-- [ ] `cd frontend && npm test` 全绿（含改写后的 home/menu 用例）。
-- [ ] 手测三条（DevTools/真机）：① 点外卖 → 立即转圈 → 出菜单（无静默卡顿）；② 后端无可配送门店 → 菜单 error 态 + toast，点重试可重走解析；③ 堂食扫码/深链不受影响。
-- [ ] 后端、接口签名、数据模型**零改动**（git diff 仅含 `frontend/`）。
-- [ ] 人工 review 后再决定是否上传小程序（部署见 deploy 记忆；**停等用户**）。
+- [ ] `cd frontend && npm test` 全绿。
+- [ ] 真机手测：两位数 / 三位数（`¥100起`）/ 四位数 / 非整价（`¥38.50`）/ 带徽章 —— `选规格` 均同行不断字。
+- [ ] git diff 仅含 `frontend/`（utils + menu + tests）；不碰 JS 业务逻辑/接口/`config.js`。
+- [ ] 人工 review 后再决定合并 + 上传体验版（**停等用户**）。
 
 ## 守护测试映射
-- T1 → `menu-page.test.js` / `delivery-cold-start.test.js`（onLoad 分支、loadDeliveryShop 成功/失败、loadData 跳过 getShop、onRetry 分流）。
-- T2 → `home-launcher.test.js`（chooseDelivery 即时导航、不再解析门店）。
-- 既有 `api-delivery.test.js` / `order-confirm-delivery.test.js` 守护下游下单逻辑，本期不应触及。
+- T1 → `__tests__/price-format.test.js`（`formatPrice` 整数/非整数/0/容错）；既有 `menu-page.test.js` 守护 loadData 不回归。
+- T2 → `__tests__/menu-price-btn.test.js`（WXML 含 `menu-spec-btn`；WXSS `.menu-spec-btn` 含 `white-space:nowrap`+`flex-shrink:0`；`.menu-card-bottom` 含 `flex-wrap:wrap`）。
 
 ## 不在本期
-- 后端合并端点（一次返回门店+菜单）、菜单骨架屏（skeleton）替换转圈、`reLaunch`→`navigateTo` 转场动画改造、预拉取/缓存门店。
-- 任何后端/模型/接口签名改动。
+- 购物车/下单页/规格弹层的价格格式统一（保留各自 `.00`，如需统一再单列）。
+- 缩小缩略图（V4 备选）、改价格标色彩身份、引入组件测试栈。
 
 ## 风险
 | 风险 | 级别 | 缓解 |
 |---|---|---|
-| `/delivery/shop` 与 `getShop` DTO 未来分叉，透传漏字段 | 低 | 两者现同为 `toPublicShopDTO`；变更需同步，已在文档标注 |
-| 改写 `home-launcher.test.js` 误删有效断言 | 低 | 无门店用例的意图迁到 T1 菜单测试，不丢覆盖 |
-| 菜单 `delivery && shop_id` 旧分支变僵尸 | 低 | 保留作向后兼容；如确认无来源再单独清理 |
+| 菜单显 `¥100`、下单页显 `¥100.00` 观感不一致 | 低 | 下单页保精度合理；如要统一另起任务 |
+| 紧凑按钮触控目标偏小 | 低 | min-height ≈56rpx + 横向 padding 给足点击区 |
+| `formatPrice` 浮点边界（如 38.1）| 低 | 单测覆盖整数/一位/两位小数与字符串入参 |
 
-## 开放问题
-- 是否要顺带把菜单「加载中…」转圈换成骨架屏以进一步降低「空等」感？默认不做（超范围），如要再单列。
+## 开放问题（已关闭）
+- 方案 → **V3**（瘦黄标 + 整数去 .00 + 紧凑按钮），效果图 375px 真机比例验证全档同行。
