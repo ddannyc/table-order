@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +24,11 @@ func setupTestDB(t *testing.T) {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
+		// In CI (REQUIRE_TEST_DB set) a missing DB is a hard failure, so the suite
+		// can't pass while silently skipping every handler test. Locally it skips.
+		if os.Getenv("REQUIRE_TEST_DB") != "" {
+			t.Fatalf("REQUIRE_TEST_DB is set but the test database is not available: %v", err)
+		}
 		t.Skipf("skipping test, db not available: %v", err)
 	}
 
