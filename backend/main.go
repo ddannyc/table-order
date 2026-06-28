@@ -40,8 +40,8 @@ func main() {
 	// Pin which upstream may set X-Forwarded-For; otherwise gin.Default() trusts all
 	// proxies and ClientIP() (the rate-limiter key) honors a client-spoofed header.
 	// Empty list = trust none → ClientIP() is the real TCP peer.
-	if err := r.SetTrustedProxies(cfg.Server.TrustedProxies); err != nil {
-		log.Fatalf("SetTrustedProxies failed: %v", err)
+	if err := router.ConfigureTrustedProxies(r, cfg.Server.TrustedProxies); err != nil {
+		log.Fatalf("ConfigureTrustedProxies failed: %v", err)
 	}
 	if len(cfg.Server.TrustedProxies) == 0 {
 		log.Println("WARNING: TRUSTED_PROXIES unset — trusting no proxy; behind a load balancer set it to the edge IP/CIDR so client IPs resolve correctly")
