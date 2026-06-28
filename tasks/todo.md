@@ -8,7 +8,7 @@ TDD：先改测试再改实现，一任务一提交。
 分支：建议 `feat/delivery-fast-entry`（开工前切）。
 
 ## 任务
-- [ ] **T1** 菜单页承接外卖冷启动（`onLoad` 无 shop_id 分支 + `loadDeliveryShop` + `loadData(prefetchedShop)` 跳过 `getShop` + `onRetry` 分流）— M
+- [x] **T1** 菜单页承接外卖冷启动（`onLoad` 无 shop_id 分支 + `loadDeliveryShop` + `loadData(prefetchedShop)` 跳过 `getShop` + `onRetry` 分流）— M ✅
 - [ ] **T2** 首页「外卖」即时跳转（`chooseDelivery` 直接 `reLaunch?order_type=delivery`，移除未用导入；无门店提示迁至菜单）— S
 - [ ] **Checkpoint A** `cd frontend && npm test` 全绿 + 手测三条（外卖即时/无门店 error/堂食不回归）+ git diff 仅 `frontend/` + 部署停等用户
 

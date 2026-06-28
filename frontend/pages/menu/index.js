@@ -1,5 +1,5 @@
 // pages/menu/index.js — 点餐菜单页（左分类栏 + 右列表）
-const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode } = require('../../api/index.js')
+const { getShop, getTableBinding, setTableBinding, clearTableBinding, bindInviteCode, resolveDeliveryShop } = require('../../api/index.js')
 const { getShopProducts, getCart, addToCart, updateCartQuantity, clearCart } = require('../../api/product.js')
 const { resolveProductImage } = require('../../utils/menu-image.js')
 const { pickDefaultSpec, clampQty, specPickerState } = require('../../utils/spec.js')
@@ -48,6 +48,13 @@ Page({
       this.loadData()
       return
     }
+    // 外卖冷启动：无 shop_id，页内解析配送门店（首页点按即跳转，避免导航前静默请求）。
+    if (options && options.order_type === 'delivery') {
+      clearTableBinding()
+      this.setData({ boundTableNo: '', orderType: 'delivery' })
+      this.loadDeliveryShop()
+      return
+    }
     if (options && options.shop_id && options.table_no) {
       const shopId = Number(options.shop_id)
       const tableNo = options.table_no
@@ -86,12 +93,27 @@ Page({
     }
   },
 
-  loadData() {
+  // 外卖冷启动：页内解析配送门店 → 复用该门店 DTO 直接 loadData（跳过冗余 getShop）。
+  loadDeliveryShop() {
+    this.setData({ loading: true, error: false })
+    return resolveDeliveryShop()
+      .then(shop => {
+        this.setData({ boundShopId: shop.id, boundTableNo: '', orderType: 'delivery' })
+        this.loadData(shop)
+      })
+      .catch(() => {
+        this.setData({ loading: false, error: true })
+        wx.showToast({ title: '暂无可配送门店', icon: 'none' })
+      })
+  },
+
+  // prefetchedShop：外卖路径已由 /delivery/shop 拿到同一 DTO，传入则跳过 getShop。
+  loadData(prefetchedShop) {
     const { boundShopId } = this.data
     if (!boundShopId) return
     this.setData({ loading: true, error: false })
-    Promise.all([
-      getShop(boundShopId),
+    return Promise.all([
+      prefetchedShop ? Promise.resolve(prefetchedShop) : getShop(boundShopId),
       getShopProducts(boundShopId)
     ]).then(([shop, products]) => {
       const categories = [...new Set(products.map(p => p.category))]
@@ -308,7 +330,12 @@ Page({
   },
 
   onRetry() {
-    this.loadData()
+    // 外卖未解析到门店时，重试要重走门店解析；否则正常重载。
+    if (this.data.orderType === 'delivery' && !this.data.boundShopId) {
+      this.loadDeliveryShop()
+    } else {
+      this.loadData()
+    }
   },
 
   // 图片加载失败 → 回退到该分类的 CSS 占位块（不显示裂图）。
