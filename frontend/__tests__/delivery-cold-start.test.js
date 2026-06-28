@@ -36,14 +36,21 @@ global.getApp = () => ({})
 
 require('../pages/menu/index.js')
 
+// 冲洗微/宏任务队列，等异步链（resolveDeliveryShop → loadData）落定
+const flush = () => new Promise(resolve => setImmediate(resolve))
+
 beforeEach(() => {
   jest.clearAllMocks()
 })
 
 describe('menu — 外卖冷启动（无 shop_id）', () => {
-  it('onLoad order_type=delivery 且无 shop_id 时，在页内解析门店（不直接 loadData）', () => {
+  it('onLoad order_type=delivery 且无 shop_id：清桌绑定 + 设外卖态 + 页内解析（不直接 loadData）', () => {
     const ctx = { setData: jest.fn(), loadDeliveryShop: jest.fn(), loadData: jest.fn() }
     pageConfig.onLoad.call(ctx, { order_type: 'delivery' })
+    expect(api.clearTableBinding).toHaveBeenCalled()
+    expect(ctx.setData).toHaveBeenCalledWith(
+      expect.objectContaining({ boundTableNo: '', orderType: 'delivery' })
+    )
     expect(ctx.loadDeliveryShop).toHaveBeenCalled()
     expect(ctx.loadData).not.toHaveBeenCalled()
   })
@@ -103,5 +110,48 @@ describe('menu — 外卖冷启动（无 shop_id）', () => {
     pageConfig.onRetry.call(ctx)
     expect(ctx.loadData).toHaveBeenCalled()
     expect(ctx.loadDeliveryShop).not.toHaveBeenCalled()
+  })
+
+  // 端到端：真实 onLoad → loadDeliveryShop → loadData 串起来跑（setData 真合并进 data），
+  // 证明「页内解析→透传跳过 getShop」整条链不会因 boundShopId 时序而早退。
+  it('端到端冷启动：解析门店 → 透传 loadData，仅一次拉商品且不调 getShop', async () => {
+    api.resolveDeliveryShop.mockResolvedValue({ id: 7, name: '鸡福旺' })
+    productApi.getShopProducts.mockResolvedValue([])
+    const ctx = Object.assign({}, pageConfig, {
+      data: { boundShopId: 0 },
+      setData(patch) { Object.assign(this.data, patch) },
+    })
+    ctx.onLoad({ order_type: 'delivery' })
+    await flush(); await flush()
+    expect(api.getShop).not.toHaveBeenCalled()
+    expect(productApi.getShopProducts).toHaveBeenCalledTimes(1)
+    expect(productApi.getShopProducts).toHaveBeenCalledWith(7)
+    expect(ctx.data.boundShopId).toBe(7)
+    expect(ctx.data.shop).toEqual({ id: 7, name: '鸡福旺' })
+    expect(ctx.data.loading).toBe(false)
+    expect(ctx.data.error).toBe(false)
+  })
+})
+
+describe('menu — onShow 外卖态守卫（保护异步解析窗口）', () => {
+  it('解析未完成（boundShopId 0）时 onShow 不加载、不读桌绑定', () => {
+    const ctx = Object.assign({}, pageConfig, {
+      data: { orderType: 'delivery', boundShopId: 0 },
+      setData: jest.fn(), loadData: jest.fn(), updateCartInfo: jest.fn(),
+    })
+    ctx.onShow()
+    expect(ctx.loadData).not.toHaveBeenCalled()
+    expect(ctx.updateCartInfo).not.toHaveBeenCalled()
+    expect(api.getTableBinding).not.toHaveBeenCalled()
+  })
+
+  it('已绑定门店时 onShow 只刷新购物车，不重载', () => {
+    const ctx = Object.assign({}, pageConfig, {
+      data: { orderType: 'delivery', boundShopId: 7 },
+      setData: jest.fn(), loadData: jest.fn(), updateCartInfo: jest.fn(),
+    })
+    ctx.onShow()
+    expect(ctx.updateCartInfo).toHaveBeenCalled()
+    expect(ctx.loadData).not.toHaveBeenCalled()
   })
 })
