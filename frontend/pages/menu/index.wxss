@@ -493,7 +493,7 @@
 /* 规格药丸：默认浅灰描边；选中=品牌粉实心；售罄=禁用灰 */
 .spec-pill {
   padding: 14rpx 28rpx;
-  border-radius: 40rpx;
+  border-radius: 32rpx; /* 圆角矩形(≈设计16px)，非满胶囊 */
   border: 2rpx solid var(--weui-FG-3);
   background: #fff;
   color: var(--weui-FG-0);
@@ -538,10 +538,11 @@
   gap: var(--space-sm);
 }
 
-/* 整宽：weui-btn 自带居中收缩(同优先级，靠后裁不动)，用后代选择器提优先级铺满 */
+/* 整宽 + 胶囊圆边：weui-btn 自带居中收缩(同优先级)且 8px 方角，用后代选择器提优先级覆盖 */
 .spec-sheet .spec-add {
   width: 100%;
   margin: var(--space-lg) 0 0;
+  border-radius: 50rpx; /* ≈设计25px 胶囊圆边 */
   box-sizing: border-box;
 }
 .spec-add[disabled] {

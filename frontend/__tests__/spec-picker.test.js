@@ -95,6 +95,12 @@ describe('规格弹层版式（对齐参考图 + JFW）', () => {
     expect(rule('.spec-pill_on')).toMatch(/background:\s*var\(--weui-BRAND\)/)
     expect(rule('.spec-price')).toMatch(/font-family:\s*var\(--font-number\)/)
   })
+  it('规格药丸圆角矩形（非胶囊），加入按钮胶囊圆边（对齐变体 A）', () => {
+    // 设计：药丸 16px≈32rpx 圆角矩形；当前 40rpx 在 76rpx 高上是满胶囊，须收敛
+    expect(rule('.spec-pill')).toMatch(/border-radius:\s*32rpx/)
+    // 设计：加入按钮 25px≈50rpx 胶囊；weui 默认 8px 方角，须显式圆边
+    expect(rule('.spec-add')).toMatch(/border-radius:\s*50rpx/)
+  })
   it('板块标题深蓝 + 粉 #（与菜单一致）', () => {
     expect(rule('.spec-group-t')).toMatch(/color:\s*var\(--jf-title-blue\)/)
     expect(wxss).toMatch(/\.spec-group-t::before\s*\{[^}]*content:\s*"#"/)
