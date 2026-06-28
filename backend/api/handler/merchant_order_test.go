@@ -508,6 +508,49 @@ func TestRedispatchOrder_ConcurrentDispatchesOnce(t *testing.T) {
 	}
 }
 
+// T2(R3): if the order is cancelled (2→4) during the quote window, the atomic
+// claim must reject it — no billable courier may be placed on a cancelled order.
+func TestRedispatchOrder_CancelledDuringQuoteNotDispatched(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9550)
+	mock := &shansongMock{
+		quoteResp:  `{"status":200,"data":{"orderNumber":"RQ-X","totalFeeAfterSave":900}}`,
+		createResp: `{"status":200,"data":{"orderNumber":"SS-X"}}`,
+		quoteDelay: 60 * time.Millisecond, // hold the handler in CalculatePrice while we cancel
+	}
+	withShansong(t, &services.ShansongClient{ClientID: "c", AppSecret: "s", BaseURL: "http://stub", HTTP: mock})
+	order := newRedispatchOrder(t, merchantID, "RD_CANCELRACE", -1) // Status:2, shansong -1
+
+	r := setupRouter()
+	setAuthContext(r, "POST", "/api/merchant/orders/:id/redispatch", RedispatchOrder, merchantID)
+	url := "/api/merchant/orders/" + itoa(order.ID) + "/redispatch"
+
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var code int
+	go func() {
+		defer wg.Done()
+		req, _ := http.NewRequest("POST", url, nil)
+		w := httptest.NewRecorder()
+		r.ServeHTTP(w, req)
+		code = w.Code
+	}()
+	// Cancel mid-quote: the handler is past the Status==2 read but not yet at the claim.
+	time.Sleep(20 * time.Millisecond)
+	config.DB.Model(&models.Order{}).Where("id = ?", order.ID).Update("status", 4)
+	wg.Wait()
+
+	if code == http.StatusOK {
+		t.Errorf("cancelled-mid-quote redispatch must not succeed, got 200")
+	}
+	mock.mu.Lock()
+	calls := mock.createCalls
+	mock.mu.Unlock()
+	if calls != 0 {
+		t.Errorf("no courier order may be placed on a cancelled order, got %d orderPlace calls", calls)
+	}
+}
+
 // T1: re-dispatch is ownership-checked like the other order actions.
 func TestRedispatchOrder_RejectsOtherMerchant(t *testing.T) {
 	setupTestDB(t)

@@ -314,8 +314,12 @@ func RedispatchOrder(c *gin.Context) {
 	// is still re-dispatchable, so two concurrent re-dispatch calls can never both
 	// place a (billable) courier order. Clearing shansong_order_no re-arms
 	// DispatchShansong against the fresh quote.
+	// The order.Status==2 check above is a stale read; a concurrent 改状态 2→4 could
+	// land during the quote round-trip. Re-assert it inside the claim via a correlated
+	// subquery so the DB — not the in-memory value — rejects a just-cancelled order.
 	claim := config.DB.Model(&models.OrderDelivery{}).
-		Where("id = ? AND shansong_status IN ?", od.ID, []int{-1, 60}).
+		Where("id = ? AND shansong_status IN ? AND order_id IN (?)", od.ID, []int{-1, 60},
+			config.DB.Model(&models.Order{}).Select("id").Where("id = ? AND status = ?", order.ID, 2)).
 		Updates(map[string]any{
 			"shansong_quote_no": res.QuoteToken,
 			"shansong_order_no": "",
