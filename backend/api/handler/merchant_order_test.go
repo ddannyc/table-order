@@ -695,3 +695,35 @@ func TestPrepareOrder_RejectsCancelled(t *testing.T) {
 		t.Fatalf("expected 400 preparing a cancelled order, got %d", w.Code)
 	}
 }
+
+// T1(R2): a cancelled order (Status=4) must not be re-dispatched even if its
+// delivery row still reads a re-dispatchable shansong_status.
+func TestRedispatchOrder_RejectsCancelledOrder(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9520)
+	withShansong(t, mockShansong(
+		`{"status":200,"data":{"orderNumber":"RQ","totalFeeAfterSave":900}}`,
+		`{"status":200,"data":{"orderNumber":"SS"}}`))
+	shop := models.Shop{Name: "RD Cancel Shop", MerchantID: merchantID, Status: 1,
+		Address: "门店", City: "北京市", Phone: "010", Latitude: 39.9, Longitude: 116.4}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "RD_CANCELLED_ORDER", ShopID: shop.ID, OrderType: "delivery", Amount: 100, Status: 4}
+	config.DB.Create(&order)
+	config.DB.Create(&models.OrderDelivery{
+		OrderID: order.ID, ShansongStatus: -1, ShansongQuoteNo: "OLD-Q", ShansongOrderNo: "",
+		RecipientName: "张三", RecipientPhone: "13800000000", DetailAddress: "某路1号",
+		RecipientLat: 39.91, RecipientLng: 116.41, DeliveryFee: 8.5,
+	})
+
+	w := doMerchantReq(t, merchantID, "POST", "/api/merchant/orders/:id/redispatch",
+		"/api/merchant/orders/"+itoa(order.ID)+"/redispatch", RedispatchOrder, nil)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 re-dispatching a cancelled order, got %d body: %s", w.Code, w.Body.String())
+	}
+	var od models.OrderDelivery
+	config.DB.Where("order_id = ?", order.ID).First(&od)
+	if od.ShansongQuoteNo != "OLD-Q" || od.ShansongOrderNo != "" || od.ShansongStatus != -1 {
+		t.Errorf("cancelled order must not be mutated, got quote=%q orderNo=%q status=%d",
+			od.ShansongQuoteNo, od.ShansongOrderNo, od.ShansongStatus)
+	}
+}

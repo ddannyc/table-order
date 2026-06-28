@@ -202,6 +202,13 @@ func RedispatchOrder(c *gin.Context) {
 	if !ok {
 		return
 	}
+	// Only a paid order may be re-dispatched. A merchant who cancelled the order
+	// via 改状态 must not be able to place a (billable) courier order against it,
+	// even though the delivery row may still read a re-dispatchable shansong_status.
+	if order.Status != 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "只有已支付订单可重新派单"})
+		return
+	}
 
 	var od models.OrderDelivery
 	if err := config.DB.Where("order_id = ?", order.ID).First(&od).Error; err != nil {
