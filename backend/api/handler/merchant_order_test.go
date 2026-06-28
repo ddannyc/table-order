@@ -571,3 +571,73 @@ func TestGetMerchantOrders_RevenueExcludesUnpaidAndCancelled(t *testing.T) {
 		t.Errorf("rewarded should be 10+5 (paid+completed only), got %v", resp.Rewarded)
 	}
 }
+
+// T4: shop_id filter (the actual production path — the SPA always sends it).
+func TestGetMerchantOrders_FilterByShopID(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9220)
+	shopA := models.Shop{Name: "Shop A", MerchantID: merchantID, Status: 1}
+	shopB := models.Shop{Name: "Shop B", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shopA)
+	config.DB.Create(&shopB)
+	config.DB.Create(&models.Order{OrderNo: "SA_1", ShopID: shopA.ID, OrderType: "dine_in", Amount: 10, Status: 2})
+	config.DB.Create(&models.Order{OrderNo: "SB_1", ShopID: shopB.ID, OrderType: "dine_in", Amount: 10, Status: 2})
+
+	resp := getMerchantOrders(t, merchantID, "?shop_id="+itoa(shopA.ID))
+	if resp.Total != 1 || len(resp.Orders) != 1 || resp.Orders[0].OrderNo != "SA_1" {
+		t.Errorf("shop_id filter failed: total=%d orders=%+v", resp.Total, resp.Orders)
+	}
+}
+
+// T4: date filter hits the day; a malformed date is silently ignored (unfiltered).
+func TestGetMerchantOrders_DateFilter(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9221)
+	shop := models.Shop{Name: "Date Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	o := models.Order{OrderNo: "DT_1", ShopID: shop.ID, OrderType: "dine_in", Amount: 10, Status: 2}
+	config.DB.Create(&o)
+	today := o.CreatedAt.Format("2006-01-02")
+
+	hit := getMerchantOrders(t, merchantID, "?date="+today)
+	if hit.Total != 1 {
+		t.Errorf("date=%s should match the order, got total=%d", today, hit.Total)
+	}
+	miss := getMerchantOrders(t, merchantID, "?date=1999-01-01")
+	if miss.Total != 0 {
+		t.Errorf("date=1999-01-01 should match nothing, got total=%d", miss.Total)
+	}
+	bad := getMerchantOrders(t, merchantID, "?date=not-a-date")
+	if bad.Total != 1 {
+		t.Errorf("malformed date should be ignored (unfiltered), got total=%d", bad.Total)
+	}
+}
+
+// T4: a merchant with no shops gets 200 + empty list (not 500/null).
+func TestGetMerchantOrders_EmptyShopsReturnsEmpty(t *testing.T) {
+	setupTestDB(t)
+	resp := getMerchantOrders(t, uint(9222), "")
+	if resp.Total != 0 || len(resp.Orders) != 0 {
+		t.Errorf("merchant with no shops should get empty, got total=%d len=%d", resp.Total, len(resp.Orders))
+	}
+}
+
+// T4: default page size (20) limits the page while total reflects the full set.
+func TestGetMerchantOrders_DefaultPageSizeLimits(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9223)
+	shop := models.Shop{Name: "Paging Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	for i := 0; i < 25; i++ {
+		config.DB.Create(&models.Order{
+			OrderNo: "PGD_" + itoa(uint(i)), ShopID: shop.ID, OrderType: "dine_in", Amount: 1, Status: 2,
+		})
+	}
+	resp := getMerchantOrders(t, merchantID, "") // no page_size → default 20
+	if len(resp.Orders) != 20 {
+		t.Errorf("default page should cap at 20, got %d", len(resp.Orders))
+	}
+	if resp.Total != 25 {
+		t.Errorf("total should be 25 across full set, got %d", resp.Total)
+	}
+}

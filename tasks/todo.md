@@ -15,7 +15,7 @@ TDD：先写/改测试再改源码；一任务一提交。
 - [x] **Checkpoint B（GO）** T1+T2+T3 完成、`npm test`/`npm run build` 绿；ship 可翻 GO
 
 ## Phase 3 — 测试加固（快速跟进）
-- [ ] **T4** 补列表测试：`shop_id` 筛选(生产路径)/`date`+非法日期静默忽略/`page_size>100` 钳制/空店铺 200 空列表 — S
+- [x] **T4** 补列表测试：`shop_id` 筛选(生产路径)/`date`+非法日期静默忽略/`page_size>100` 钳制/空店铺 200 空列表 — S
 - [ ] **T5** 补 redispatch 测试：扩展 mock 支持询价错误 → 502 且不留脏数据；非外卖单 → 400（依赖 T1）— S
 
 ## Phase 4 — CI 防护 + 安全加固
