@@ -658,3 +658,43 @@
   padding: 18rpx 56rpx;
   border-radius: 44rpx;
 }
+
+/* ===== 加载骨架屏（Variant B）：静态品牌头 + 动态区 shimmer 占位 ===== */
+.sk {
+  position: relative;
+  overflow: hidden;
+  background: #ECE4EA; /* 暖灰占位，贴合粉调主题 */
+  border-radius: 8rpx;
+}
+.sk::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: sk-shimmer 1.25s infinite;
+}
+@keyframes sk-shimmer {
+  100% { transform: translateX(100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk::after { animation: none; }
+}
+
+/* 门店栏：店名占位（真 pin + 真模式之间） */
+.sk-shopname { width: 220rpx; height: 26rpx; }
+
+/* 左类目轨：每项一条短占位 */
+.sk-rail { width: 84rpx; height: 26rpx; }
+
+/* 右列表：区块标题占位 */
+.sk-sec-t { width: 150rpx; height: 30rpx; }
+
+/* 卡片骨架：复用 .menu-card / .menu-card-thumb 的真实尺寸，仅覆盖缩略图圆角 */
+.menu-card-thumb.sk { border-radius: var(--radius-md); }
+.sk-line { height: 24rpx; }
+.sk-line_title { width: 60%; height: 30rpx; }
+.sk-line_desc { width: 85%; margin-top: 16rpx; }
+.sk-card-bottom { margin-top: auto; display: flex; align-items: center; }
+.sk-price { width: 96rpx; height: 32rpx; }
+.sk-btn { width: 120rpx; height: 50rpx; border-radius: 99rpx; margin-left: auto; }

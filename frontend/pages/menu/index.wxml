@@ -18,10 +18,46 @@
     </view>
   </view>
 
-  <!-- 加载中 -->
-  <view wx:elif="{{loading}}" class="weui-loadmore">
-    <view class="weui-loading"></view>
-    <view class="weui-loadmore__tips">加载中…</view>
+  <!-- 加载中：骨架屏（Variant B）—— 静态品牌头即刻出，动态区 shimmer 占位 -->
+  <view wx:elif="{{loading}}" class="menu-main menu-skeleton" aria-hidden="true">
+    <!-- 品牌海报头（静态，立即渲染） -->
+    <view class="menu-poster">
+      <view class="menu-poster-row">
+        <view class="menu-poster-brand">#鸡福旺</view>
+        <view class="menu-poster-tag">现炸出炉</view>
+      </view>
+      <view class="menu-poster-sub">五指毛桃鸡 · 鲜烤窑鸡 · 现炸零食小食</view>
+    </view>
+    <!-- 门店栏：真 pin + 店名骨架 + 真模式 -->
+    <view class="menu-shopbar">
+      <view class="menu-shop-pin" aria-hidden="true"></view>
+      <view class="sk sk-shopname"></view>
+      <view class="menu-mode">{{orderType === 'delivery' ? '外卖 · 送货上门' : '堂食 · ' + boundTableNo}}</view>
+    </view>
+    <!-- 左类目轨 + 右卡片，复用真实布局类避免布局跳动 -->
+    <view class="menu-body">
+      <view class="menu-rail">
+        <view class="menu-rail-item" wx:for="{{[1,2,3,4,5,6]}}" wx:key="*this">
+          <view class="sk sk-rail"></view>
+        </view>
+      </view>
+      <view class="menu-list">
+        <view class="menu-sec">
+          <view class="sk sk-sec-t"></view>
+        </view>
+        <view class="menu-card sk-card" wx:for="{{[1,2,3,4]}}" wx:key="*this">
+          <view class="menu-card-thumb sk"></view>
+          <view class="menu-card-bd">
+            <view class="sk sk-line sk-line_title"></view>
+            <view class="sk sk-line sk-line_desc"></view>
+            <view class="sk-card-bottom">
+              <view class="sk sk-price"></view>
+              <view class="sk sk-btn"></view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </view>
   </view>
 
   <!-- 加载失败 -->
