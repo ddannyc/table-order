@@ -968,3 +968,30 @@ func TestUpdateOrderStatus_TransitionWhitelist(t *testing.T) {
 		}
 	}
 }
+
+// R4 polish: a failed audit-log write must NOT fail the action (fire-and-forget
+// after commit). Dropping the audit table makes logOrderAction's insert error;
+// the status change must still succeed and persist.
+func TestUpdateOrderStatus_SurvivesAuditWriteFailure(t *testing.T) {
+	setupTestDB(t)
+	const merchantID = uint(9570)
+	shop := models.Shop{Name: "Audit-Fail Shop", MerchantID: merchantID, Status: 1}
+	config.DB.Create(&shop)
+	order := models.Order{OrderNo: "AF_1", ShopID: shop.ID, OrderType: "dine_in", Amount: 10, Status: 2}
+	config.DB.Create(&order)
+
+	if err := config.DB.Migrator().DropTable(&models.OrderActionLog{}); err != nil {
+		t.Fatalf("drop audit table: %v", err)
+	}
+
+	w := doMerchantReq(t, merchantID, "PUT", "/api/merchant/orders/:id/status",
+		"/api/merchant/orders/"+itoa(order.ID)+"/status", UpdateMerchantOrderStatus, map[string]any{"status": 3})
+	if w.Code != http.StatusOK {
+		t.Fatalf("action must succeed despite audit-write failure, got %d", w.Code)
+	}
+	var got models.Order
+	config.DB.First(&got, order.ID)
+	if got.Status != 3 {
+		t.Errorf("status change must persist despite audit failure, got %d", got.Status)
+	}
+}
